@@ -7,6 +7,7 @@ const channels = {
   saved: "保存済み",
   guide: "はじめてガイド",
   qa: "質問・相談",
+  ai: "AI相談ルーム",
 };
 
 const jobs = [
@@ -141,6 +142,7 @@ const channelMessageInput = document.querySelector("#channelMessageInput");
 const openMyPageButton = document.querySelector("#openMyPage");
 const workerIdentityText = document.querySelector("#workerIdentityText");
 const workerPresence = document.querySelector("#workerPresence");
+const aiRoomButton = document.querySelector("#aiRoomButton");
 const notificationsButton = document.querySelector("#notificationsButton");
 const settingsButton = document.querySelector("#settingsButton");
 const utilityPopover = document.querySelector("#utilityPopover");
@@ -156,8 +158,8 @@ const appViews = {
   company: document.querySelector("#companyApp"),
   vuzz: document.querySelector("#vuzzApp"),
 };
-const writableChannels = new Set(["qa"]);
-const supportChannels = new Set(["guide", "qa"]);
+const writableChannels = new Set(["qa", "ai"]);
+const supportChannels = new Set(["guide", "qa", "ai"]);
 const supportMessages = [
   {
     author: "vuzzサポート",
@@ -182,6 +184,16 @@ const supportMessages = [
     time: "10:20",
     title: "送料は案件詳細の条件を確認してください",
     body: "資材配送ありの案件は、詳細欄に配送・返送条件を表示しています。不明な場合は企業へ質問できます。",
+  },
+];
+const aiMessages = [
+  {
+    author: "vuzz AI",
+    avatar: "AI",
+    color: "#b9a7ff",
+    time: "固定",
+    title: "相談内容を入力してください",
+    body: "案件選び、応募前の確認、本人認証、納期や報酬の不安などをここで相談できます。",
   },
 ];
 const vuzzChannels = {
@@ -383,6 +395,45 @@ function updateIdentityUI() {
         ? '<i data-lucide="check-circle-2"></i> この案件に応募'
         : '<i data-lucide="badge-alert"></i> vuzz承認後に応募';
   refreshIcons();
+}
+
+function escapeHtml(value) {
+  return value.replace(/[&<>"']/g, (character) => {
+    const entities = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    };
+    return entities[character];
+  });
+}
+
+function getAiReply(message) {
+  const normalizedMessage = message.toLowerCase();
+
+  if (message.includes("本人") || message.includes("認証") || message.includes("登録")) {
+    return "応募するには、メール認証、基本情報、身分証提出、契約書受領、vuzz承認の順に進みます。公式LINE登録は任意です。";
+  }
+
+  if (message.includes("応募") || message.includes("仕事")) {
+    return "未ログインでも案件は見られます。応募ボタンを押すと登録へ進み、ログイン済みの場合は本人認証ページへ移動します。";
+  }
+
+  if (message.includes("報酬") || message.includes("支払") || message.includes("お金")) {
+    return "報酬は案件詳細の金額と検収条件を必ず確認してください。納品後、企業の検収が完了してから支払い対象になります。";
+  }
+
+  if (message.includes("納期") || message.includes("間に合") || message.includes("遅れ")) {
+    return "納期が不安な案件は、応募前に作業量、返送方法、検収までの時間を確認するのがおすすめです。無理な場合は応募前に別案件を選びましょう。";
+  }
+
+  if (message.includes("契約") || message.includes("身分証") || message.includes("line") || normalizedMessage.includes("line")) {
+    return "契約書受領まで完了するとvuzz運営へ申請されます。身分証提出は必須、公式LINE登録は任意です。";
+  }
+
+  return "内容を確認しました。応募前なら、作業内容、納期、報酬、検収条件、送料の5点を見ておくと安心です。気になる案件名を送ってくれれば、確認ポイントを整理します。";
 }
 
 function closeUtilityPopover() {
@@ -996,6 +1047,30 @@ function renderSupportChannel() {
   channelComposer.classList.toggle("is-hidden", !canWrite);
   channelMessageInput.placeholder = `#${channels[activeChannel]} にメッセージを送信`;
 
+  if (activeChannel === "ai") {
+    feedIntroText.textContent =
+      "vuzz AIに案件選びや応募前の不安を相談できます。外部送信のないプロトタイプ用チャットです。";
+    feed.innerHTML = aiMessages
+      .map(
+        (message) => `
+          <article class="support-message ai-chat-message">
+            <div class="avatar" style="background:${message.color}">${escapeHtml(message.avatar)}</div>
+            <div class="message-body">
+              <div class="message-head">
+                <strong>${escapeHtml(message.author)}</strong>
+                <time>${escapeHtml(message.time)}</time>
+              </div>
+              <h3>${escapeHtml(message.title)}</h3>
+              <p>${escapeHtml(message.body)}</p>
+            </div>
+          </article>
+        `,
+      )
+      .join("");
+    refreshIcons();
+    return;
+  }
+
   if (activeChannel === "guide") {
     feedIntroText.textContent =
       "応募から納品、検収、報酬受け取りまでの流れを確認できます。このチャンネルは読み取り専用です。";
@@ -1045,10 +1120,11 @@ function renderSupportChannel() {
 
 function renderFeed() {
   channelTitle.textContent = channels[activeChannel];
-  feedTitle.textContent = `#${channels[activeChannel]} へようこそ`;
+  feedTitle.textContent = activeChannel === "ai" ? "AI相談ルーム" : `#${channels[activeChannel]} へようこそ`;
   workerMainGrid.classList.toggle("support-mode", supportChannels.has(activeChannel));
   filterRow?.classList.toggle("is-hidden", supportChannels.has(activeChannel));
   channelComposer.classList.toggle("is-hidden", !writableChannels.has(activeChannel));
+  aiRoomButton.classList.toggle("active", activeChannel === "ai");
   savedCount.textContent = savedJobs.size;
 
   if (supportChannels.has(activeChannel)) {
@@ -1158,6 +1234,14 @@ document.querySelectorAll("#workerApp .channel").forEach((button) => {
   });
 });
 
+aiRoomButton.addEventListener("click", () => {
+  document.querySelectorAll("#workerApp .channel").forEach((item) => item.classList.remove("active"));
+  activeChannel = "ai";
+  closeUtilityPopover();
+  renderFeed();
+  channelMessageInput.focus();
+});
+
 document.querySelectorAll("#workerApp .filter").forEach((button) => {
   button.addEventListener("click", () => {
     document.querySelectorAll("#workerApp .filter").forEach((item) => item.classList.remove("active"));
@@ -1242,6 +1326,7 @@ document.querySelector("#submitModalJob").addEventListener("click", () => {
   document.querySelectorAll("#workerApp .channel").forEach((item) => {
     item.classList.toggle("active", item.dataset.channel === "all");
   });
+  aiRoomButton.classList.remove("active");
   renderDetail(newJob);
   renderFeed();
 });
@@ -1250,6 +1335,29 @@ channelComposer.addEventListener("submit", (event) => {
   event.preventDefault();
   const body = channelMessageInput.value.trim();
   if (!body || !writableChannels.has(activeChannel)) return;
+
+  if (activeChannel === "ai") {
+    aiMessages.push({
+      author: "佐藤 美咲",
+      avatar: "美",
+      color: "#58a9df",
+      time: "now",
+      title: body,
+      body: "送信済み",
+    });
+    aiMessages.push({
+      author: "vuzz AI",
+      avatar: "AI",
+      color: "#b9a7ff",
+      time: "now",
+      title: "AI回答",
+      body: getAiReply(body),
+    });
+    channelMessageInput.value = "";
+    renderFeed();
+    feed.scrollTop = feed.scrollHeight;
+    return;
+  }
 
   supportMessages.push({
     author: "佐藤 美咲",

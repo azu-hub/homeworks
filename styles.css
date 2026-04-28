@@ -518,6 +518,15 @@ button {
   color: var(--muted);
 }
 
+.voice-pill.active {
+  background: rgba(72, 181, 140, 0.16);
+  color: var(--text);
+}
+
+.ai-chat-message .avatar {
+  font-size: 12px;
+}
+
 .user-actions {
   display: flex;
   gap: 2px;
