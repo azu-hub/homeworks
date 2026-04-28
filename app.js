@@ -179,8 +179,8 @@ const writableChannels = new Set(["qa", "ai"]);
 const supportChannels = new Set(["guide", "qa", "ai"]);
 const supportMessages = [
   {
-    author: "vuzzサポート",
-    avatar: "v",
+    author: "運営サポート",
+    avatar: "運",
     color: "#48b58c",
     time: "10:02",
     title: "応募前の不安はここで相談できます",
@@ -195,8 +195,8 @@ const supportMessages = [
     body: "応募前に確認したいです。返送時の送料も企業負担か知りたいです。",
   },
   {
-    author: "vuzzサポート",
-    avatar: "v",
+    author: "運営サポート",
+    avatar: "運",
     color: "#48b58c",
     time: "10:20",
     title: "送料は案件詳細の条件を確認してください",
@@ -205,7 +205,7 @@ const supportMessages = [
 ];
 const aiMessages = [
   {
-    author: "vuzz AI",
+    author: "運営AI",
     avatar: "AI",
     color: "#b9a7ff",
     time: "固定",
@@ -389,15 +389,15 @@ function getWorkerApprovalStatus() {
   if (!profileSubmitted) return "基本情報未入力・応募制限中";
   if (!idSubmitted) return "身分証未提出・応募制限中";
   if (!contractIssued) return "契約書未交付・応募制限中";
-  if (!vuzzApplicationSubmitted) return "vuzz申請前・応募制限中";
-  if (!identityVerified) return "vuzz承認待ち・応募制限中";
-  return "vuzz承認済み・応募可";
+  if (!vuzzApplicationSubmitted) return "運営申請前・応募制限中";
+  if (!identityVerified) return "運営承認待ち・応募制限中";
+  return "運営承認済み・応募可";
 }
 
 function getWorkerApprovalLabel() {
   if (!isLoggedIn) return "登録して本人確認へ";
   if (!emailVerified) return "メール認証後に応募";
-  if (!identityVerified) return "vuzz承認後に応募";
+  if (!identityVerified) return "運営承認後に応募";
   return "この案件に応募";
 }
 
@@ -451,7 +451,7 @@ function updateIdentityUI() {
       ? '<i data-lucide="mail-check"></i> メール認証後に応募'
       : identityVerified
         ? '<i data-lucide="check-circle-2"></i> この案件に応募'
-        : '<i data-lucide="badge-alert"></i> vuzz承認後に応募';
+        : '<i data-lucide="badge-alert"></i> 運営承認後に応募';
   refreshIcons();
 }
 
@@ -472,7 +472,7 @@ function getAiReply(message) {
   const normalizedMessage = message.toLowerCase();
 
   if (message.includes("本人") || message.includes("認証") || message.includes("登録")) {
-    return "応募するには、メール認証、基本情報、身分証提出、契約書受領、vuzz承認の順に進みます。公式LINE登録は任意です。";
+    return "応募するには、メール認証、基本情報、身分証提出、契約書受領、運営承認の順に進みます。公式LINE登録は任意です。";
   }
 
   if (message.includes("応募") || message.includes("仕事")) {
@@ -488,7 +488,7 @@ function getAiReply(message) {
   }
 
   if (message.includes("契約") || message.includes("身分証") || message.includes("line") || normalizedMessage.includes("line")) {
-    return "契約書受領まで完了するとvuzz運営へ申請されます。身分証提出は必須、公式LINE登録は任意です。";
+    return "契約書受領まで完了すると運営へ申請されます。身分証提出は必須、公式LINE登録は任意です。";
   }
 
   return "内容を確認しました。応募前なら、作業内容、納期、報酬、検収条件、送料の5点を見ておくと安心です。気になる案件名を送ってくれれば、確認ポイントを整理します。";
@@ -572,7 +572,7 @@ function renderUtilityPopover(type) {
           <div class="setting-row">
             <div>
               <strong>サポート通知</strong>
-              <span>vuzz運営からの連絡</span>
+              <span>運営からの連絡</span>
             </div>
             <button class="setting-toggle" type="button" aria-label="サポート通知" aria-pressed="false"></button>
           </div>
@@ -605,7 +605,7 @@ function applyToJob(jobId) {
   }
 
   if (!identityVerified) {
-    renderMyPage("応募するには、本人情報・身分証・契約書交付を完了し、vuzz運営の承認を受ける必要があります。");
+    renderMyPage("応募するには、本人情報・身分証・契約書交付を完了し、運営の承認を受ける必要があります。");
     return;
   }
 
@@ -842,7 +842,7 @@ function renderMyPage(alertText = "") {
   channelTitle.textContent = "マイページ";
   feedTitle.textContent = "マイページ";
   feedIntroText.textContent =
-    "基本情報、身分証、契約書交付を完了するとvuzz運営へ申請され、承認後に案件へ応募できます。公式LINE登録は任意です。";
+    "基本情報、身分証、契約書交付を完了すると運営へ申請され、承認後に案件へ応募できます。公式LINE登録は任意です。";
   workerMainGrid.classList.add("support-mode");
   filterRow?.classList.add("is-hidden");
   channelComposer.classList.add("is-hidden");
@@ -874,7 +874,7 @@ function renderMyPage(alertText = "") {
         <span class="status-dot warn"></span>
         <div>
           <strong>応募履歴はまだありません</strong>
-          <p>vuzz承認が完了すると、案件に応募できるようになります。</p>
+          <p>運営承認が完了すると、案件に応募できるようになります。</p>
         </div>
         <span class="status-badge">未応募</span>
       </article>
@@ -886,8 +886,8 @@ function renderMyPage(alertText = "") {
     ["身分証提出", idSubmitted, idSubmitted ? "提出済み" : "未提出"],
     ["契約書交付", contractIssued, contractIssued ? "交付済み" : "未交付"],
     ["公式LINE登録", lineRegistered, lineRegistered ? "登録済み" : "任意"],
-    ["vuzz申請", vuzzApplicationSubmitted, vuzzApplicationSubmitted ? "申請済み" : "未申請"],
-    ["vuzz承認", identityVerified, identityVerified ? "承認済み" : "承認待ち"],
+    ["運営申請", vuzzApplicationSubmitted, vuzzApplicationSubmitted ? "申請済み" : "未申請"],
+    ["運営承認", identityVerified, identityVerified ? "承認済み" : "承認待ち"],
   ];
 
   const nextAction = !profileSubmitted
@@ -934,20 +934,20 @@ function renderMyPage(alertText = "") {
       : !contractIssued
         ? `
           <div class="onboarding-action">
-            <p class="form-note">業務委託に関する契約書を交付します。内容を確認して受領してください。受領後、自動でvuzz運営へ申請されます。</p>
+            <p class="form-note">業務委託に関する契約書を交付します。内容を確認して受領してください。受領後、自動で運営へ申請されます。</p>
             <button class="primary-button wide" id="issueContractButton" type="button">
               <i data-lucide="file-signature"></i>
-              契約書を受領してvuzzへ申請
+              契約書を受領して運営へ申請
             </button>
           </div>
         `
         : !vuzzApplicationSubmitted
           ? `
             <div class="onboarding-action">
-              <p class="form-note">契約書まで完了しました。申請が未送信の場合は、vuzz運営へ申請してください。</p>
+              <p class="form-note">契約書まで完了しました。申請が未送信の場合は、運営へ申請してください。</p>
               <button class="primary-button wide" id="submitVuzzApplicationButton" type="button">
                 <i data-lucide="send"></i>
-                vuzz運営へ申請
+                運営へ申請
               </button>
               <button class="secondary-button wide" id="registerLineButton" type="button">
                 <i data-lucide="message-circle"></i>
@@ -958,20 +958,20 @@ function renderMyPage(alertText = "") {
           : !identityVerified
             ? `
               <div class="onboarding-action">
-                <p class="form-note">vuzz運営へ申請済みです。承認後に仕事を受けられます。公式LINE登録は任意ですが、連絡がスムーズになります。</p>
+                <p class="form-note">運営へ申請済みです。承認後に仕事を受けられます。公式LINE登録は任意ですが、連絡がスムーズになります。</p>
                 <button class="secondary-button wide" id="registerLineButton" type="button">
                   <i data-lucide="message-circle"></i>
                   ${lineRegistered ? "公式LINE登録済み" : "公式LINEを任意で登録"}
                 </button>
                 <button class="primary-button wide" id="approveWorkerButton" type="button">
                   <i data-lucide="shield-check"></i>
-                  vuzz承認する
+                  運営承認する
                 </button>
               </div>
             `
             : `
               <div class="onboarding-action">
-                <p class="form-note">vuzz承認済みです。案件に応募できます。</p>
+                <p class="form-note">運営承認済みです。案件に応募できます。</p>
                 <button class="primary-button wide" id="myPageApplyButton" type="button">
                   <i data-lucide="send"></i>
                   選択中の案件に応募
@@ -985,9 +985,9 @@ function renderMyPage(alertText = "") {
       : !contractIssued
         ? "契約書の確認"
         : !vuzzApplicationSubmitted
-          ? "vuzz運営へ申請"
+          ? "運営へ申請"
           : !identityVerified
-            ? "vuzz承認待ち"
+            ? "運営承認待ち"
             : "応募できます";
   const actionBadge = identityVerified ? "応募可" : "登録中";
   const applicationsCard = identityVerified
@@ -1122,12 +1122,12 @@ function renderMyPage(alertText = "") {
     contractIssued = true;
     vuzzApplicationSubmitted = true;
     updateIdentityUI();
-    renderMyPage("契約書を受領しました。vuzz運営へ申請しました。");
+    renderMyPage("契約書を受領しました。運営へ申請しました。");
   });
   document.querySelector("#submitVuzzApplicationButton")?.addEventListener("click", () => {
     vuzzApplicationSubmitted = true;
     updateIdentityUI();
-    renderMyPage("vuzz運営へ申請しました。承認をお待ちください。");
+    renderMyPage("運営へ申請しました。承認をお待ちください。");
   });
   document.querySelector("#registerLineButton")?.addEventListener("click", () => {
     lineRegistered = true;
@@ -1137,11 +1137,11 @@ function renderMyPage(alertText = "") {
   document.querySelector("#approveWorkerButton")?.addEventListener("click", () => {
     identityVerified = true;
     updateIdentityUI();
-    renderMyPage("vuzz承認が完了しました。仕事を受けられます。");
+    renderMyPage("運営承認が完了しました。仕事を受けられます。");
   });
   document.querySelector("#myPageApplyButton")?.addEventListener("click", () => {
     if (!identityVerified) {
-      renderMyPage("応募するにはvuzz承認が必要です。");
+      renderMyPage("応募するには運営承認が必要です。");
       return;
     }
     applyToJob(selectedJobId);
@@ -1250,7 +1250,7 @@ function renderSupportChannel() {
 
   if (activeChannel === "ai") {
     feedIntroText.textContent =
-      "vuzz AIに案件選びや応募前の不安を相談できます。外部送信のないプロトタイプ用チャットです。";
+      "運営AIに案件選びや応募前の不安を相談できます。外部送信のないプロトタイプ用チャットです。";
     feed.innerHTML = aiMessages
       .map(
         (message) => `
@@ -1277,9 +1277,9 @@ function renderSupportChannel() {
       "応募から納品、検収、報酬受け取りまでの流れを確認できます。このチャンネルは読み取り専用です。";
     feed.innerHTML = `
       <article class="support-message">
-        <div class="avatar" style="background:#48b58c">v</div>
+        <div class="avatar" style="background:#48b58c">運</div>
         <div class="message-body">
-          <div class="message-head"><strong>vuzzガイド</strong><time>固定</time><span class="badge">READ ONLY</span></div>
+          <div class="message-head"><strong>運営ガイド</strong><time>固定</time><span class="badge">READ ONLY</span></div>
           <h3>はじめての流れ</h3>
           <p>1. 案件を選ぶ、2. 条件を確認する、3. 応募する、4. 納品する、5. 検収後に報酬を受け取る、という順番で進みます。</p>
         </div>
@@ -1556,7 +1556,7 @@ channelComposer.addEventListener("submit", (event) => {
       body: "送信済み",
     });
     aiMessages.push({
-      author: "vuzz AI",
+      author: "運営AI",
       avatar: "AI",
       color: "#b9a7ff",
       time: "now",
