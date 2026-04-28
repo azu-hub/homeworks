@@ -44,12 +44,12 @@
         <form class="login-form">
           <label>
             メールアドレス
-            <input type="email" value="demo@homeworks.jp" />
+            <input type="email" />
           </label>
           <label>
             パスワード
             <span class="password-field">
-              <input type="password" value="password" />
+              <input type="password" />
               <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
                 <i data-lucide="eye"></i>
               </button>
@@ -81,11 +81,11 @@
         </div>
 
         <button class="worker-card profile-card" id="openMyPage" type="button">
-          <div class="worker-avatar">美</div>
+          <div class="worker-avatar" id="workerAvatar"><i data-lucide="user"></i></div>
           <div>
-            <strong>佐藤 美咲</strong>
-            <span class="rank-line" id="workerRankText">ブロンズ会員・0pt</span>
-            <span id="workerIdentityText">本人確認未完了・応募制限中</span>
+            <strong id="workerNameText">ゲスト</strong>
+            <span class="rank-line is-hidden" id="workerRankText"></span>
+            <span id="workerIdentityText">ゲスト閲覧中・応募には登録</span>
           </div>
           <span class="presence warning" id="workerPresence"></span>
         </button>

@@ -137,15 +137,15 @@ let contractIssued = false;
 let lineRegistered = false;
 let vuzzApplicationSubmitted = false;
 let identityVerified = false;
-let lifetimeEarnings = 76000;
+let lifetimeEarnings = 0;
 let isEditingProfile = false;
 const profileData = {
-  name: "佐藤 美咲",
-  birthdate: "1992-04-12",
-  gender: "女性",
-  postalCode: "150-0001",
-  phone: "090-1234-5678",
-  address: "東京都渋谷区神宮前1-1-1",
+  name: "",
+  birthdate: "",
+  gender: "",
+  postalCode: "",
+  phone: "",
+  address: "",
 };
 const savedJobs = new Set();
 const applications = [];
@@ -164,6 +164,8 @@ const filterRow = document.querySelector("#workerApp .filter-row");
 const channelComposer = document.querySelector("#channelComposer");
 const channelMessageInput = document.querySelector("#channelMessageInput");
 const openMyPageButton = document.querySelector("#openMyPage");
+const workerAvatar = document.querySelector("#workerAvatar");
+const workerNameText = document.querySelector("#workerNameText");
 const workerIdentityText = document.querySelector("#workerIdentityText");
 const workerRankText = document.querySelector("#workerRankText");
 const workerPresence = document.querySelector("#workerPresence");
@@ -451,8 +453,14 @@ function getRewardSummary() {
 
 function updateIdentityUI() {
   const rewardSummary = getRewardSummary();
+  const displayName = profileData.name || (isLoggedIn ? "未設定" : "ゲスト");
+  workerNameText.textContent = displayName;
+  workerAvatar.innerHTML = profileData.name ? escapeHtml(profileData.name.charAt(0)) : '<i data-lucide="user"></i>';
   workerIdentityText.textContent = getWorkerApprovalStatus();
-  workerRankText.textContent = `${rewardSummary.currentRank.label}・${rewardSummary.points.toLocaleString("ja-JP")}pt`;
+  workerRankText.textContent = isLoggedIn
+    ? `${rewardSummary.currentRank.label}・${rewardSummary.points.toLocaleString("ja-JP")}pt`
+    : "";
+  workerRankText.classList.toggle("is-hidden", !isLoggedIn);
   workerPresence.classList.toggle("warning", !isLoggedIn || !emailVerified || !identityVerified);
   document.querySelector("#applyButton").innerHTML = !isLoggedIn
     ? '<i data-lucide="user-plus"></i> 登録して本人確認へ'
@@ -667,16 +675,16 @@ function renderRegistrationForm(alertText = "") {
         <div class="form-grid">
           <label>
             氏名
-            <input type="text" value="佐藤 美咲" />
+            <input type="text" />
           </label>
           <label>
             メールアドレス
-            <input type="email" value="misaki@example.com" />
+            <input type="email" />
           </label>
           <label>
             パスワード
             <span class="password-field">
-              <input type="password" value="password" />
+              <input type="password" />
               <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
                 <i data-lucide="eye"></i>
               </button>
@@ -779,11 +787,11 @@ function renderEmailVerification(alertText = "") {
           </div>
           <span class="status-badge">未認証</span>
         </div>
-        <p class="form-note">misaki@example.com に6桁の認証コードを送信しました。</p>
+        <p class="form-note">登録したメールアドレスに6桁の認証コードを送信しました。</p>
         <div class="form-grid">
           <label class="span-2">
             認証コード
-            <input id="emailCodeInput" type="text" inputmode="numeric" value="123456" />
+            <input id="emailCodeInput" type="text" inputmode="numeric" />
           </label>
         </div>
         <button class="primary-button wide" type="submit">
@@ -1146,12 +1154,12 @@ function renderMyPage(alertText = "") {
   document.querySelector("#profileForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    profileData.name = formData.get("name")?.toString().trim() || profileData.name;
-    profileData.birthdate = formData.get("birthdate")?.toString() || profileData.birthdate;
-    profileData.gender = formData.get("gender")?.toString() || profileData.gender;
-    profileData.postalCode = formData.get("postalCode")?.toString().trim() || profileData.postalCode;
-    profileData.phone = formData.get("phone")?.toString().trim() || profileData.phone;
-    profileData.address = formData.get("address")?.toString().trim() || profileData.address;
+    profileData.name = formData.get("name")?.toString().trim() || "";
+    profileData.birthdate = formData.get("birthdate")?.toString() || "";
+    profileData.gender = formData.get("gender")?.toString() || "";
+    profileData.postalCode = formData.get("postalCode")?.toString().trim() || "";
+    profileData.phone = formData.get("phone")?.toString().trim() || "";
+    profileData.address = formData.get("address")?.toString().trim() || "";
     const wasEditing = isEditingProfile;
     profileSubmitted = true;
     isEditingProfile = false;

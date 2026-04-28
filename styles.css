@@ -472,6 +472,11 @@ button {
   font-weight: 900;
 }
 
+.worker-avatar svg {
+  width: 20px;
+  height: 20px;
+}
+
 .worker-card strong,
 .company-profile strong {
   display: block;
