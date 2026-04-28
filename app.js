@@ -137,6 +137,7 @@ let contractIssued = false;
 let lineRegistered = false;
 let vuzzApplicationSubmitted = false;
 let identityVerified = false;
+let lifetimeEarnings = 76000;
 const savedJobs = new Set();
 const applications = [];
 
@@ -156,6 +157,7 @@ const channelComposer = document.querySelector("#channelComposer");
 const channelMessageInput = document.querySelector("#channelMessageInput");
 const openMyPageButton = document.querySelector("#openMyPage");
 const workerIdentityText = document.querySelector("#workerIdentityText");
+const workerRankText = document.querySelector("#workerRankText");
 const workerPresence = document.querySelector("#workerPresence");
 const aiRoomButton = document.querySelector("#aiRoomButton");
 const notificationsButton = document.querySelector("#notificationsButton");
@@ -399,8 +401,49 @@ function getWorkerApprovalLabel() {
   return "この案件に応募";
 }
 
+function formatCurrency(value) {
+  return `${value.toLocaleString("ja-JP")}円`;
+}
+
+function getRewardSummary() {
+  const points = Math.floor(lifetimeEarnings / 100);
+  const ranks = [
+    { id: "bronze", label: "ブロンズ会員", threshold: 0 },
+    { id: "silver", label: "シルバー会員", threshold: 500 },
+    { id: "gold", label: "ゴールド会員", threshold: 1200 },
+  ];
+  const rewards = [
+    { threshold: 500, label: "500円分ギフトカード" },
+    { threshold: 1000, label: "1,000円分ギフトカード" },
+    { threshold: 2000, label: "3,000円分ギフトカード" },
+  ];
+  const currentRank = ranks
+    .slice()
+    .reverse()
+    .find((rank) => points >= rank.threshold);
+  const nextRank = ranks.find((rank) => rank.threshold > points);
+  const previousThreshold = currentRank?.threshold || 0;
+  const nextThreshold = nextRank?.threshold || previousThreshold;
+  const rankRange = Math.max(nextThreshold - previousThreshold, 1);
+  const rankProgress = nextRank ? Math.min(((points - previousThreshold) / rankRange) * 100, 100) : 100;
+  const nextReward = rewards.find((reward) => reward.threshold > points);
+
+  return {
+    points,
+    ranks,
+    rewards,
+    currentRank,
+    nextRank,
+    nextReward,
+    rankProgress,
+    pointsToNextRank: nextRank ? nextRank.threshold - points : 0,
+  };
+}
+
 function updateIdentityUI() {
+  const rewardSummary = getRewardSummary();
   workerIdentityText.textContent = getWorkerApprovalStatus();
+  workerRankText.textContent = `${rewardSummary.currentRank.label}・${rewardSummary.points.toLocaleString("ja-JP")}pt`;
   workerPresence.classList.toggle("warning", !isLoggedIn || !emailVerified || !identityVerified);
   document.querySelector("#applyButton").innerHTML = !isLoggedIn
     ? '<i data-lucide="user-plus"></i> 登録して本人確認へ'
@@ -804,6 +847,13 @@ function renderMyPage(alertText = "") {
   filterRow?.classList.add("is-hidden");
   channelComposer.classList.add("is-hidden");
 
+  const rewardSummary = getRewardSummary();
+  const nextRankText = rewardSummary.nextRank
+    ? `${rewardSummary.nextRank.label}まで${rewardSummary.pointsToNextRank.toLocaleString("ja-JP")}pt`
+    : "最高ランクです";
+  const nextRewardText = rewardSummary.nextReward
+    ? `${rewardSummary.nextReward.label}まであと${(rewardSummary.nextReward.threshold - rewardSummary.points).toLocaleString("ja-JP")}pt`
+    : "すべてのギフト特典を獲得済み";
   const applicationRows = applications.length
     ? applications
         .map(
@@ -932,6 +982,62 @@ function renderMyPage(alertText = "") {
   feed.innerHTML = `
     ${alertText ? `<div class="mypage-alert">${alertText}</div>` : ""}
     <section class="mypage-grid">
+      <article class="portal-panel mypage-card membership-card">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">member rank</p>
+            <h2>${rewardSummary.currentRank.label}</h2>
+          </div>
+          <span class="status-badge verified">${rewardSummary.points.toLocaleString("ja-JP")}pt</span>
+        </div>
+        <div class="rank-overview">
+          <div>
+            <span>累計獲得金額</span>
+            <strong>${formatCurrency(lifetimeEarnings)}</strong>
+          </div>
+          <div>
+            <span>次のランク</span>
+            <strong>${nextRankText}</strong>
+          </div>
+          <div>
+            <span>次の特典</span>
+            <strong>${nextRewardText}</strong>
+          </div>
+        </div>
+        <div class="rank-progress" aria-label="ランク進捗">
+          <span style="width:${rewardSummary.rankProgress}%"></span>
+        </div>
+        <div class="rank-ladder">
+          ${rewardSummary.ranks
+            .map(
+              (rank) => `
+                <div class="rank-tier ${rank.id} ${rewardSummary.currentRank.id === rank.id ? "active" : ""} ${rewardSummary.points >= rank.threshold ? "unlocked" : ""}">
+                  <i data-lucide="${rank.id === "bronze" ? "medal" : rank.id === "silver" ? "badge" : "crown"}"></i>
+                  <strong>${rank.label}</strong>
+                  <span>${rank.threshold.toLocaleString("ja-JP")}pt〜</span>
+                </div>
+              `,
+            )
+            .join("")}
+        </div>
+        <div class="reward-list">
+          ${rewardSummary.rewards
+            .map(
+              (reward) => `
+                <div class="reward-item ${rewardSummary.points >= reward.threshold ? "unlocked" : ""}">
+                  <i data-lucide="${rewardSummary.points >= reward.threshold ? "gift" : "lock"}"></i>
+                  <div>
+                    <strong>${reward.label}</strong>
+                    <span>${reward.threshold.toLocaleString("ja-JP")}ptで獲得</span>
+                  </div>
+                  <b>${rewardSummary.points >= reward.threshold ? "獲得済み" : "未達成"}</b>
+                </div>
+              `,
+            )
+            .join("")}
+        </div>
+      </article>
+
       <article class="portal-panel mypage-card">
         <div class="section-head">
           <div>

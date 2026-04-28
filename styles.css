@@ -420,6 +420,11 @@ button {
   white-space: nowrap;
 }
 
+.worker-card .rank-line {
+  color: #ffd280;
+  font-weight: 900;
+}
+
 .presence {
   width: 10px;
   height: 10px;
@@ -1189,6 +1194,113 @@ button {
   padding-right: 12px;
 }
 
+.membership-card {
+  grid-column: 1 / -1;
+}
+
+.rank-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rank-overview div {
+  padding: 13px 14px;
+  border-radius: var(--radius);
+  background: #1e2026;
+}
+
+.rank-overview span,
+.rank-tier span,
+.reward-item span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.rank-overview strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 18px;
+}
+
+.rank-progress {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #191b20;
+}
+
+.rank-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f0b84b, #48b58c);
+}
+
+.rank-ladder,
+.reward-list {
+  display: grid;
+  gap: 10px;
+}
+
+.rank-ladder {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.rank-tier,
+.reward-item {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius);
+  background: #1e2026;
+}
+
+.rank-tier {
+  display: grid;
+  gap: 7px;
+  padding: 13px;
+}
+
+.rank-tier svg,
+.reward-item svg {
+  width: 18px;
+  height: 18px;
+  color: var(--muted-2);
+}
+
+.rank-tier.unlocked svg,
+.reward-item.unlocked svg {
+  color: var(--accent);
+}
+
+.rank-tier.active {
+  border-color: rgba(240, 184, 75, 0.48);
+  background: rgba(240, 184, 75, 0.11);
+}
+
+.rank-tier strong,
+.reward-item strong {
+  font-size: 14px;
+}
+
+.reward-item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 13px;
+}
+
+.reward-item b {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.reward-item.unlocked b {
+  color: #86e6bd;
+}
+
 .registration-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
@@ -1459,7 +1571,9 @@ button {
   .login-form,
   .form-grid,
   .mypage-grid,
-  .registration-grid {
+  .registration-grid,
+  .rank-overview,
+  .rank-ladder {
     grid-template-columns: 1fr;
   }
 
