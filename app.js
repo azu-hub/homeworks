@@ -141,7 +141,6 @@ const channelMessageInput = document.querySelector("#channelMessageInput");
 const openMyPageButton = document.querySelector("#openMyPage");
 const workerIdentityText = document.querySelector("#workerIdentityText");
 const workerPresence = document.querySelector("#workerPresence");
-const identityRequirement = document.querySelector("#identityRequirement");
 const vuzzTitle = document.querySelector("#vuzzTitle");
 const vuzzSubtitle = document.querySelector("#vuzzSubtitle");
 const vuzzNoticeTitle = document.querySelector("#vuzzNoticeTitle");
@@ -373,7 +372,6 @@ function getWorkerApprovalLabel() {
 function updateIdentityUI() {
   workerIdentityText.textContent = getWorkerApprovalStatus();
   workerPresence.classList.toggle("warning", !isLoggedIn || !emailVerified || !identityVerified);
-  identityRequirement.checked = identityVerified;
   document.querySelector("#applyButton").innerHTML = !isLoggedIn
     ? '<i data-lucide="user-plus"></i> 登録して応募'
     : !emailVerified

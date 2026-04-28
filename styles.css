@@ -965,30 +965,6 @@ button {
   line-height: 1.45;
 }
 
-.requirements {
-  display: grid;
-  gap: 10px;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
-
-.requirements strong {
-  margin-bottom: 2px;
-}
-
-.requirements label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.requirements input {
-  accent-color: var(--accent);
-}
-
 .detail-actions {
   display: grid;
   gap: 10px;
