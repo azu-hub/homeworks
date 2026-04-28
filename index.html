@@ -83,45 +83,111 @@
           <span class="presence warning" id="workerPresence"></span>
         </button>
 
+        <label class="category-search" aria-label="カテゴリ検索">
+          <i data-lucide="search"></i>
+          <input id="categorySearchInput" type="search" placeholder="カテゴリ検索" />
+        </label>
+
         <nav class="channel-list">
-          <div class="channel-group">
+          <div class="channel-group utility-channel-group">
             <button class="group-title" type="button">
               <i data-lucide="chevron-down"></i>
-              案件チャンネル
+              全体
             </button>
             <button class="channel active" data-channel="all" type="button">
               <i data-lucide="hash"></i>
               すべての案件
-              <span>24</span>
+              <span id="allJobsCount">0</span>
             </button>
             <button class="channel" data-channel="saved" type="button">
               <i data-lucide="bookmark"></i>
               保存済み
               <span id="savedCount">0</span>
             </button>
-            <button class="channel" data-channel="inspection" type="button">
+          </div>
+
+          <div class="channel-group price-channel-group" data-price-group>
+            <button class="group-title" type="button">
+              <i data-lucide="chevron-down"></i>
+              〜15,000円
+            </button>
+            <button class="channel" data-channel="jobs" data-price-tier="under15000" data-category="all" data-category-option type="button">
               <i data-lucide="hash"></i>
+              すべて
+              <span data-channel-count data-price-tier="under15000" data-category="all">0</span>
+            </button>
+            <button class="channel" data-channel="jobs" data-price-tier="under15000" data-category="inspection" data-category-option type="button">
+              <i data-lucide="package-check"></i>
               検品・梱包
-              <span>8</span>
+              <span data-channel-count data-price-tier="under15000" data-category="inspection">0</span>
             </button>
-            <button class="channel" data-channel="typing" type="button">
-              <i data-lucide="hash"></i>
+            <button class="channel" data-channel="jobs" data-price-tier="under15000" data-category="typing" data-category-option type="button">
+              <i data-lucide="keyboard"></i>
               データ入力
-              <span>6</span>
+              <span data-channel-count data-price-tier="under15000" data-category="typing">0</span>
             </button>
-            <button class="channel" data-channel="creative" type="button">
-              <i data-lucide="hash"></i>
+            <button class="channel" data-channel="jobs" data-price-tier="under15000" data-category="creative" data-category-option type="button">
+              <i data-lucide="image-check"></i>
               画像チェック
-              <span>5</span>
-            </button>
-            <button class="channel" data-channel="urgent" type="button">
-              <i data-lucide="zap"></i>
-              今日締切
-              <span>5</span>
+              <span data-channel-count data-price-tier="under15000" data-category="creative">0</span>
             </button>
           </div>
 
-          <div class="channel-group">
+          <div class="channel-group price-channel-group" data-price-group>
+            <button class="group-title" type="button">
+              <i data-lucide="chevron-down"></i>
+              15,000〜19,999円
+            </button>
+            <button class="channel" data-channel="jobs" data-price-tier="middle15000" data-category="all" data-category-option type="button">
+              <i data-lucide="hash"></i>
+              すべて
+              <span data-channel-count data-price-tier="middle15000" data-category="all">0</span>
+            </button>
+            <button class="channel" data-channel="jobs" data-price-tier="middle15000" data-category="inspection" data-category-option type="button">
+              <i data-lucide="package-check"></i>
+              検品・梱包
+              <span data-channel-count data-price-tier="middle15000" data-category="inspection">0</span>
+            </button>
+            <button class="channel" data-channel="jobs" data-price-tier="middle15000" data-category="typing" data-category-option type="button">
+              <i data-lucide="keyboard"></i>
+              データ入力
+              <span data-channel-count data-price-tier="middle15000" data-category="typing">0</span>
+            </button>
+            <button class="channel" data-channel="jobs" data-price-tier="middle15000" data-category="creative" data-category-option type="button">
+              <i data-lucide="image-check"></i>
+              画像チェック
+              <span data-channel-count data-price-tier="middle15000" data-category="creative">0</span>
+            </button>
+          </div>
+
+          <div class="channel-group price-channel-group" data-price-group>
+            <button class="group-title" type="button">
+              <i data-lucide="chevron-down"></i>
+              20,000円以上
+            </button>
+            <button class="channel" data-channel="jobs" data-price-tier="over20000" data-category="all" data-category-option type="button">
+              <i data-lucide="hash"></i>
+              すべて
+              <span data-channel-count data-price-tier="over20000" data-category="all">0</span>
+            </button>
+            <button class="channel" data-channel="jobs" data-price-tier="over20000" data-category="inspection" data-category-option type="button">
+              <i data-lucide="package-check"></i>
+              検品・梱包
+              <span data-channel-count data-price-tier="over20000" data-category="inspection">0</span>
+            </button>
+            <button class="channel" data-channel="jobs" data-price-tier="over20000" data-category="typing" data-category-option type="button">
+              <i data-lucide="keyboard"></i>
+              データ入力
+              <span data-channel-count data-price-tier="over20000" data-category="typing">0</span>
+            </button>
+            <button class="channel" data-channel="jobs" data-price-tier="over20000" data-category="creative" data-category-option type="button">
+              <i data-lucide="image-check"></i>
+              画像チェック
+              <span data-channel-count data-price-tier="over20000" data-category="creative">0</span>
+            </button>
+          </div>
+
+          <div class="channel-group support-channel-group">
             <button class="group-title" type="button">
               <i data-lucide="chevron-down"></i>
               サポート

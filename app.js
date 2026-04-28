@@ -1,13 +1,24 @@
 const channels = {
   all: "すべての案件",
-  inspection: "検品・梱包",
-  typing: "データ入力",
-  creative: "画像チェック",
-  urgent: "今日締切",
+  jobs: "案件",
   saved: "保存済み",
   guide: "はじめてガイド",
   qa: "質問・相談",
   ai: "AI相談ルーム",
+};
+
+const priceTiers = {
+  all: { label: "すべての価格帯", min: 0, max: Infinity },
+  under15000: { label: "〜15,000円", min: 0, max: 14999 },
+  middle15000: { label: "15,000〜19,999円", min: 15000, max: 19999 },
+  over20000: { label: "20,000円以上", min: 20000, max: Infinity },
+};
+
+const categories = {
+  all: "すべて",
+  inspection: "検品・梱包",
+  typing: "データ入力",
+  creative: "画像チェック",
 };
 
 const jobs = [
@@ -114,6 +125,8 @@ const jobs = [
 ];
 
 let activeChannel = "all";
+let activePriceTier = "all";
+let activeCategory = "all";
 let activeFilter = "all";
 let selectedJobId = jobs[0].id;
 let isLoggedIn = false;
@@ -132,6 +145,8 @@ const channelTitle = document.querySelector("#channelTitle");
 const feedTitle = document.querySelector("#feedTitle");
 const feedIntroText = document.querySelector("#feedIntroText");
 const searchInput = document.querySelector("#searchInput");
+const categorySearchInput = document.querySelector("#categorySearchInput");
+const allJobsCount = document.querySelector("#allJobsCount");
 const saveCurrent = document.querySelector("#saveCurrent");
 const savedCount = document.querySelector("#savedCount");
 const postModal = document.querySelector("#postModal");
@@ -1016,6 +1031,58 @@ function showRole(role) {
   refreshIcons();
 }
 
+function getPayAmount(job) {
+  return Number(job.pay.replace(/[^\d]/g, "")) || 0;
+}
+
+function getJobPriceTier(job) {
+  const amount = getPayAmount(job);
+  return (
+    Object.entries(priceTiers).find(([key, tier]) => key !== "all" && amount >= tier.min && amount <= tier.max)?.[0] ||
+    "all"
+  );
+}
+
+function matchesPriceAndCategory(job, priceTier = activePriceTier, category = activeCategory) {
+  const priceMatch = priceTier === "all" || getJobPriceTier(job) === priceTier;
+  const categoryMatch = category === "all" || job.channel === category;
+  return priceMatch && categoryMatch;
+}
+
+function getActiveChannelLabel() {
+  if (activeChannel === "jobs") {
+    const priceLabel = priceTiers[activePriceTier]?.label || "案件";
+    const categoryLabel = categories[activeCategory] || "すべて";
+    return `${priceLabel} / ${categoryLabel}`;
+  }
+
+  return channels[activeChannel] || "すべての案件";
+}
+
+function updateChannelCounts() {
+  allJobsCount.textContent = jobs.length;
+  savedCount.textContent = savedJobs.size;
+  document.querySelectorAll("[data-channel-count]").forEach((countNode) => {
+    const priceTier = countNode.dataset.priceTier;
+    const category = countNode.dataset.category;
+    countNode.textContent = jobs.filter((job) => matchesPriceAndCategory(job, priceTier, category)).length;
+  });
+}
+
+function updateCategorySearchResults() {
+  const query = categorySearchInput?.value.trim().toLowerCase() || "";
+
+  document.querySelectorAll("[data-category-option]").forEach((button) => {
+    const label = button.textContent.toLowerCase();
+    button.classList.toggle("is-hidden", Boolean(query) && !label.includes(query));
+  });
+
+  document.querySelectorAll("[data-price-group]").forEach((group) => {
+    const hasVisibleCategory = group.querySelector("[data-category-option]:not(.is-hidden)");
+    group.classList.toggle("is-hidden", Boolean(query) && !hasVisibleCategory);
+  });
+}
+
 function getVisibleJobs() {
   const query = searchInput?.value.trim().toLowerCase() || "";
 
@@ -1023,8 +1090,7 @@ function getVisibleJobs() {
     const channelMatch =
       activeChannel === "all" ||
       (activeChannel === "saved" && savedJobs.has(job.id)) ||
-      job.channel === activeChannel ||
-      job.tags.includes(activeChannel);
+      (activeChannel === "jobs" && matchesPriceAndCategory(job));
     const filterMatch =
       activeFilter === "all" ||
       (activeFilter === "saved" && savedJobs.has(job.id)) ||
@@ -1119,13 +1185,15 @@ function renderSupportChannel() {
 }
 
 function renderFeed() {
-  channelTitle.textContent = channels[activeChannel];
-  feedTitle.textContent = activeChannel === "ai" ? "AI相談ルーム" : `#${channels[activeChannel]} へようこそ`;
+  const channelLabel = getActiveChannelLabel();
+  channelTitle.textContent = channelLabel;
+  feedTitle.textContent = activeChannel === "ai" ? "AI相談ルーム" : `#${channelLabel} へようこそ`;
   workerMainGrid.classList.toggle("support-mode", supportChannels.has(activeChannel));
   filterRow?.classList.toggle("is-hidden", supportChannels.has(activeChannel));
   channelComposer.classList.toggle("is-hidden", !writableChannels.has(activeChannel));
   aiRoomButton.classList.toggle("active", activeChannel === "ai");
-  savedCount.textContent = savedJobs.size;
+  updateChannelCounts();
+  updateCategorySearchResults();
 
   if (supportChannels.has(activeChannel)) {
     renderSupportChannel();
@@ -1133,7 +1201,7 @@ function renderFeed() {
   }
 
   feedIntroText.textContent =
-    "条件の合う案件を見つけたら、詳細を確認して応募できます。企業側は作業内容・納期・検収条件をテンプレートで投稿できます。";
+    "価格帯ごとに案件を並べ、各価格帯の中でカテゴリ別に確認できます。カテゴリ検索で見たい仕事だけに絞り込めます。";
   const visibleJobs = getVisibleJobs();
 
   if (!visibleJobs.length) {
@@ -1230,6 +1298,8 @@ document.querySelectorAll("#workerApp .channel").forEach((button) => {
     document.querySelectorAll("#workerApp .channel").forEach((item) => item.classList.remove("active"));
     button.classList.add("active");
     activeChannel = button.dataset.channel;
+    activePriceTier = button.dataset.priceTier || "all";
+    activeCategory = button.dataset.category || "all";
     renderFeed();
   });
 });
@@ -1237,6 +1307,8 @@ document.querySelectorAll("#workerApp .channel").forEach((button) => {
 aiRoomButton.addEventListener("click", () => {
   document.querySelectorAll("#workerApp .channel").forEach((item) => item.classList.remove("active"));
   activeChannel = "ai";
+  activePriceTier = "all";
+  activeCategory = "all";
   closeUtilityPopover();
   renderFeed();
   channelMessageInput.focus();
@@ -1280,6 +1352,7 @@ feed.addEventListener("click", (event) => {
 });
 
 searchInput?.addEventListener("input", renderFeed);
+categorySearchInput?.addEventListener("input", updateCategorySearchResults);
 
 saveCurrent.addEventListener("click", () => {
   toggleSave(selectedJobId);
@@ -1323,6 +1396,8 @@ document.querySelector("#submitModalJob").addEventListener("click", () => {
 
   jobs.unshift(newJob);
   activeChannel = "all";
+  activePriceTier = "all";
+  activeCategory = "all";
   document.querySelectorAll("#workerApp .channel").forEach((item) => {
     item.classList.toggle("active", item.dataset.channel === "all");
   });
