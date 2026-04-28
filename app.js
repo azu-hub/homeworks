@@ -978,6 +978,33 @@ function renderMyPage(alertText = "") {
                 </button>
               </div>
             `;
+  const actionTitle = !profileSubmitted
+    ? "本人確認情報の入力"
+    : !idSubmitted
+      ? "身分証提出"
+      : !contractIssued
+        ? "契約書の確認"
+        : !vuzzApplicationSubmitted
+          ? "vuzz運営へ申請"
+          : !identityVerified
+            ? "vuzz承認待ち"
+            : "応募できます";
+  const actionBadge = identityVerified ? "応募可" : "登録中";
+  const applicationsCard = identityVerified
+    ? `
+      <article class="portal-panel mypage-card applications-card">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">applications</p>
+            <h2>応募ステータス</h2>
+          </div>
+        </div>
+        <div class="review-list">
+          ${applicationRows}
+        </div>
+      </article>
+    `
+    : "";
 
   feed.innerHTML = `
     ${alertText ? `<div class="mypage-alert">${alertText}</div>` : ""}
@@ -1038,17 +1065,30 @@ function renderMyPage(alertText = "") {
         </div>
       </article>
 
-      <article class="portal-panel mypage-card">
+      <article class="portal-panel mypage-card action-card">
         <div class="section-head">
           <div>
-            <p class="eyebrow">onboarding</p>
-            <h2>受注開始までの流れ</h2>
+            <p class="eyebrow">next action</p>
+            <h2>${actionTitle}</h2>
           </div>
           <span class="status-badge ${identityVerified ? "verified" : ""}">
-            ${identityVerified ? "vuzz承認済み" : "承認前"}
+            ${actionBadge}
           </span>
         </div>
-        <div class="onboarding-steps">
+        ${nextAction}
+      </article>
+
+      <article class="portal-panel mypage-card flow-card">
+        <div class="section-head compact-head">
+          <div>
+            <p class="eyebrow">flow</p>
+            <h2>受注開始まで</h2>
+          </div>
+          <span class="status-badge ${identityVerified ? "verified" : ""}">
+            ${identityVerified ? "完了" : "進行中"}
+          </span>
+        </div>
+        <div class="onboarding-steps compact-steps">
           ${steps
             .map(
               ([label, done, status]) => `
@@ -1061,20 +1101,9 @@ function renderMyPage(alertText = "") {
             )
             .join("")}
         </div>
-        ${nextAction}
       </article>
 
-      <article class="portal-panel mypage-card">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">applications</p>
-            <h2>応募ステータス</h2>
-          </div>
-        </div>
-        <div class="review-list">
-          ${applicationRows}
-        </div>
-      </article>
+      ${applicationsCard}
     </section>
   `;
 

@@ -1189,12 +1189,51 @@ button {
 
 .mypage-grid {
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 340px;
   gap: 18px;
   padding-right: 12px;
 }
 
 .membership-card {
+  grid-column: 1 / -1;
+}
+
+.action-card {
+  min-height: 320px;
+}
+
+.action-card .form-grid {
+  margin-top: 2px;
+}
+
+.flow-card {
+  gap: 10px;
+}
+
+.compact-head {
+  margin-bottom: 4px;
+}
+
+.flow-card h2 {
+  font-size: 18px;
+}
+
+.compact-steps {
+  gap: 7px;
+}
+
+.flow-card .onboarding-step {
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 9px 10px;
+}
+
+.flow-card .onboarding-step strong,
+.flow-card .onboarding-step span:last-child {
+  font-size: 12px;
+}
+
+.applications-card {
   grid-column: 1 / -1;
 }
 
