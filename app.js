@@ -138,6 +138,15 @@ let lineRegistered = false;
 let vuzzApplicationSubmitted = false;
 let identityVerified = false;
 let lifetimeEarnings = 76000;
+let isEditingProfile = false;
+const profileData = {
+  name: "佐藤 美咲",
+  birthdate: "1992-04-12",
+  gender: "女性",
+  postalCode: "150-0001",
+  phone: "090-1234-5678",
+  address: "東京都渋谷区神宮前1-1-1",
+};
 const savedJobs = new Set();
 const applications = [];
 
@@ -456,7 +465,7 @@ function updateIdentityUI() {
 }
 
 function escapeHtml(value) {
-  return value.replace(/[&<>"']/g, (character) => {
+  return String(value).replace(/[&<>"']/g, (character) => {
     const entities = {
       "&": "&amp;",
       "<": "&lt;",
@@ -723,6 +732,7 @@ function renderRegistrationForm(alertText = "") {
     lineRegistered = false;
     vuzzApplicationSubmitted = false;
     identityVerified = false;
+    isEditingProfile = false;
     updateIdentityUI();
     renderEmailVerification("登録が完了しました。メールに届いた認証コードを確認してください。");
   });
@@ -735,6 +745,7 @@ function renderRegistrationForm(alertText = "") {
     lineRegistered = false;
     vuzzApplicationSubmitted = false;
     identityVerified = false;
+    isEditingProfile = false;
     updateIdentityUI();
     renderMyPage("ログインしました。応募には本人確認が必要です。");
   });
@@ -890,36 +901,58 @@ function renderMyPage(alertText = "") {
     ["運営承認", identityVerified, identityVerified ? "承認済み" : "承認待ち"],
   ];
 
-  const nextAction = !profileSubmitted
+  const editProfileButton = profileSubmitted
     ? `
-      <form class="onboarding-action" id="profileForm">
-        <div class="form-grid">
+      <button class="secondary-button wide" id="editProfileButton" type="button">
+        <i data-lucide="arrow-left"></i>
+        基本情報に戻る
+      </button>
+    `
+    : "";
+  const profileForm = `
+    <form class="onboarding-action" id="profileForm">
+      <div class="form-grid">
+        <label>
+          氏名
+          <input name="name" type="text" value="${escapeHtml(profileData.name)}" />
+        </label>
+        <label>
+          生年月日
+          <input name="birthdate" type="date" value="${escapeHtml(profileData.birthdate)}" />
+        </label>
+        <fieldset class="gender-options span-2">
+          <legend>性別</legend>
           <label>
-            氏名
-            <input type="text" value="佐藤 美咲" />
+            <input name="gender" type="radio" value="男性" ${profileData.gender === "男性" ? "checked" : ""} />
+            男性
           </label>
           <label>
-            生年月日
-            <input type="date" value="1992-04-12" />
+            <input name="gender" type="radio" value="女性" ${profileData.gender === "女性" ? "checked" : ""} />
+            女性
           </label>
-          <label>
-            郵便番号
-            <input type="text" value="150-0001" />
-          </label>
-          <label>
-            電話番号
-            <input type="tel" value="090-1234-5678" />
-          </label>
-          <label class="span-2">
-            住所
-            <input type="text" value="東京都渋谷区神宮前1-1-1" />
-          </label>
-        </div>
-        <button class="primary-button wide" type="submit">
-          <i data-lucide="save"></i>
-          基本情報を保存
-        </button>
-      </form>
+        </fieldset>
+        <label>
+          郵便番号
+          <input name="postalCode" type="text" value="${escapeHtml(profileData.postalCode)}" />
+        </label>
+        <label>
+          電話番号
+          <input name="phone" type="tel" value="${escapeHtml(profileData.phone)}" />
+        </label>
+        <label class="span-2">
+          住所
+          <input name="address" type="text" value="${escapeHtml(profileData.address)}" />
+        </label>
+      </div>
+      <button class="primary-button wide" type="submit">
+        <i data-lucide="save"></i>
+        ${profileSubmitted ? "基本情報を更新" : "基本情報を保存"}
+      </button>
+    </form>
+  `;
+  const nextAction = !profileSubmitted || isEditingProfile
+    ? `
+      ${profileForm}
     `
     : !idSubmitted
       ? `
@@ -929,6 +962,7 @@ function renderMyPage(alertText = "") {
             <i data-lucide="id-card"></i>
             身分証を提出
           </button>
+          ${editProfileButton}
         </div>
       `
       : !contractIssued
@@ -939,6 +973,7 @@ function renderMyPage(alertText = "") {
               <i data-lucide="file-signature"></i>
               契約書を受領して運営へ申請
             </button>
+            ${editProfileButton}
           </div>
         `
         : !vuzzApplicationSubmitted
@@ -953,6 +988,7 @@ function renderMyPage(alertText = "") {
                 <i data-lucide="message-circle"></i>
                 公式LINEを任意で登録
               </button>
+              ${editProfileButton}
             </div>
           `
           : !identityVerified
@@ -967,6 +1003,7 @@ function renderMyPage(alertText = "") {
                   <i data-lucide="shield-check"></i>
                   運営承認する
                 </button>
+                ${editProfileButton}
               </div>
             `
             : `
@@ -976,10 +1013,13 @@ function renderMyPage(alertText = "") {
                   <i data-lucide="send"></i>
                   選択中の案件に応募
                 </button>
+                ${editProfileButton}
               </div>
             `;
   const actionTitle = !profileSubmitted
     ? "本人確認情報の入力"
+    : isEditingProfile
+      ? "本人確認情報の修正"
     : !idSubmitted
       ? "身分証提出"
       : !contractIssued
@@ -989,7 +1029,7 @@ function renderMyPage(alertText = "") {
           : !identityVerified
             ? "運営承認待ち"
             : "応募できます";
-  const actionBadge = identityVerified ? "応募可" : "登録中";
+  const actionBadge = isEditingProfile ? "修正中" : identityVerified ? "応募可" : "登録中";
   const applicationsCard = identityVerified
     ? `
       <article class="portal-panel mypage-card applications-card">
@@ -1109,9 +1149,22 @@ function renderMyPage(alertText = "") {
 
   document.querySelector("#profileForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    profileData.name = formData.get("name")?.toString().trim() || profileData.name;
+    profileData.birthdate = formData.get("birthdate")?.toString() || profileData.birthdate;
+    profileData.gender = formData.get("gender")?.toString() || profileData.gender;
+    profileData.postalCode = formData.get("postalCode")?.toString().trim() || profileData.postalCode;
+    profileData.phone = formData.get("phone")?.toString().trim() || profileData.phone;
+    profileData.address = formData.get("address")?.toString().trim() || profileData.address;
+    const wasEditing = isEditingProfile;
     profileSubmitted = true;
+    isEditingProfile = false;
     updateIdentityUI();
-    renderMyPage("基本情報を保存しました。続けて身分証を提出してください。");
+    renderMyPage(wasEditing ? "基本情報を更新しました。元の手続きに戻れます。" : "基本情報を保存しました。続けて身分証を提出してください。");
+  });
+  document.querySelector("#editProfileButton")?.addEventListener("click", () => {
+    isEditingProfile = true;
+    renderMyPage("基本情報を修正できます。保存すると元の手続きに戻ります。");
   });
   document.querySelector("#submitIdButton")?.addEventListener("click", () => {
     idSubmitted = true;
@@ -1611,6 +1664,7 @@ document.querySelectorAll("[data-login-role]").forEach((button) => {
       lineRegistered = false;
       vuzzApplicationSubmitted = false;
       identityVerified = false;
+      isEditingProfile = false;
       updateIdentityUI();
     }
     showRole(button.dataset.loginRole);
@@ -1627,6 +1681,7 @@ document.querySelectorAll("[data-logout]").forEach((button) => {
     lineRegistered = false;
     vuzzApplicationSubmitted = false;
     identityVerified = false;
+    isEditingProfile = false;
     updateIdentityUI();
     closeUtilityPopover();
     showLogin();

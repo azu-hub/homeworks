@@ -175,12 +175,42 @@ button {
 }
 
 .login-form label,
-.form-grid label {
+.form-grid label,
+.gender-options {
   display: grid;
   gap: 7px;
   color: var(--muted);
   font-size: 13px;
   font-weight: 800;
+}
+
+.gender-options {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.gender-options legend {
+  padding: 0;
+  margin-bottom: 7px;
+}
+
+.gender-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #191b20;
+  color: var(--text);
+}
+
+.gender-options input {
+  width: auto;
+  height: auto;
+  accent-color: var(--accent);
 }
 
 .login-form input,
@@ -198,6 +228,13 @@ button {
 .form-grid input {
   height: 42px;
   padding: 0 12px;
+}
+
+.form-grid .gender-options input {
+  width: auto;
+  height: auto;
+  padding: 0;
+  accent-color: var(--accent);
 }
 
 .password-field {
