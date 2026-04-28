@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HomeWorks Hub</title>
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <section class="login-view" id="loginView" aria-label="ログイン">
+      <div class="login-panel">
+        <div class="login-brand">
+          <div class="brand-mark">v</div>
+          <div>
+            <p class="eyebrow">vuzz work platform</p>
+            <h1>HomeWorks Hub</h1>
+          </div>
+        </div>
+
+        <div class="login-copy">
+          <h2>ログインするページを選択</h2>
+          <p>在宅ワーカー、企業、vuzz運営で入口を分けて、それぞれに必要な画面へ進みます。</p>
+        </div>
+
+        <div class="role-grid" aria-label="ログイン種別">
+          <button class="role-card" data-login-role="worker" type="button">
+            <span class="role-icon"><i data-lucide="user-check"></i></span>
+            <strong>ワーカー</strong>
+            <small>案件を探す・保存する・応募する</small>
+          </button>
+          <button class="role-card" data-login-role="company" type="button">
+            <span class="role-icon"><i data-lucide="building-2"></i></span>
+            <strong>企業</strong>
+            <small>案件を投稿する・応募者を確認する</small>
+          </button>
+          <button class="role-card" data-login-role="vuzz" type="button">
+            <span class="role-icon"><i data-lucide="shield-check"></i></span>
+            <strong>vuzz管理</strong>
+            <small>審査・監視・支払い状況を管理する</small>
+          </button>
+        </div>
+
+        <form class="login-form">
+          <label>
+            メールアドレス
+            <input type="email" value="demo@vuzz.jp" />
+          </label>
+          <label>
+            パスワード
+            <span class="password-field">
+              <input type="password" value="password" />
+              <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
+                <i data-lucide="eye"></i>
+              </button>
+            </span>
+          </label>
+        </form>
+      </div>
+    </section>
+
+    <div class="app-shell app-view is-hidden" id="workerApp">
+      <aside class="channel-panel" aria-label="案件チャンネル">
+        <div class="guild-header">
+          <div>
+            <p class="eyebrow">在宅ワーク市場</p>
+            <h1>HomeWorks Hub</h1>
+          </div>
+          <button class="icon-button" aria-label="メニュー">
+            <i data-lucide="chevron-down"></i>
+          </button>
+          <button class="icon-button logout-button" data-logout type="button" aria-label="ログアウト">
+            <i data-lucide="log-out"></i>
+          </button>
+        </div>
+
+        <button class="worker-card profile-card" id="openMyPage" type="button">
+          <div class="worker-avatar">美</div>
+          <div>
+            <strong>佐藤 美咲</strong>
+            <span id="workerIdentityText">本人確認未完了・応募制限中</span>
+          </div>
+          <span class="presence warning" id="workerPresence"></span>
+        </button>
+
+        <nav class="channel-list">
+          <div class="channel-group">
+            <button class="group-title" type="button">
+              <i data-lucide="chevron-down"></i>
+              案件チャンネル
+            </button>
+            <button class="channel active" data-channel="all" type="button">
+              <i data-lucide="hash"></i>
+              すべての案件
+              <span>24</span>
+            </button>
+            <button class="channel" data-channel="saved" type="button">
+              <i data-lucide="bookmark"></i>
+              保存済み
+              <span id="savedCount">0</span>
+            </button>
+            <button class="channel" data-channel="inspection" type="button">
+              <i data-lucide="hash"></i>
+              検品・梱包
+              <span>8</span>
+            </button>
+            <button class="channel" data-channel="typing" type="button">
+              <i data-lucide="hash"></i>
+              データ入力
+              <span>6</span>
+            </button>
+            <button class="channel" data-channel="creative" type="button">
+              <i data-lucide="hash"></i>
+              画像チェック
+              <span>5</span>
+            </button>
+            <button class="channel" data-channel="urgent" type="button">
+              <i data-lucide="zap"></i>
+              今日締切
+              <span>5</span>
+            </button>
+          </div>
+
+          <div class="channel-group">
+            <button class="group-title" type="button">
+              <i data-lucide="chevron-down"></i>
+              サポート
+            </button>
+            <button class="channel" data-channel="guide" type="button">
+              <i data-lucide="book-open"></i>
+              はじめてガイド
+            </button>
+            <button class="channel" data-channel="qa" type="button">
+              <i data-lucide="message-circle-question"></i>
+              質問・相談
+            </button>
+          </div>
+        </nav>
+
+        <div class="status-strip">
+          <button class="voice-pill" type="button">
+            <i data-lucide="headphones"></i>
+            相談ルーム
+          </button>
+          <div class="user-actions">
+            <button class="icon-button" aria-label="通知">
+              <i data-lucide="bell"></i>
+            </button>
+            <button class="icon-button" aria-label="設定">
+              <i data-lucide="settings"></i>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="content-area">
+        <header class="topbar">
+          <div class="channel-heading">
+            <i data-lucide="hash"></i>
+            <div>
+              <strong id="channelTitle">すべての案件</strong>
+              <span>企業が投稿した在宅案件をリアルタイムに確認</span>
+            </div>
+          </div>
+        </header>
+
+        <div class="main-grid">
+          <section class="feed-panel" aria-label="案件フィード">
+            <div class="feed-intro">
+              <h2 id="feedTitle">#すべての案件 へようこそ</h2>
+              <p id="feedIntroText">条件の合う案件を見つけたら、詳細を確認して応募できます。企業側は作業内容・納期・検収条件をテンプレートで投稿できます。</p>
+            </div>
+
+            <div id="jobFeed" class="job-feed" aria-live="polite"></div>
+
+            <form class="composer is-hidden" id="channelComposer">
+              <button class="icon-button" type="button" aria-label="添付">
+                <i data-lucide="paperclip"></i>
+              </button>
+              <input id="channelMessageInput" type="text" placeholder="#質問・相談 にメッセージを送信" />
+              <button class="icon-button" type="submit" aria-label="送信">
+                <i data-lucide="arrow-up"></i>
+              </button>
+            </form>
+          </section>
+
+          <aside class="detail-panel" aria-label="案件詳細">
+            <div class="detail-header">
+              <div>
+                <p class="eyebrow">選択中の案件</p>
+                <h2 id="detailTitle">封入作業 300セット</h2>
+              </div>
+              <button class="icon-button" id="saveCurrent" type="button" aria-label="保存">
+                <i data-lucide="bookmark"></i>
+              </button>
+            </div>
+
+            <div class="company-profile">
+              <div class="company-logo" id="detailLogo">白</div>
+              <div>
+                <strong id="detailCompany">白樺文具株式会社</strong>
+                <span id="detailTrust">本人確認済み・発注実績 128件</span>
+              </div>
+            </div>
+
+            <div class="detail-hero">
+              <div class="detail-hero-icon">
+                <i data-lucide="package-check"></i>
+              </div>
+              <div>
+                <span id="detailPay">12,000円</span>
+                <small id="detailDue">納期: 5月2日</small>
+              </div>
+            </div>
+
+            <dl class="detail-list">
+              <div>
+                <dt>作業場所</dt>
+                <dd id="detailPlace">完全在宅・資材配送</dd>
+              </div>
+              <div>
+                <dt>募集人数</dt>
+                <dd id="detailSlots">あと4名</dd>
+              </div>
+              <div>
+                <dt>目安時間</dt>
+                <dd id="detailTime">約6時間</dd>
+              </div>
+              <div>
+                <dt>検収</dt>
+                <dd id="detailReview">写真提出後24時間以内</dd>
+              </div>
+            </dl>
+
+            <div class="requirements">
+              <strong>応募前チェック</strong>
+              <label>
+                <input type="checkbox" checked />
+                作業スペースを確保できる
+              </label>
+              <label>
+                <input type="checkbox" id="identityRequirement" />
+                本人確認が完了している
+              </label>
+              <label>
+                <input type="checkbox" />
+                納期までに発送できる
+              </label>
+            </div>
+
+            <div class="detail-actions">
+              <button class="primary-button wide" id="applyButton" type="button">
+                <i data-lucide="check-circle-2"></i>
+                この案件に応募
+              </button>
+              <button class="secondary-button wide" type="button">
+                <i data-lucide="message-square"></i>
+                企業に質問
+              </button>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <div class="app-shell app-view is-hidden" id="companyApp">
+      <aside class="channel-panel" aria-label="企業メニュー">
+        <div class="guild-header">
+          <div>
+            <p class="eyebrow">company portal</p>
+            <h1>企業ページ</h1>
+          </div>
+          <button class="icon-button logout-button" data-logout type="button" aria-label="ログアウト">
+            <i data-lucide="log-out"></i>
+          </button>
+        </div>
+        <div class="worker-card">
+          <div class="worker-avatar">白</div>
+          <div>
+            <strong>白樺文具株式会社</strong>
+            <span>企業確認済み・掲載可</span>
+          </div>
+          <span class="presence"></span>
+        </div>
+        <nav class="channel-list">
+          <div class="channel-group">
+            <button class="group-title" type="button">
+              <i data-lucide="chevron-down"></i>
+              企業メニュー
+            </button>
+            <button class="channel active" type="button">
+              <i data-lucide="layout-dashboard"></i>
+              ダッシュボード
+              <span>3</span>
+            </button>
+            <button class="channel" type="button">
+              <i data-lucide="send"></i>
+              案件投稿
+              <span>2</span>
+            </button>
+            <button class="channel" type="button">
+              <i data-lucide="users"></i>
+              応募者管理
+              <span>14</span>
+            </button>
+            <button class="channel" type="button">
+              <i data-lucide="receipt"></i>
+              支払い・検収
+              <span>5</span>
+            </button>
+          </div>
+        </nav>
+      </aside>
+
+      <main class="content-area">
+        <header class="topbar">
+          <div class="channel-heading">
+            <i data-lucide="building-2"></i>
+            <div>
+              <strong>企業ダッシュボード</strong>
+              <span>案件投稿から応募者選定までを管理</span>
+            </div>
+          </div>
+          <div class="topbar-actions">
+            <button class="secondary-button" type="button">
+              <i data-lucide="file-text"></i>
+              下書き
+            </button>
+            <button class="primary-button" type="button">
+              <i data-lucide="send"></i>
+              新規案件を投稿
+            </button>
+          </div>
+        </header>
+
+        <section class="notice-band">
+          <div>
+            <strong>掲載前チェック</strong>
+            <span>報酬・納期・検収条件が揃った案件はvuzz審査へ送れます</span>
+          </div>
+          <div class="notice-metrics">
+            <span><b>3</b> 掲載中</span>
+            <span><b>14</b> 応募者</span>
+            <span><b>2</b> 審査待ち</span>
+          </div>
+        </section>
+
+        <div class="portal-grid">
+          <section class="portal-panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">post template</p>
+                <h2>案件投稿フォーム</h2>
+              </div>
+              <span class="status-badge">下書き保存中</span>
+            </div>
+            <div class="form-grid">
+              <label>
+                案件タイトル
+                <input type="text" value="ラベル貼り 500枚" />
+              </label>
+              <label>
+                報酬
+                <input type="text" value="18,500円" />
+              </label>
+              <label>
+                募集人数
+                <input type="text" value="5名" />
+              </label>
+              <label>
+                納期
+                <input type="text" value="5月8日" />
+              </label>
+              <label class="span-2">
+                作業内容
+                <textarea>商品ラベルの貼付、数量チェック、写真での完了報告をお願いします。</textarea>
+              </label>
+            </div>
+            <div class="detail-actions horizontal">
+              <button class="primary-button" type="button">
+                <i data-lucide="shield-check"></i>
+                vuzz審査へ送る
+              </button>
+              <button class="secondary-button" type="button">
+                <i data-lucide="eye"></i>
+                投稿プレビュー
+              </button>
+            </div>
+          </section>
+
+          <aside class="portal-panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">applicants</p>
+                <h2>応募者</h2>
+              </div>
+            </div>
+            <div class="applicant-list">
+              <article>
+                <div class="worker-avatar">美</div>
+                <div>
+                  <strong>佐藤 美咲</strong>
+                  <span>検品経験 12件・評価 4.9</span>
+                </div>
+                <button class="mini-button" type="button">採用</button>
+              </article>
+              <article>
+                <div class="worker-avatar">田</div>
+                <div>
+                  <strong>田中 亮</strong>
+                  <span>データ入力 8件・即日対応</span>
+                </div>
+                <button class="mini-button" type="button">確認</button>
+              </article>
+              <article>
+                <div class="worker-avatar">K</div>
+                <div>
+                  <strong>Kana S.</strong>
+                  <span>本人確認済み・納期遵守率 100%</span>
+                </div>
+                <button class="mini-button" type="button">確認</button>
+              </article>
+            </div>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <div class="app-shell app-view is-hidden" id="vuzzApp">
+      <aside class="channel-panel" aria-label="vuzz管理メニュー">
+        <div class="guild-header">
+          <div>
+            <p class="eyebrow">vuzz operation</p>
+            <h1>vuzz管理ページ</h1>
+          </div>
+          <button class="icon-button logout-button" data-logout type="button" aria-label="ログアウト">
+            <i data-lucide="log-out"></i>
+          </button>
+        </div>
+        <div class="worker-card">
+          <div class="worker-avatar">管</div>
+          <div>
+            <strong>vuzz Ops</strong>
+            <span>審査・支払い・安全管理</span>
+          </div>
+          <span class="presence"></span>
+        </div>
+        <nav class="channel-list">
+          <div class="channel-group">
+            <button class="group-title" type="button">
+              <i data-lucide="chevron-down"></i>
+              管理チャンネル
+            </button>
+            <button class="channel active" data-vuzz-channel="review" type="button">
+              <i data-lucide="shield-check"></i>
+              案件審査
+              <span>9</span>
+            </button>
+            <button class="channel" data-vuzz-channel="identity" type="button">
+              <i data-lucide="badge-check"></i>
+              本人確認
+              <span>18</span>
+            </button>
+            <button class="channel" data-vuzz-channel="payments" type="button">
+              <i data-lucide="circle-dollar-sign"></i>
+              支払い監視
+              <span>4</span>
+            </button>
+            <button class="channel" data-vuzz-channel="issues" type="button">
+              <i data-lucide="triangle-alert"></i>
+              トラブル対応
+              <span>2</span>
+            </button>
+          </div>
+        </nav>
+      </aside>
+
+      <main class="content-area">
+        <header class="topbar">
+          <div class="channel-heading">
+            <i data-lucide="shield-check"></i>
+            <div>
+              <strong id="vuzzTitle">vuzz運営ダッシュボード</strong>
+              <span id="vuzzSubtitle">企業・案件・ワーカーの安全性を管理</span>
+            </div>
+          </div>
+          <div class="topbar-actions">
+            <label class="search-box" aria-label="管理対象を検索">
+              <i data-lucide="search"></i>
+              <input type="search" placeholder="企業・案件・ワーカーIDを検索" />
+            </label>
+          </div>
+        </header>
+
+        <section class="notice-band">
+          <div>
+            <strong id="vuzzNoticeTitle">本日の運営状況</strong>
+            <span id="vuzzNoticeText">審査待ちと支払い保留を優先して確認</span>
+          </div>
+          <div class="notice-metrics" id="vuzzMetrics">
+            <span><b>9</b> 案件審査</span>
+            <span><b>18</b> 本人確認</span>
+            <span><b>2</b> 要対応</span>
+          </div>
+        </section>
+
+        <div class="ops-grid" id="vuzzContent">
+          <section class="portal-panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">review queue</p>
+                <h2>案件審査キュー</h2>
+              </div>
+            </div>
+            <div class="review-list">
+              <article>
+                <span class="status-dot warn"></span>
+                <div>
+                  <strong>ラベル貼り 500枚</strong>
+                  <p>白樺文具株式会社・報酬 18,500円・資材配送あり</p>
+                </div>
+                <button class="mini-button" type="button">承認</button>
+              </article>
+              <article>
+                <span class="status-dot"></span>
+                <div>
+                  <strong>領収書の項目チェック 600枚</strong>
+                  <p>Mori Accounting・個人情報マスキング確認待ち</p>
+                </div>
+                <button class="mini-button" type="button">確認</button>
+              </article>
+              <article>
+                <span class="status-dot danger"></span>
+                <div>
+                  <strong>短納期 画像チェック</strong>
+                  <p>Nami EC Studio・納期と作業量の再確認が必要</p>
+                </div>
+                <button class="mini-button" type="button">差戻し</button>
+              </article>
+            </div>
+          </section>
+
+          <aside class="portal-panel">
+            <div class="section-head">
+              <div>
+                <p class="eyebrow">platform health</p>
+                <h2>健全性</h2>
+              </div>
+            </div>
+            <dl class="ops-metrics">
+              <div>
+                <dt>支払い完了率</dt>
+                <dd>96%</dd>
+              </div>
+              <div>
+                <dt>平均検収時間</dt>
+                <dd>21h</dd>
+              </div>
+              <div>
+                <dt>本人確認通過率</dt>
+                <dd>88%</dd>
+              </div>
+              <div>
+                <dt>未解決問い合わせ</dt>
+                <dd>2件</dd>
+              </div>
+            </dl>
+          </aside>
+        </div>
+      </main>
+    </div>
+
+    <dialog class="post-modal" id="postModal">
+      <form method="dialog" class="modal-card">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">企業向け</p>
+            <h2>案件を投稿</h2>
+          </div>
+          <button class="icon-button" value="cancel" aria-label="閉じる">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <label>
+          案件タイトル
+          <input id="modalTitle" type="text" value="ラベル貼り 500枚" />
+        </label>
+        <label>
+          報酬
+          <input id="modalPay" type="text" value="18,500円" />
+        </label>
+        <label>
+          チャンネル
+          <select id="modalChannel">
+            <option value="inspection">検品・梱包</option>
+            <option value="typing">データ入力</option>
+            <option value="creative">画像チェック</option>
+          </select>
+        </label>
+        <label>
+          作業内容
+          <textarea id="modalDescription">商品ラベルの貼付と数量チェック。資材は企業から発送します。</textarea>
+        </label>
+        <button class="primary-button wide" value="default" id="submitModalJob">
+          <i data-lucide="send"></i>
+          投稿する
+        </button>
+      </form>
+    </dialog>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
