@@ -393,7 +393,7 @@ function getWorkerApprovalStatus() {
 }
 
 function getWorkerApprovalLabel() {
-  if (!isLoggedIn) return "登録して応募";
+  if (!isLoggedIn) return "登録して本人確認へ";
   if (!emailVerified) return "メール認証後に応募";
   if (!identityVerified) return "vuzz承認後に応募";
   return "この案件に応募";
@@ -403,7 +403,7 @@ function updateIdentityUI() {
   workerIdentityText.textContent = getWorkerApprovalStatus();
   workerPresence.classList.toggle("warning", !isLoggedIn || !emailVerified || !identityVerified);
   document.querySelector("#applyButton").innerHTML = !isLoggedIn
-    ? '<i data-lucide="user-plus"></i> 登録して応募'
+    ? '<i data-lucide="user-plus"></i> 登録して本人確認へ'
     : !emailVerified
       ? '<i data-lucide="mail-check"></i> メール認証後に応募'
       : identityVerified
@@ -632,12 +632,12 @@ function renderRegistrationForm(alertText = "") {
           </label>
         </div>
         <button class="primary-button wide" type="submit">
-          <i data-lucide="mail-check"></i>
-          登録してメール認証へ
+          <i data-lucide="user-check"></i>
+          登録して本人確認へ
         </button>
         <button class="secondary-button wide" id="existingLoginButton" type="button">
           <i data-lucide="log-in"></i>
-          すでに登録済み
+          ログイン
         </button>
       </form>
 
