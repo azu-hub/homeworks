@@ -146,7 +146,20 @@ const profileData = {
   postalCode: "",
   phone: "",
   address: "",
+  workHistory: "",
 };
+const companyData = {
+  companyName: "",
+  representativeName: "",
+  contactName: "",
+  contactPhone: "",
+  companyPostalCode: "",
+  companyAddress: "",
+  companyHistory: "",
+};
+let companyProfileSubmitted = false;
+let pendingLoginRole = null;
+let pendingLoginMethod = null;
 const savedJobs = new Set();
 const applications = [];
 
@@ -180,7 +193,6 @@ const vuzzNoticeText = document.querySelector("#vuzzNoticeText");
 const vuzzMetrics = document.querySelector("#vuzzMetrics");
 const vuzzContent = document.querySelector("#vuzzContent");
 const loginView = document.querySelector("#loginView");
-const googleLoginButton = document.querySelector("#googleLoginButton");
 const appViews = {
   worker: document.querySelector("#workerApp"),
   company: document.querySelector("#companyApp"),
@@ -947,6 +959,10 @@ function renderMyPage(alertText = "") {
           住所
           <input name="address" type="text" value="${escapeHtml(profileData.address)}" />
         </label>
+        <label class="span-2">
+          職歴
+          <textarea name="workHistory" rows="4" placeholder="例) 2020-2023 ◯◯株式会社 経理事務 / 2018-2020 ▲▲スーパー 商品管理">${escapeHtml(profileData.workHistory)}</textarea>
+        </label>
       </div>
       <button class="primary-button wide" type="submit">
         <i data-lucide="save"></i>
@@ -1160,6 +1176,7 @@ function renderMyPage(alertText = "") {
     profileData.postalCode = formData.get("postalCode")?.toString().trim() || "";
     profileData.phone = formData.get("phone")?.toString().trim() || "";
     profileData.address = formData.get("address")?.toString().trim() || "";
+    profileData.workHistory = formData.get("workHistory")?.toString().trim() || "";
     const wasEditing = isEditingProfile;
     profileSubmitted = true;
     isEditingProfile = false;
@@ -1240,6 +1257,80 @@ function loginWithGoogle() {
   resetWorkerVerification();
   showRole("worker");
   renderMyPage("Googleアカウントでログインしました。続けて本人確認を完了してください。");
+}
+
+const loginSteps = ["role", "method", "email", "workerProfile", "companyProfile"];
+const loginStepIds = {
+  role: "loginStepRole",
+  method: "loginStepMethod",
+  email: "loginStepEmail",
+  workerProfile: "loginStepWorkerProfile",
+  companyProfile: "loginStepCompanyProfile",
+};
+
+function setLoginStep(step) {
+  loginSteps.forEach((name) => {
+    const el = document.getElementById(loginStepIds[name]);
+    if (!el) return;
+    el.classList.toggle("is-hidden", name !== step);
+  });
+  refreshIcons();
+}
+
+function profileStepFor(role) {
+  if (role === "worker") return "workerProfile";
+  if (role === "company") return "companyProfile";
+  return null;
+}
+
+function startRegistrationFlow(role) {
+  pendingLoginRole = role;
+  pendingLoginMethod = null;
+  const heading = document.getElementById("methodHeading");
+  if (heading) {
+    heading.textContent = role === "company" ? "企業として登録方法を選択" : "ワーカーとして登録方法を選択";
+  }
+  setLoginStep("method");
+}
+
+function chooseAuthMethod(method) {
+  pendingLoginMethod = method;
+  if (method === "google") {
+    completeAuthentication();
+    return;
+  }
+  setLoginStep("email");
+}
+
+function completeAuthentication() {
+  isLoggedIn = true;
+  emailVerified = true;
+  if (pendingLoginRole === "worker") {
+    resetWorkerVerification();
+    isLoggedIn = true;
+    emailVerified = true;
+  }
+  const next = profileStepFor(pendingLoginRole);
+  if (!next) {
+    enterRoleApp();
+    return;
+  }
+  setLoginStep(next);
+}
+
+function enterRoleApp() {
+  const role = pendingLoginRole;
+  pendingLoginRole = null;
+  pendingLoginMethod = null;
+  setLoginStep("role");
+  if (role === "worker") {
+    showRole("worker");
+    renderMyPage("登録が完了しました。続けて身分証を提出してください。");
+  } else if (role === "company") {
+    showRole("company");
+  } else {
+    showRole(role);
+  }
 }
 
 function getPayAmount(job) {
@@ -1687,14 +1778,66 @@ utilityPopover.addEventListener("click", (event) => {
 
 document.querySelectorAll("[data-login-role]").forEach((button) => {
   button.addEventListener("click", () => {
-    if (button.dataset.loginRole === "worker") {
-      resetWorkerVerification();
+    const role = button.dataset.loginRole;
+    if (role === "vuzz") {
+      showRole(role);
+      return;
     }
-    showRole(button.dataset.loginRole);
+    startRegistrationFlow(role);
   });
 });
 
-googleLoginButton.addEventListener("click", loginWithGoogle);
+document.querySelectorAll("[data-login-back]").forEach((button) => {
+  button.addEventListener("click", () => {
+    setLoginStep(button.dataset.loginBack);
+  });
+});
+
+document.getElementById("chooseEmailButton")?.addEventListener("click", () => chooseAuthMethod("email"));
+document.getElementById("chooseGoogleButton")?.addEventListener("click", () => chooseAuthMethod("google"));
+
+document.getElementById("emailRegisterForm")?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (!form.reportValidity()) return;
+  completeAuthentication();
+});
+
+document.getElementById("workerProfileGate")?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (!form.reportValidity()) return;
+  const formData = new FormData(form);
+  profileData.name = formData.get("name")?.toString().trim() || "";
+  profileData.birthdate = formData.get("birthdate")?.toString() || "";
+  profileData.gender = formData.get("gender")?.toString() || "";
+  profileData.postalCode = formData.get("postalCode")?.toString().trim() || "";
+  profileData.phone = formData.get("phone")?.toString().trim() || "";
+  profileData.address = formData.get("address")?.toString().trim() || "";
+  profileData.workHistory = formData.get("workHistory")?.toString().trim() || "";
+  profileSubmitted = true;
+  isEditingProfile = false;
+  updateIdentityUI();
+  form.reset();
+  enterRoleApp();
+});
+
+document.getElementById("companyProfileGate")?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (!form.reportValidity()) return;
+  const formData = new FormData(form);
+  companyData.companyName = formData.get("companyName")?.toString().trim() || "";
+  companyData.representativeName = formData.get("representativeName")?.toString().trim() || "";
+  companyData.contactName = formData.get("contactName")?.toString().trim() || "";
+  companyData.contactPhone = formData.get("contactPhone")?.toString().trim() || "";
+  companyData.companyPostalCode = formData.get("companyPostalCode")?.toString().trim() || "";
+  companyData.companyAddress = formData.get("companyAddress")?.toString().trim() || "";
+  companyData.companyHistory = formData.get("companyHistory")?.toString().trim() || "";
+  companyProfileSubmitted = true;
+  form.reset();
+  enterRoleApp();
+});
 
 document.querySelectorAll("[data-logout]").forEach((button) => {
   button.addEventListener("click", () => {
@@ -1707,8 +1850,12 @@ document.querySelectorAll("[data-logout]").forEach((button) => {
     vuzzApplicationSubmitted = false;
     identityVerified = false;
     isEditingProfile = false;
+    companyProfileSubmitted = false;
+    pendingLoginRole = null;
+    pendingLoginMethod = null;
     updateIdentityUI();
     closeUtilityPopover();
+    setLoginStep("role");
     showLogin();
     renderFeed();
   });

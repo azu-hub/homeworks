@@ -1516,6 +1516,52 @@ button {
   grid-column: span 2;
 }
 
+.auth-method-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.auth-method-card {
+  display: grid;
+  gap: 10px;
+  min-height: 142px;
+  align-content: start;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #24272d;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.auth-method-card:hover {
+  border-color: rgba(72, 181, 140, 0.7);
+  background: #2e3239;
+  transform: translateY(-1px);
+}
+
+.auth-method-card strong {
+  font-size: 17px;
+}
+
+.auth-method-card small {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.login-back {
+  margin-top: 18px;
+  width: max-content;
+}
+
+.login-profile-form {
+  margin-top: 4px;
+}
+
 .applicant-list,
 .review-list {
   display: grid;
@@ -1709,6 +1755,7 @@ button {
   .role-grid,
   .login-form,
   .form-grid,
+  .auth-method-grid,
   .mypage-grid,
   .registration-grid,
   .rank-overview,

@@ -18,48 +18,177 @@
           </div>
         </div>
 
-        <div class="login-copy">
-          <h2>ログインするページを選択</h2>
-          <p>在宅ワーカー、企業、運営で入口を分けて、それぞれに必要な画面へ進みます。</p>
+        <div class="login-step" id="loginStepRole">
+          <div class="login-copy">
+            <h2>登録するページを選択</h2>
+            <p>在宅ワーカー、企業、運営で入口を分けて、それぞれに必要な画面へ進みます。</p>
+          </div>
+          <div class="role-grid" aria-label="ログイン種別">
+            <button class="role-card" data-login-role="worker" type="button">
+              <span class="role-icon"><i data-lucide="user-check"></i></span>
+              <strong>ワーカー</strong>
+              <small>案件を探す・保存する・応募する</small>
+            </button>
+            <button class="role-card" data-login-role="company" type="button">
+              <span class="role-icon"><i data-lucide="building-2"></i></span>
+              <strong>企業</strong>
+              <small>案件を投稿する・応募者を確認する</small>
+            </button>
+            <button class="role-card" data-login-role="vuzz" type="button">
+              <span class="role-icon"><i data-lucide="shield-check"></i></span>
+              <strong>運営管理</strong>
+              <small>審査・監視・支払い状況を管理する</small>
+            </button>
+          </div>
         </div>
 
-        <div class="role-grid" aria-label="ログイン種別">
-          <button class="role-card" data-login-role="worker" type="button">
-            <span class="role-icon"><i data-lucide="user-check"></i></span>
-            <strong>ワーカー</strong>
-            <small>案件を探す・保存する・応募する</small>
-          </button>
-          <button class="role-card" data-login-role="company" type="button">
-            <span class="role-icon"><i data-lucide="building-2"></i></span>
-            <strong>企業</strong>
-            <small>案件を投稿する・応募者を確認する</small>
-          </button>
-          <button class="role-card" data-login-role="vuzz" type="button">
-            <span class="role-icon"><i data-lucide="shield-check"></i></span>
-            <strong>運営管理</strong>
-            <small>審査・監視・支払い状況を管理する</small>
+        <div class="login-step is-hidden" id="loginStepMethod">
+          <div class="login-copy">
+            <h2 id="methodHeading">登録方法を選択</h2>
+            <p>メールアドレスまたはGoogleアカウントを選んで登録します。次の画面で本人情報を入力します。</p>
+          </div>
+          <div class="auth-method-grid" aria-label="登録方法">
+            <button class="auth-method-card" id="chooseEmailButton" type="button">
+              <span class="role-icon"><i data-lucide="mail"></i></span>
+              <strong>メールアドレスで登録</strong>
+              <small>メールアドレスとパスワードを設定します</small>
+            </button>
+            <button class="auth-method-card" id="chooseGoogleButton" type="button">
+              <span class="role-icon"><span class="google-mark">G</span></span>
+              <strong>Googleアカウントで登録</strong>
+              <small>Googleで認証して登録します</small>
+            </button>
+          </div>
+          <button class="secondary-button login-back" data-login-back="role" type="button">
+            <i data-lucide="arrow-left"></i>
+            ロール選択に戻る
           </button>
         </div>
 
-        <form class="login-form">
-          <label>
-            メールアドレス
-            <input type="email" />
-          </label>
-          <label>
-            パスワード
-            <span class="password-field">
-              <input type="password" />
-              <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
-                <i data-lucide="eye"></i>
-              </button>
-            </span>
-          </label>
-        </form>
-        <div class="oauth-row">
-          <button class="google-button" id="googleLoginButton" type="button">
-            <span class="google-mark">G</span>
-            Googleアカウントでログイン
+        <div class="login-step is-hidden" id="loginStepEmail">
+          <div class="login-copy">
+            <h2>メールアドレスで登録</h2>
+            <p>登録情報を入力してください。送信後、本人情報の入力に進みます。</p>
+          </div>
+          <form class="login-form" id="emailRegisterForm" novalidate>
+            <label>
+              メールアドレス
+              <input name="email" type="email" required />
+            </label>
+            <label>
+              パスワード
+              <span class="password-field">
+                <input name="password" type="password" required minlength="8" />
+                <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
+                  <i data-lucide="eye"></i>
+                </button>
+              </span>
+            </label>
+            <button class="primary-button wide span-2" type="submit">
+              <i data-lucide="mail-check"></i>
+              認証して次へ
+            </button>
+          </form>
+          <button class="secondary-button login-back" data-login-back="method" type="button">
+            <i data-lucide="arrow-left"></i>
+            登録方法に戻る
+          </button>
+        </div>
+
+        <div class="login-step is-hidden" id="loginStepWorkerProfile">
+          <div class="login-copy">
+            <h2>本人情報の入力</h2>
+            <p>応募の前に必須の本人情報を入力します。職歴を含むすべての項目をご記入ください。</p>
+          </div>
+          <form class="form-grid login-profile-form" id="workerProfileGate" novalidate>
+            <label>
+              氏名
+              <input name="name" type="text" required />
+            </label>
+            <label>
+              生年月日
+              <input name="birthdate" type="date" required />
+            </label>
+            <fieldset class="gender-options span-2">
+              <legend>性別</legend>
+              <label>
+                <input name="gender" type="radio" value="男性" required />
+                男性
+              </label>
+              <label>
+                <input name="gender" type="radio" value="女性" />
+                女性
+              </label>
+            </fieldset>
+            <label>
+              郵便番号
+              <input name="postalCode" type="text" required />
+            </label>
+            <label>
+              電話番号
+              <input name="phone" type="tel" required />
+            </label>
+            <label class="span-2">
+              住所
+              <input name="address" type="text" required />
+            </label>
+            <label class="span-2">
+              職歴
+              <textarea name="workHistory" rows="4" placeholder="例) 2020-2023 ◯◯株式会社 経理事務 / 2018-2020 ▲▲スーパー 商品管理" required></textarea>
+            </label>
+            <button class="primary-button wide span-2" type="submit">
+              <i data-lucide="save"></i>
+              保存して登録を完了
+            </button>
+          </form>
+          <button class="secondary-button login-back" data-login-back="method" type="button">
+            <i data-lucide="arrow-left"></i>
+            登録方法に戻る
+          </button>
+        </div>
+
+        <div class="login-step is-hidden" id="loginStepCompanyProfile">
+          <div class="login-copy">
+            <h2>企業情報の入力</h2>
+            <p>案件を投稿する前に、企業の本人情報を入力します。すべての項目をご記入ください。</p>
+          </div>
+          <form class="form-grid login-profile-form" id="companyProfileGate" novalidate>
+            <label class="span-2">
+              会社名
+              <input name="companyName" type="text" required />
+            </label>
+            <label>
+              代表者氏名
+              <input name="representativeName" type="text" required />
+            </label>
+            <label>
+              担当者氏名
+              <input name="contactName" type="text" required />
+            </label>
+            <label>
+              担当者電話番号
+              <input name="contactPhone" type="tel" required />
+            </label>
+            <label>
+              郵便番号
+              <input name="companyPostalCode" type="text" required />
+            </label>
+            <label class="span-2">
+              会社住所
+              <input name="companyAddress" type="text" required />
+            </label>
+            <label class="span-2">
+              事業内容・業歴
+              <textarea name="companyHistory" rows="4" placeholder="例) 2010年設立、文具卸を中心にEC事業を展開..." required></textarea>
+            </label>
+            <button class="primary-button wide span-2" type="submit">
+              <i data-lucide="save"></i>
+              保存して登録を完了
+            </button>
+          </form>
+          <button class="secondary-button login-back" data-login-back="method" type="button">
+            <i data-lucide="arrow-left"></i>
+            登録方法に戻る
           </button>
         </div>
       </div>
