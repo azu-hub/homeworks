@@ -1493,7 +1493,8 @@ document.querySelectorAll("[data-logout]").forEach((button) => {
     vuzzApplicationSubmitted = false;
     identityVerified = false;
     updateIdentityUI();
-    showRole("worker");
+    closeUtilityPopover();
+    showLogin();
     renderFeed();
   });
 });
