@@ -78,7 +78,7 @@ const jobs = [
     time: "約5時間",
     review: "提出後12時間以内",
     trust: "本人確認済み・発注実績 74件",
-    badge: "今日締切",
+    badge: "今日まで",
     tags: ["remote", "urgent", "beginner"],
     posted: "09:12",
   },
