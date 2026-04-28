@@ -230,6 +230,40 @@ button {
   padding: 0 12px;
 }
 
+.oauth-row {
+  display: grid;
+  margin-top: 12px;
+}
+
+.google-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #f5f6f8;
+  color: #17181c;
+  font-weight: 900;
+}
+
+.google-button:hover {
+  background: #ffffff;
+}
+
+.google-mark {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #4285f4;
+  font-weight: 900;
+}
+
 .form-grid .gender-options input {
   width: auto;
   height: auto;

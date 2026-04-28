@@ -178,6 +178,7 @@ const vuzzNoticeText = document.querySelector("#vuzzNoticeText");
 const vuzzMetrics = document.querySelector("#vuzzMetrics");
 const vuzzContent = document.querySelector("#vuzzContent");
 const loginView = document.querySelector("#loginView");
+const googleLoginButton = document.querySelector("#googleLoginButton");
 const appViews = {
   worker: document.querySelector("#workerApp"),
   company: document.querySelector("#companyApp"),
@@ -690,6 +691,10 @@ function renderRegistrationForm(alertText = "") {
           <i data-lucide="log-in"></i>
           ログイン
         </button>
+        <button class="google-button wide" id="googleSignupButton" type="button">
+          <span class="google-mark">G</span>
+          Googleアカウントで続行
+        </button>
       </form>
 
       <aside class="portal-panel mypage-card">
@@ -736,18 +741,10 @@ function renderRegistrationForm(alertText = "") {
     renderEmailVerification("登録が完了しました。メールに届いた認証コードを確認してください。");
   });
   document.querySelector("#existingLoginButton").addEventListener("click", () => {
-    isLoggedIn = true;
-    emailVerified = true;
-    profileSubmitted = false;
-    idSubmitted = false;
-    contractIssued = false;
-    lineRegistered = false;
-    vuzzApplicationSubmitted = false;
-    identityVerified = false;
-    isEditingProfile = false;
-    updateIdentityUI();
+    resetWorkerVerification();
     renderMyPage("ログインしました。応募には本人確認が必要です。");
   });
+  document.querySelector("#googleSignupButton").addEventListener("click", loginWithGoogle);
   refreshIcons();
 }
 
@@ -1218,6 +1215,25 @@ function showRole(role) {
   refreshIcons();
 }
 
+function resetWorkerVerification() {
+  isLoggedIn = true;
+  emailVerified = true;
+  profileSubmitted = false;
+  idSubmitted = false;
+  contractIssued = false;
+  lineRegistered = false;
+  vuzzApplicationSubmitted = false;
+  identityVerified = false;
+  isEditingProfile = false;
+  updateIdentityUI();
+}
+
+function loginWithGoogle() {
+  resetWorkerVerification();
+  showRole("worker");
+  renderMyPage("Googleアカウントでログインしました。続けて本人確認を完了してください。");
+}
+
 function getPayAmount(job) {
   return Number(job.pay.replace(/[^\d]/g, "")) || 0;
 }
@@ -1664,20 +1680,13 @@ utilityPopover.addEventListener("click", (event) => {
 document.querySelectorAll("[data-login-role]").forEach((button) => {
   button.addEventListener("click", () => {
     if (button.dataset.loginRole === "worker") {
-      isLoggedIn = true;
-      emailVerified = true;
-      profileSubmitted = false;
-      idSubmitted = false;
-      contractIssued = false;
-      lineRegistered = false;
-      vuzzApplicationSubmitted = false;
-      identityVerified = false;
-      isEditingProfile = false;
-      updateIdentityUI();
+      resetWorkerVerification();
     }
     showRole(button.dataset.loginRole);
   });
 });
+
+googleLoginButton.addEventListener("click", loginWithGoogle);
 
 document.querySelectorAll("[data-logout]").forEach((button) => {
   button.addEventListener("click", () => {
