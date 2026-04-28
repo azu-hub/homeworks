@@ -141,6 +141,9 @@ const channelMessageInput = document.querySelector("#channelMessageInput");
 const openMyPageButton = document.querySelector("#openMyPage");
 const workerIdentityText = document.querySelector("#workerIdentityText");
 const workerPresence = document.querySelector("#workerPresence");
+const notificationsButton = document.querySelector("#notificationsButton");
+const settingsButton = document.querySelector("#settingsButton");
+const utilityPopover = document.querySelector("#utilityPopover");
 const vuzzTitle = document.querySelector("#vuzzTitle");
 const vuzzSubtitle = document.querySelector("#vuzzSubtitle");
 const vuzzNoticeTitle = document.querySelector("#vuzzNoticeTitle");
@@ -379,6 +382,102 @@ function updateIdentityUI() {
       : identityVerified
         ? '<i data-lucide="check-circle-2"></i> この案件に応募'
         : '<i data-lucide="badge-alert"></i> vuzz承認後に応募';
+  refreshIcons();
+}
+
+function closeUtilityPopover() {
+  utilityPopover.classList.add("is-hidden");
+  notificationsButton.classList.remove("active");
+  settingsButton.classList.remove("active");
+  notificationsButton.setAttribute("aria-expanded", "false");
+  settingsButton.setAttribute("aria-expanded", "false");
+}
+
+function renderUtilityPopover(type) {
+  const activeButton = type === "notifications" ? notificationsButton : settingsButton;
+  const otherButton = type === "notifications" ? settingsButton : notificationsButton;
+  const isAlreadyOpen = !utilityPopover.classList.contains("is-hidden") && activeButton.classList.contains("active");
+
+  if (isAlreadyOpen) {
+    closeUtilityPopover();
+    return;
+  }
+
+  otherButton.classList.remove("active");
+  otherButton.setAttribute("aria-expanded", "false");
+  activeButton.classList.add("active");
+  activeButton.setAttribute("aria-expanded", "true");
+  utilityPopover.classList.remove("is-hidden");
+
+  utilityPopover.innerHTML =
+    type === "notifications"
+      ? `
+        <div class="utility-head">
+          <strong>通知</strong>
+          <span>3件</span>
+        </div>
+        <div class="utility-list">
+          <article class="utility-item">
+            <span class="utility-icon"><i data-lucide="briefcase-business"></i></span>
+            <div>
+              <strong>新しい案件が追加されました</strong>
+              <p>検品・梱包に「封入作業 300セット」が届いています。</p>
+            </div>
+          </article>
+          <article class="utility-item">
+            <span class="utility-icon"><i data-lucide="shield-check"></i></span>
+            <div>
+              <strong>本人確認の進捗</strong>
+              <p>${getWorkerApprovalStatus()}</p>
+            </div>
+          </article>
+          <article class="utility-item">
+            <span class="utility-icon"><i data-lucide="bookmark"></i></span>
+            <div>
+              <strong>保存済み案件</strong>
+              <p>${savedJobs.size}件の案件を保存しています。</p>
+            </div>
+          </article>
+        </div>
+      `
+      : `
+        <div class="utility-head">
+          <strong>設定</strong>
+          <span>ワーカー</span>
+        </div>
+        <div class="utility-list">
+          <div class="setting-row">
+            <div>
+              <strong>新着案件通知</strong>
+              <span>条件に合う案件を通知</span>
+            </div>
+            <button class="setting-toggle is-on" type="button" aria-label="新着案件通知" aria-pressed="true"></button>
+          </div>
+          <div class="setting-row">
+            <div>
+              <strong>応募ステータス通知</strong>
+              <span>承認、差戻し、採用の更新</span>
+            </div>
+            <button class="setting-toggle is-on" type="button" aria-label="応募ステータス通知" aria-pressed="true"></button>
+          </div>
+          <div class="setting-row">
+            <div>
+              <strong>サポート通知</strong>
+              <span>vuzz運営からの連絡</span>
+            </div>
+            <button class="setting-toggle" type="button" aria-label="サポート通知" aria-pressed="false"></button>
+          </div>
+        </div>
+      `;
+
+  utilityPopover.querySelectorAll(".setting-toggle").forEach((button) => {
+    button.addEventListener("click", () => {
+      const isOn = !button.classList.contains("is-on");
+      button.classList.toggle("is-on", isOn);
+      button.setAttribute("aria-pressed", String(isOn));
+    });
+  });
+
   refreshIcons();
 }
 
@@ -1169,6 +1268,20 @@ openMyPageButton.addEventListener("click", () => {
   renderMyPage();
 });
 
+notificationsButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  renderUtilityPopover("notifications");
+});
+
+settingsButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  renderUtilityPopover("settings");
+});
+
+utilityPopover.addEventListener("click", (event) => {
+  event.stopPropagation();
+});
+
 document.querySelectorAll("[data-login-role]").forEach((button) => {
   button.addEventListener("click", () => {
     if (button.dataset.loginRole === "worker") {
@@ -1200,6 +1313,10 @@ document.querySelectorAll("[data-logout]").forEach((button) => {
     showRole("worker");
     renderFeed();
   });
+});
+
+document.addEventListener("click", () => {
+  closeUtilityPopover();
 });
 
 document.addEventListener("click", (event) => {

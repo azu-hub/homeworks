@@ -143,14 +143,15 @@
             相談ルーム
           </button>
           <div class="user-actions">
-            <button class="icon-button" aria-label="通知">
+            <button class="icon-button" id="notificationsButton" type="button" aria-label="通知" aria-expanded="false">
               <i data-lucide="bell"></i>
             </button>
-            <button class="icon-button" aria-label="設定">
+            <button class="icon-button" id="settingsButton" type="button" aria-label="設定" aria-expanded="false">
               <i data-lucide="settings"></i>
             </button>
           </div>
         </div>
+        <div class="utility-popover is-hidden" id="utilityPopover" aria-live="polite"></div>
       </aside>
 
       <main class="content-area">
