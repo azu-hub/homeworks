@@ -84,10 +84,34 @@
           <span class="presence warning" id="workerPresence"></span>
         </button>
 
-        <label class="category-search" aria-label="カテゴリ検索">
-          <i data-lucide="search"></i>
-          <input id="categorySearchInput" type="search" placeholder="カテゴリ検索" />
-        </label>
+        <section class="category-browser" aria-label="カテゴリから探す">
+          <button class="group-title category-browser-title" type="button">
+            <i data-lucide="chevron-down"></i>
+            カテゴリから探す
+          </button>
+          <div class="category-choice-list">
+            <button class="category-choice" data-category-shortcut="all" type="button">
+              <i data-lucide="layout-list"></i>
+              すべて
+              <span data-category-total-count="all">0</span>
+            </button>
+            <button class="category-choice" data-category-shortcut="inspection" type="button">
+              <i data-lucide="package-check"></i>
+              検品・梱包
+              <span data-category-total-count="inspection">0</span>
+            </button>
+            <button class="category-choice" data-category-shortcut="typing" type="button">
+              <i data-lucide="keyboard"></i>
+              データ入力
+              <span data-category-total-count="typing">0</span>
+            </button>
+            <button class="category-choice" data-category-shortcut="creative" type="button">
+              <i data-lucide="image-check"></i>
+              画像チェック
+              <span data-category-total-count="creative">0</span>
+            </button>
+          </div>
+        </section>
 
         <nav class="channel-list">
           <div class="channel-group utility-channel-group">

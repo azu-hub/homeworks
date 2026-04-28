@@ -155,7 +155,6 @@ const channelTitle = document.querySelector("#channelTitle");
 const feedTitle = document.querySelector("#feedTitle");
 const feedIntroText = document.querySelector("#feedIntroText");
 const searchInput = document.querySelector("#searchInput");
-const categorySearchInput = document.querySelector("#categorySearchInput");
 const allJobsCount = document.querySelector("#allJobsCount");
 const saveCurrent = document.querySelector("#saveCurrent");
 const savedCount = document.querySelector("#savedCount");
@@ -1250,6 +1249,10 @@ function getActiveChannelLabel() {
 function updateChannelCounts() {
   allJobsCount.textContent = jobs.length;
   savedCount.textContent = savedJobs.size;
+  document.querySelectorAll("[data-category-total-count]").forEach((countNode) => {
+    const category = countNode.dataset.categoryTotalCount;
+    countNode.textContent = jobs.filter((job) => category === "all" || job.channel === category).length;
+  });
   document.querySelectorAll("[data-channel-count]").forEach((countNode) => {
     const priceTier = countNode.dataset.priceTier;
     const category = countNode.dataset.category;
@@ -1257,17 +1260,13 @@ function updateChannelCounts() {
   });
 }
 
-function updateCategorySearchResults() {
-  const query = categorySearchInput?.value.trim().toLowerCase() || "";
-
-  document.querySelectorAll("[data-category-option]").forEach((button) => {
-    const label = button.textContent.toLowerCase();
-    button.classList.toggle("is-hidden", Boolean(query) && !label.includes(query));
-  });
-
-  document.querySelectorAll("[data-price-group]").forEach((group) => {
-    const hasVisibleCategory = group.querySelector("[data-category-option]:not(.is-hidden)");
-    group.classList.toggle("is-hidden", Boolean(query) && !hasVisibleCategory);
+function updateCategoryChoices() {
+  document.querySelectorAll("[data-category-shortcut]").forEach((button) => {
+    const isActive =
+      activeChannel === "jobs" &&
+      activePriceTier === "all" &&
+      activeCategory === button.dataset.categoryShortcut;
+    button.classList.toggle("active", isActive);
   });
 }
 
@@ -1381,7 +1380,7 @@ function renderFeed() {
   channelComposer.classList.toggle("is-hidden", !writableChannels.has(activeChannel));
   aiRoomButton.classList.toggle("active", activeChannel === "ai");
   updateChannelCounts();
-  updateCategorySearchResults();
+  updateCategoryChoices();
 
   if (supportChannels.has(activeChannel)) {
     renderSupportChannel();
@@ -1389,7 +1388,7 @@ function renderFeed() {
   }
 
   feedIntroText.textContent =
-    "価格帯ごとに案件を並べ、各価格帯の中でカテゴリ別に確認できます。カテゴリ検索で見たい仕事だけに絞り込めます。";
+    "価格帯ごとに案件を並べ、各価格帯の中でカテゴリ別に確認できます。カテゴリから探す一覧で見たい仕事だけに切り替えられます。";
   const visibleJobs = getVisibleJobs();
 
   if (!visibleJobs.length) {
@@ -1492,6 +1491,16 @@ document.querySelectorAll("#workerApp .channel").forEach((button) => {
   });
 });
 
+document.querySelectorAll("[data-category-shortcut]").forEach((button) => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll("#workerApp .channel").forEach((item) => item.classList.remove("active"));
+    activeChannel = "jobs";
+    activePriceTier = "all";
+    activeCategory = button.dataset.categoryShortcut;
+    renderFeed();
+  });
+});
+
 aiRoomButton.addEventListener("click", () => {
   document.querySelectorAll("#workerApp .channel").forEach((item) => item.classList.remove("active"));
   activeChannel = "ai";
@@ -1540,7 +1549,6 @@ feed.addEventListener("click", (event) => {
 });
 
 searchInput?.addEventListener("input", renderFeed);
-categorySearchInput?.addEventListener("input", updateCategorySearchResults);
 
 saveCurrent.addEventListener("click", () => {
   toggleSave(selectedJobId);
