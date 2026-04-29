@@ -1216,6 +1216,70 @@ function renderPostVerificationSetup(alertText = "") {
   refreshIcons();
 }
 
+function renderUsernameSetup(alertText = "") {
+  document.querySelectorAll("#workerApp .channel").forEach((item) => item.classList.remove("active"));
+  workerMainGrid.classList.add("support-mode");
+  filterRow?.classList.add("is-hidden");
+  channelComposer.classList.add("is-hidden");
+  channelTitle.textContent = "ユーザー名設定";
+  feedTitle.textContent = "ユーザー名設定";
+  feedIntroText.textContent = "表示名として使われます。";
+
+  feed.innerHTML = `
+    ${alertText ? `<div class="mypage-alert">${alertText}</div>` : ""}
+    <section class="registration-grid">
+      <form class="portal-panel registration-form" id="usernameSetupForm">
+        <p class="form-note">他のユーザーに表示される名前を入力してください。半角英数字で入力できます。</p>
+        <div class="form-grid single-column-fields">
+          <label>
+            ユーザー名
+            <input name="username" type="text" value="${escapeHtml(profileData.username)}" required autocomplete="username" />
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="secondary-button" id="usernameSetupBackButton" type="button">
+            <i data-lucide="arrow-left"></i>
+            戻る
+          </button>
+          <button class="primary-button" type="submit">
+            <i data-lucide="check"></i>
+            登録を完了する
+          </button>
+        </div>
+      </form>
+    </section>
+  `;
+
+  const usernameInput = feed.querySelector('input[name="username"]');
+  usernameInput?.addEventListener("input", () => {
+    const converted = toHalfWidth(usernameInput.value);
+    if (usernameInput.value !== converted) usernameInput.value = converted;
+  });
+
+  feed.querySelector("#usernameSetupBackButton")?.addEventListener("click", () => {
+    profileFormStep = 2;
+    renderMyPage();
+  });
+
+  feed.querySelector("#usernameSetupForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const rawUsername = toHalfWidth(event.currentTarget.querySelector('input[name="username"]').value.trim());
+    if (!rawUsername) {
+      renderUsernameSetup("ユーザー名を入力してください。");
+      return;
+    }
+    profileData.username = rawUsername;
+    const wasEditing = isEditingProfile;
+    profileSubmitted = true;
+    profileFormStep = 1;
+    isEditingProfile = false;
+    updateIdentityUI();
+    renderMyPage(wasEditing ? "個人情報を更新しました。" : "個人情報を保存しました。続けて身分証を提出してください。");
+  });
+
+  refreshIcons();
+}
+
 function renderMyPage(alertText = "") {
   if (!isLoggedIn) {
     renderRegistrationForm("マイページを見るには登録またはログインが必要です。");
@@ -1224,6 +1288,11 @@ function renderMyPage(alertText = "") {
 
   if (!emailVerified) {
     renderEmailVerification(alertText || "マイページへ進む前にメール認証が必要です。");
+    return;
+  }
+
+  if (profileFormStep === 3) {
+    renderUsernameSetup(alertText);
     return;
   }
 
@@ -1320,13 +1389,16 @@ function renderMyPage(alertText = "") {
               ? `
               <label>
                 郵便番号
-                <input name="postalCode" type="text" value="${escapeHtml(profileData.postalCode)}" required />
+                <input name="postalCode" type="text" inputmode="numeric" pattern="[0-9]{7}" maxlength="8" placeholder="1234567" value="${escapeHtml(profileData.postalCode.replace(/-/g, ""))}" required />
+                <span class="field-hint">ハイフンなし7桁</span>
               </label>
               <label>
                 都道府県
-                <select name="prefecture" required>
-                  ${renderPrefectureOptions(profileData.prefecture)}
-                </select>
+                <div class="select-wrap">
+                  <select name="prefecture" required>
+                    ${renderPrefectureOptions(profileData.prefecture)}
+                  </select>
+                </div>
               </label>
               <label class="span-2">
                 住所（番地まで）
@@ -1773,36 +1845,28 @@ function renderMyPage(alertText = "") {
       return;
     }
     if (profileFormStep === 2) {
-      profileData.postalCode = formData.get("postalCode")?.toString().trim() || "";
+      const rawPostal = toHalfWidth(formData.get("postalCode")?.toString().trim() || "").replace(/-/g, "");
+      if (!/^[0-9]{7}$/.test(rawPostal)) {
+        renderMyPage("郵便番号は数字7桁で入力してください。");
+        return;
+      }
+      profileData.postalCode = rawPostal;
       profileData.prefecture = formData.get("prefecture")?.toString().trim() || "";
       profileData.addressLine1 = formData.get("addressLine1")?.toString().trim() || "";
       profileData.addressLine2 = formData.get("addressLine2")?.toString().trim() || "";
       profileData.address = [profileData.prefecture, profileData.addressLine1, profileData.addressLine2].filter(Boolean).join("");
       profileFormStep = 3;
-      renderMyPage("最後にユーザー名を入力してください。");
+      renderMyPage();
       return;
     }
-    const rawUsername = toHalfWidth(formData.get("username")?.toString().trim() || "");
-    if (!rawUsername) {
-      renderMyPage("ユーザー名を入力してください。");
-      return;
-    }
-    profileData.username = rawUsername;
-    const wasEditing = isEditingProfile;
-    profileSubmitted = true;
-    profileFormStep = 1;
-    isEditingProfile = false;
-    updateIdentityUI();
-    renderMyPage(wasEditing ? "個人情報を更新しました。" : "個人情報を保存しました。続けて身分証を提出してください。");
   });
   document.querySelector("#profileStepBackButton")?.addEventListener("click", () => {
     profileFormStep = Math.max(profileFormStep - 1, 1);
     renderMyPage();
   });
-  const usernameInput = document.querySelector('#profileForm input[name="username"]');
-  usernameInput?.addEventListener("input", () => {
-    const converted = toHalfWidth(usernameInput.value);
-    if (usernameInput.value !== converted) usernameInput.value = converted;
+  const postalInput = document.querySelector('#profileForm input[name="postalCode"]');
+  postalInput?.addEventListener("input", () => {
+    postalInput.value = toHalfWidth(postalInput.value).replace(/-/g, "");
   });
   document.querySelector("#editProfileButton")?.addEventListener("click", () => {
     isEditingProfile = true;
