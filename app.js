@@ -2768,8 +2768,12 @@ document.querySelectorAll("[data-logout]").forEach((button) => {
     updateIdentityUI();
     closeUtilityPopover();
     setLoginStep("role");
-    showLogin();
-    renderFeed();
+    if (button.closest("#workerApp")) {
+      showRole("worker");
+      renderFeed();
+    } else {
+      showLogin();
+    }
   });
 });
 
