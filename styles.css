@@ -1298,6 +1298,19 @@ button {
   grid-column: 1 / -1;
 }
 
+.profile-required .action-card {
+  order: 1;
+  grid-column: 1 / -1;
+}
+
+.profile-required .flow-card {
+  order: 2;
+}
+
+.profile-required .membership-card {
+  order: 3;
+}
+
 .action-card {
   min-height: 320px;
 }
@@ -1518,11 +1531,30 @@ button {
 
 .auth-method-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
   gap: 12px;
 }
 
+.auth-method-or {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  background: #1d2025;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .auth-method-card {
+  position: relative;
   display: grid;
   gap: 10px;
   min-height: 142px;
@@ -1535,6 +1567,22 @@ button {
   text-align: left;
   cursor: pointer;
   transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.auth-method-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(72, 181, 140, 0.18);
+  color: #6fd1a8;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .auth-method-card:hover {

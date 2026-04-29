@@ -44,16 +44,19 @@
 
         <div class="login-step is-hidden" id="loginStepMethod">
           <div class="login-copy">
-            <h2 id="methodHeading">登録方法を選択</h2>
-            <p>メールアドレスまたはGoogleアカウントを選んで登録します。次の画面で本人情報を入力します。</p>
+            <h2 id="methodHeading">登録方法を選択（2つから1つ）</h2>
+            <p>下の <strong>メール</strong> または <strong>Googleアカウント</strong> のどちらか1つを選んでください。認証後に個人情報を入力します。</p>
           </div>
-          <div class="auth-method-grid" aria-label="登録方法">
+          <div class="auth-method-grid" aria-label="登録方法（2つから1つ選択）" role="group">
             <button class="auth-method-card" id="chooseEmailButton" type="button">
+              <span class="auth-method-badge">1</span>
               <span class="role-icon"><i data-lucide="mail"></i></span>
               <strong>メールアドレスで登録</strong>
               <small>メールアドレスとパスワードを設定します</small>
             </button>
+            <span class="auth-method-or" aria-hidden="true">または</span>
             <button class="auth-method-card" id="chooseGoogleButton" type="button">
+              <span class="auth-method-badge">2</span>
               <span class="role-icon"><span class="google-mark">G</span></span>
               <strong>Googleアカウントで登録</strong>
               <small>Googleで認証して登録します</small>
@@ -68,21 +71,12 @@
         <div class="login-step is-hidden" id="loginStepEmail">
           <div class="login-copy">
             <h2>メールアドレスで登録</h2>
-            <p>登録情報を入力してください。送信後、本人情報の入力に進みます。</p>
+            <p>登録するメールアドレスを入力してください。メール認証後、個人情報の入力に進みます。</p>
           </div>
           <form class="login-form" id="emailRegisterForm" novalidate>
-            <label>
+            <label class="span-2">
               メールアドレス
               <input name="email" type="email" required />
-            </label>
-            <label>
-              パスワード
-              <span class="password-field">
-                <input name="password" type="password" required minlength="8" />
-                <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
-                  <i data-lucide="eye"></i>
-                </button>
-              </span>
             </label>
             <button class="primary-button wide span-2" type="submit">
               <i data-lucide="mail-check"></i>
@@ -97,15 +91,15 @@
 
         <div class="login-step is-hidden" id="loginStepWorkerProfile">
           <div class="login-copy">
-            <h2>本人情報の入力</h2>
-            <p>応募の前に必須の本人情報を入力します。職歴を含むすべての項目をご記入ください。</p>
+            <h2>個人情報の入力</h2>
+            <p>メール認証またはGoogle認証が完了しました。応募の前に必須の個人情報を入力してください。</p>
           </div>
           <form class="form-grid login-profile-form" id="workerProfileGate" novalidate>
-            <label>
+            <label class="span-2">
               氏名
               <input name="name" type="text" required />
             </label>
-            <label>
+            <label class="span-2">
               生年月日
               <input name="birthdate" type="date" required />
             </label>
@@ -158,15 +152,7 @@
               <input name="companyName" type="text" required />
             </label>
             <label>
-              代表者氏名
-              <input name="representativeName" type="text" required />
-            </label>
-            <label>
-              担当者氏名
-              <input name="contactName" type="text" required />
-            </label>
-            <label>
-              担当者電話番号
+              電話番号
               <input name="contactPhone" type="tel" required />
             </label>
             <label>

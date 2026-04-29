@@ -409,7 +409,7 @@ function renderVuzzChannel(channelKey) {
 function getWorkerApprovalStatus() {
   if (!isLoggedIn) return "ゲスト閲覧中・応募には登録";
   if (!emailVerified) return "メール未認証・応募制限中";
-  if (!profileSubmitted) return "基本情報未入力・応募制限中";
+  if (!profileSubmitted) return "個人情報未入力・応募制限中";
   if (!idSubmitted) return "身分証未提出・応募制限中";
   if (!contractIssued) return "契約書未交付・応募制限中";
   if (!vuzzApplicationSubmitted) return "運営申請前・応募制限中";
@@ -418,7 +418,7 @@ function getWorkerApprovalStatus() {
 }
 
 function getWorkerApprovalLabel() {
-  if (!isLoggedIn) return "登録して本人確認へ";
+  if (!isLoggedIn) return "登録して認証へ";
   if (!emailVerified) return "メール認証後に応募";
   if (!identityVerified) return "運営承認後に応募";
   return "この案件に応募";
@@ -475,7 +475,7 @@ function updateIdentityUI() {
   workerRankText.classList.toggle("is-hidden", !isLoggedIn);
   workerPresence.classList.toggle("warning", !isLoggedIn || !emailVerified || !identityVerified);
   document.querySelector("#applyButton").innerHTML = !isLoggedIn
-    ? '<i data-lucide="user-plus"></i> 登録して本人確認へ'
+    ? '<i data-lucide="user-plus"></i> 登録して認証へ'
     : !emailVerified
       ? '<i data-lucide="mail-check"></i> メール認証後に応募'
       : identityVerified
@@ -501,7 +501,7 @@ function getAiReply(message) {
   const normalizedMessage = message.toLowerCase();
 
   if (message.includes("本人") || message.includes("認証") || message.includes("登録")) {
-    return "応募するには、メール認証、基本情報、身分証提出、契約書受領、運営承認の順に進みます。公式LINE登録は任意です。";
+    return "応募するには、メール認証またはGoogle認証、個人情報入力、身分証提出、契約書受領、運営承認の順に進みます。公式LINE登録は任意です。";
   }
 
   if (message.includes("応募") || message.includes("仕事")) {
@@ -634,7 +634,7 @@ function applyToJob(jobId) {
   }
 
   if (!identityVerified) {
-    renderMyPage("応募するには、本人情報・身分証・契約書交付を完了し、運営の承認を受ける必要があります。");
+    renderMyPage("応募するには、個人情報・身分証・契約書交付を完了し、運営の承認を受ける必要があります。");
     return;
   }
 
@@ -660,7 +660,7 @@ function renderRegistrationForm(alertText = "") {
       renderEmailVerification("登録済みです。メール認証を完了してください。");
       return;
     }
-    renderMyPage(identityVerified ? "ログイン済みです。応募ステータスを確認できます。" : "ログイン済みです。応募には本人確認が必要です。");
+    renderMyPage(identityVerified ? "ログイン済みです。応募ステータスを確認できます。" : "ログイン済みです。応募には個人情報の入力が必要です。");
     return;
   }
 
@@ -680,15 +680,11 @@ function renderRegistrationForm(alertText = "") {
         <div class="section-head">
           <div>
             <p class="eyebrow">worker signup</p>
-            <h2>無料登録</h2>
+            <h2>認証して登録</h2>
           </div>
-          <span class="status-badge">応募前に必要</span>
+          <span class="status-badge">認証後に個人情報</span>
         </div>
         <div class="form-grid">
-          <label>
-            氏名
-            <input type="text" />
-          </label>
           <label>
             メールアドレス
             <input type="email" />
@@ -704,8 +700,8 @@ function renderRegistrationForm(alertText = "") {
           </label>
         </div>
         <button class="primary-button wide" type="submit">
-          <i data-lucide="user-check"></i>
-          登録して本人確認へ
+          <i data-lucide="mail-check"></i>
+          メール認証へ進む
         </button>
         <button class="secondary-button wide" id="existingLoginButton" type="button">
           <i data-lucide="log-in"></i>
@@ -713,7 +709,7 @@ function renderRegistrationForm(alertText = "") {
         </button>
         <button class="google-button wide" id="googleSignupButton" type="button">
           <span class="google-mark">G</span>
-          Googleアカウントで続行
+          Google認証で進む
         </button>
       </form>
 
@@ -726,19 +722,19 @@ function renderRegistrationForm(alertText = "") {
         </div>
         <dl class="ops-metrics">
           <div>
-            <dt>1. 登録</dt>
-            <dd>1分</dd>
+            <dt>1. 認証</dt>
+            <dd>メール / Google</dd>
           </div>
           <div>
-            <dt>2. メール認証</dt>
-            <dd>メール後</dd>
-          </div>
-          <div>
-            <dt>3. 本人確認</dt>
+            <dt>2. 個人情報</dt>
             <dd>必須</dd>
           </div>
           <div>
-            <dt>4. 応募</dt>
+            <dt>3. 身分証提出</dt>
+            <dd>必須</dd>
+          </div>
+          <div>
+            <dt>4. 運営承認後に応募</dt>
             <dd>可能</dd>
           </div>
         </dl>
@@ -775,7 +771,7 @@ function renderEmailVerification(alertText = "") {
   }
 
   if (emailVerified) {
-    renderMyPage("メール認証済みです。応募には本人確認を完了してください。");
+    renderMyPage(profileSubmitted ? "メール認証済みです。応募には本人確認を完了してください。" : "メール認証済みです。続けて個人情報を入力してください。");
     return;
   }
 
@@ -846,7 +842,7 @@ function renderEmailVerification(alertText = "") {
     emailVerified = true;
     identityVerified = false;
     updateIdentityUI();
-    renderMyPage("メール認証が完了しました。続けて基本情報を入力してください。");
+    renderMyPage("メール認証が完了しました。続けて個人情報を入力してください。");
   });
   document.querySelector("#resendEmailButton").addEventListener("click", () => {
     renderEmailVerification("認証メールを再送しました。");
@@ -866,10 +862,10 @@ function renderMyPage(alertText = "") {
   }
 
   document.querySelectorAll("#workerApp .channel").forEach((item) => item.classList.remove("active"));
-  channelTitle.textContent = "マイページ";
-  feedTitle.textContent = "マイページ";
+  channelTitle.textContent = profileSubmitted ? "マイページ" : "個人情報入力";
+  feedTitle.textContent = profileSubmitted ? "マイページ" : "個人情報入力";
   feedIntroText.textContent =
-    "基本情報、身分証、契約書交付を完了すると運営へ申請され、承認後に案件へ応募できます。公式LINE登録は任意です。";
+    "メール認証またはGoogle認証の後、個人情報、身分証、契約書交付を完了すると運営へ申請されます。公式LINE登録は任意です。";
   workerMainGrid.classList.add("support-mode");
   filterRow?.classList.add("is-hidden");
   channelComposer.classList.add("is-hidden");
@@ -909,7 +905,7 @@ function renderMyPage(alertText = "") {
 
   const steps = [
     ["メール認証", emailVerified, emailVerified ? "完了" : "未完了"],
-    ["基本情報入力", profileSubmitted, profileSubmitted ? "完了" : "未入力"],
+    ["個人情報入力", profileSubmitted, profileSubmitted ? "完了" : "未入力"],
     ["身分証提出", idSubmitted, idSubmitted ? "提出済み" : "未提出"],
     ["契約書交付", contractIssued, contractIssued ? "交付済み" : "未交付"],
     ["公式LINE登録", lineRegistered, lineRegistered ? "登録済み" : "任意"],
@@ -921,7 +917,7 @@ function renderMyPage(alertText = "") {
     ? `
       <button class="secondary-button wide" id="editProfileButton" type="button">
         <i data-lucide="arrow-left"></i>
-        基本情報に戻る
+        個人情報に戻る
       </button>
     `
     : "";
@@ -966,7 +962,7 @@ function renderMyPage(alertText = "") {
       </div>
       <button class="primary-button wide" type="submit">
         <i data-lucide="save"></i>
-        ${profileSubmitted ? "基本情報を更新" : "基本情報を保存"}
+        ${profileSubmitted ? "個人情報を更新" : "個人情報を保存"}
       </button>
     </form>
   `;
@@ -1037,9 +1033,9 @@ function renderMyPage(alertText = "") {
               </div>
             `;
   const actionTitle = !profileSubmitted
-    ? "本人確認情報の入力"
+    ? "個人情報の入力"
     : isEditingProfile
-      ? "本人確認情報の修正"
+      ? "個人情報の修正"
     : !idSubmitted
       ? "身分証提出"
       : !contractIssued
@@ -1068,7 +1064,7 @@ function renderMyPage(alertText = "") {
 
   feed.innerHTML = `
     ${alertText ? `<div class="mypage-alert">${alertText}</div>` : ""}
-    <section class="mypage-grid">
+    <section class="mypage-grid ${profileSubmitted ? "" : "profile-required"}">
       <article class="portal-panel mypage-card membership-card">
         <div class="section-head">
           <div>
@@ -1181,11 +1177,11 @@ function renderMyPage(alertText = "") {
     profileSubmitted = true;
     isEditingProfile = false;
     updateIdentityUI();
-    renderMyPage(wasEditing ? "基本情報を更新しました。元の手続きに戻れます。" : "基本情報を保存しました。続けて身分証を提出してください。");
+    renderMyPage(wasEditing ? "個人情報を更新しました。元の手続きに戻れます。" : "個人情報を保存しました。続けて身分証を提出してください。");
   });
   document.querySelector("#editProfileButton")?.addEventListener("click", () => {
     isEditingProfile = true;
-    renderMyPage("基本情報を修正できます。保存すると元の手続きに戻ります。");
+    renderMyPage("個人情報を修正できます。保存すると元の手続きに戻ります。");
   });
   document.querySelector("#submitIdButton")?.addEventListener("click", () => {
     idSubmitted = true;
@@ -1256,7 +1252,7 @@ function resetWorkerVerification() {
 function loginWithGoogle() {
   resetWorkerVerification();
   showRole("worker");
-  renderMyPage("Googleアカウントでログインしました。続けて本人確認を完了してください。");
+  renderMyPage("Google認証が完了しました。続けて個人情報を入力してください。");
 }
 
 const loginSteps = ["role", "method", "email", "workerProfile", "companyProfile"];
@@ -1828,8 +1824,6 @@ document.getElementById("companyProfileGate")?.addEventListener("submit", (event
   if (!form.reportValidity()) return;
   const formData = new FormData(form);
   companyData.companyName = formData.get("companyName")?.toString().trim() || "";
-  companyData.representativeName = formData.get("representativeName")?.toString().trim() || "";
-  companyData.contactName = formData.get("contactName")?.toString().trim() || "";
   companyData.contactPhone = formData.get("contactPhone")?.toString().trim() || "";
   companyData.companyPostalCode = formData.get("companyPostalCode")?.toString().trim() || "";
   companyData.companyAddress = formData.get("companyAddress")?.toString().trim() || "";
