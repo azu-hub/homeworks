@@ -938,7 +938,7 @@ function renderMyPage(alertText = "") {
       </button>
     `
     : "";
-  const profileStepBadge = profileFormStep === 1 ? "1 / 2" : "2 / 2";
+  const profileStepBadge = `${profileFormStep} / 3`;
   const profileForm = `
     <form class="onboarding-action" id="profileForm">
       <div class="verified-email-box">
@@ -962,7 +962,8 @@ function renderMyPage(alertText = "") {
                 <input name="birthdate" type="date" value="${escapeHtml(profileData.birthdate)}" required />
               </label>
             `
-            : `
+            : profileFormStep === 2
+              ? `
               <label>
                 郵便番号
                 <input name="postalCode" type="text" value="${escapeHtml(profileData.postalCode)}" required />
@@ -979,17 +980,19 @@ function renderMyPage(alertText = "") {
                 住所（ビル名など）
                 <input name="addressLine2" type="text" value="${escapeHtml(profileData.addressLine2)}" />
               </label>
-              <label class="span-2">
-                ユーザー名
-                <input name="username" type="text" value="${escapeHtml(profileData.username)}" required />
-              </label>
             `
+              : `
+                <label class="span-2">
+                  ユーザー名
+                  <input name="username" type="text" value="${escapeHtml(profileData.username)}" required />
+                </label>
+              `
         }
       </div>
       <div class="profile-step-actions">
         <span class="status-badge">${profileStepBadge}</span>
         ${
-          profileFormStep === 2
+          profileFormStep > 1
             ? `
               <button class="secondary-button" id="profileStepBackButton" type="button">
                 <i data-lucide="arrow-left"></i>
@@ -1000,8 +1003,8 @@ function renderMyPage(alertText = "") {
         }
       </div>
       <button class="primary-button wide" type="submit">
-        <i data-lucide="${profileFormStep === 1 ? "arrow-right" : "save"}"></i>
-        ${profileFormStep === 1 ? "次へ" : profileSubmitted ? "個人情報を更新" : "個人情報を保存"}
+        <i data-lucide="${profileFormStep < 3 ? "arrow-right" : "save"}"></i>
+        ${profileFormStep < 3 ? "次へ" : profileSubmitted ? "個人情報を更新" : "個人情報を保存"}
       </button>
     </form>
   `;
@@ -1212,15 +1215,20 @@ function renderMyPage(alertText = "") {
       profileData.birthdate = formData.get("birthdate")?.toString() || "";
       profileFormStep = 2;
       updateIdentityUI();
-      renderMyPage("続けて住所とユーザー名を入力してください。");
+      renderMyPage("続けて住所を入力してください。");
       return;
     }
-    profileData.postalCode = formData.get("postalCode")?.toString().trim() || "";
-    profileData.prefecture = formData.get("prefecture")?.toString().trim() || "";
-    profileData.addressLine1 = formData.get("addressLine1")?.toString().trim() || "";
-    profileData.addressLine2 = formData.get("addressLine2")?.toString().trim() || "";
+    if (profileFormStep === 2) {
+      profileData.postalCode = formData.get("postalCode")?.toString().trim() || "";
+      profileData.prefecture = formData.get("prefecture")?.toString().trim() || "";
+      profileData.addressLine1 = formData.get("addressLine1")?.toString().trim() || "";
+      profileData.addressLine2 = formData.get("addressLine2")?.toString().trim() || "";
+      profileData.address = [profileData.prefecture, profileData.addressLine1, profileData.addressLine2].filter(Boolean).join("");
+      profileFormStep = 3;
+      renderMyPage("最後にユーザー名を入力してください。");
+      return;
+    }
     profileData.username = formData.get("username")?.toString().trim() || "";
-    profileData.address = [profileData.prefecture, profileData.addressLine1, profileData.addressLine2].filter(Boolean).join("");
     const wasEditing = isEditingProfile;
     profileSubmitted = true;
     profileFormStep = 1;
@@ -1229,8 +1237,8 @@ function renderMyPage(alertText = "") {
     renderMyPage(wasEditing ? "個人情報を更新しました。元の手続きに戻れます。" : "個人情報を保存しました。続けて身分証を提出してください。");
   });
   document.querySelector("#profileStepBackButton")?.addEventListener("click", () => {
-    profileFormStep = 1;
-    renderMyPage("氏名、仮名、生年月日を修正できます。");
+    profileFormStep = Math.max(profileFormStep - 1, 1);
+    renderMyPage(profileFormStep === 1 ? "氏名、仮名、生年月日を修正できます。" : "住所を修正できます。");
   });
   document.querySelector("#editProfileButton")?.addEventListener("click", () => {
     isEditingProfile = true;
@@ -1890,6 +1898,25 @@ document.getElementById("workerProfileGateNext")?.addEventListener("click", () =
 
 document.getElementById("workerProfileGateBack")?.addEventListener("click", () => {
   setWorkerProfileGateStep(1);
+});
+
+document.getElementById("workerProfileGateAddressNext")?.addEventListener("click", () => {
+  const form = document.getElementById("workerProfileGate");
+  const addressStep = form?.querySelector("[data-profile-gate-step='2']");
+  if (!form || !addressStep) return;
+  const addressInputs = addressStep.querySelectorAll("input");
+  if (![...addressInputs].every((input) => input.reportValidity())) return;
+  const formData = new FormData(form);
+  profileData.postalCode = formData.get("postalCode")?.toString().trim() || "";
+  profileData.prefecture = formData.get("prefecture")?.toString().trim() || "";
+  profileData.addressLine1 = formData.get("addressLine1")?.toString().trim() || "";
+  profileData.addressLine2 = formData.get("addressLine2")?.toString().trim() || "";
+  profileData.address = [profileData.prefecture, profileData.addressLine1, profileData.addressLine2].filter(Boolean).join("");
+  setWorkerProfileGateStep(3);
+});
+
+document.getElementById("workerProfileGateAddressBack")?.addEventListener("click", () => {
+  setWorkerProfileGateStep(2);
 });
 
 document.getElementById("workerProfileGate")?.addEventListener("submit", (event) => {

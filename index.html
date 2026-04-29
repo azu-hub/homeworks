@@ -137,14 +137,29 @@
                   住所（ビル名など）
                   <input name="addressLine2" type="text" />
                 </label>
+              </div>
+              <div class="profile-step-actions">
+                <span class="status-badge">2 / 3</span>
+                <button class="secondary-button" id="workerProfileGateBack" type="button">
+                  <i data-lucide="arrow-left"></i>
+                  戻る
+                </button>
+              </div>
+              <button class="primary-button wide" id="workerProfileGateAddressNext" type="button">
+                <i data-lucide="arrow-right"></i>
+                次へ
+              </button>
+            </div>
+            <div class="profile-gate-step is-hidden" data-profile-gate-step="3">
+              <div class="form-grid">
                 <label class="span-2">
                   ユーザー名
                   <input name="username" type="text" required />
                 </label>
               </div>
               <div class="profile-step-actions">
-                <span class="status-badge">2 / 2</span>
-                <button class="secondary-button" id="workerProfileGateBack" type="button">
+                <span class="status-badge">3 / 3</span>
+                <button class="secondary-button" id="workerProfileGateAddressBack" type="button">
                   <i data-lucide="arrow-left"></i>
                   戻る
                 </button>
