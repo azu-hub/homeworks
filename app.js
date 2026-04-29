@@ -575,6 +575,7 @@ function updateIdentityUI() {
       : identityVerified
         ? '<i data-lucide="check-circle-2"></i> この案件に応募'
         : '<i data-lucide="badge-alert"></i> 運営承認後に応募';
+  document.querySelector("#guestTopbarActions")?.classList.toggle("is-hidden", isLoggedIn);
   refreshIcons();
 }
 
@@ -1917,6 +1918,11 @@ function renderMyPage(alertText = "") {
   refreshIcons();
 }
 
+function bindGuestTopbarButtons() {
+  document.querySelector("#topbarLoginButton")?.addEventListener("click", showLogin);
+  document.querySelector("#topbarRegisterButton")?.addEventListener("click", showLogin);
+}
+
 function showLogin() {
   loginView.classList.remove("is-hidden");
   Object.values(appViews).forEach((view) => view.classList.add("is-hidden"));
@@ -2619,12 +2625,55 @@ document.getElementById("companyProfileGate")?.addEventListener("submit", (event
   enterRoleApp();
 });
 
+const MOBILE_MQ = window.matchMedia("(max-width: 820px)");
+
+function closeMobilePanel(shell) {
+  shell.classList.remove("panel-open");
+  const btn = shell.querySelector("[data-panel-toggle]");
+  if (btn) btn.setAttribute("aria-label", "サイドバーを開く");
+}
+
+document.querySelectorAll(".app-shell").forEach((shell) => {
+  const backdrop = document.createElement("div");
+  backdrop.className = "panel-backdrop";
+  shell.appendChild(backdrop);
+  backdrop.addEventListener("click", () => closeMobilePanel(shell));
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  shell.addEventListener("touchstart", (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  shell.addEventListener("touchend", (e) => {
+    if (!MOBILE_MQ.matches) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dy) > Math.abs(dx)) return;
+    const panelOpen = shell.classList.contains("panel-open");
+    if (!panelOpen && dx > 50 && touchStartX < 48) {
+      shell.classList.add("panel-open");
+      const btn = shell.querySelector("[data-panel-toggle]");
+      if (btn) btn.setAttribute("aria-label", "サイドバーを閉じる");
+    } else if (panelOpen && dx < -50) {
+      closeMobilePanel(shell);
+    }
+  }, { passive: true });
+});
+
 document.querySelectorAll("[data-panel-toggle]").forEach((button) => {
   button.addEventListener("click", () => {
     const shell = button.closest(".app-shell");
     if (!shell) return;
-    const collapsed = shell.classList.toggle("panel-collapsed");
-    button.setAttribute("aria-label", collapsed ? "サイドバーを開く" : "サイドバーを閉じる");
+    if (MOBILE_MQ.matches) {
+      const open = shell.classList.toggle("panel-open");
+      button.setAttribute("aria-label", open ? "サイドバーを閉じる" : "サイドバーを開く");
+    } else {
+      const collapsed = shell.classList.toggle("panel-collapsed");
+      button.setAttribute("aria-label", collapsed ? "サイドバーを開く" : "サイドバーを閉じる");
+    }
   });
 });
 
@@ -2673,6 +2722,7 @@ document.addEventListener("click", (event) => {
 renderDetail(jobs[0]);
 renderFeed();
 renderVuzzChannel("review");
+bindGuestTopbarButtons();
 
 const initialRole = window.location.hash.replace("#", "");
 if (appViews[initialRole]) {
@@ -2680,3 +2730,5 @@ if (appViews[initialRole]) {
 } else {
   showRole("worker");
 }
+
+updateIdentityUI();
