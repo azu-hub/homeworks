@@ -1584,6 +1584,27 @@ button {
   gap: 14px;
 }
 
+.single-column-fields {
+  grid-template-columns: 1fr;
+}
+
+.auth-divider {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  height: 1px;
+  background: var(--line);
+}
+
 .span-2 {
   grid-column: span 2;
 }

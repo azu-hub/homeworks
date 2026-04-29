@@ -815,7 +815,8 @@ function renderRegistrationForm(alertText = "", mode = "login") {
                 <span class="google-mark">G</span>
                 Googleでログインする
               </button>
-              <div class="form-grid">
+              <div class="auth-divider" aria-hidden="true"><span>または</span></div>
+              <div class="form-grid single-column-fields">
                 <label>
                   メールアドレス
                   <input name="email" type="email" required />
