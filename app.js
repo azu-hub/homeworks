@@ -1404,11 +1404,9 @@ function renderMyPage(alertText = "") {
               </label>
               <label>
                 都道府県
-                <div class="select-wrap">
-                  <select name="prefecture" required>
-                    ${renderPrefectureOptions(profileData.prefecture)}
-                  </select>
-                </div>
+                <select name="prefecture" required>
+                  ${renderPrefectureOptions(profileData.prefecture)}
+                </select>
               </label>
               <label class="span-2">
                 住所（番地まで）
@@ -1546,8 +1544,8 @@ function renderMyPage(alertText = "") {
           </div>
         </div>
         <form id="profileCardForm">
-          <div class="profile-card-avatar-wrap">
-            ${avatarPreview}
+          <div style="display:flex;align-items:center;gap:16px">
+            <div class="profile-card-avatar-wrap">${avatarPreview}</div>
             <label class="profile-card-avatar-label">
               <input type="file" id="profileAvatarInput" accept="image/*" style="display:none" />
               <span class="secondary-button" style="cursor:pointer">
