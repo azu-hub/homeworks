@@ -537,7 +537,7 @@ function renderPrefectureOptions(selected = "") {
 
 function updateIdentityUI() {
   const rewardSummary = getRewardSummary();
-  const displayName = profileData.username || profileData.name || (isLoggedIn ? "未設定" : "ゲスト");
+  const displayName = isLoggedIn ? profileData.username || profileData.name || "未設定" : "ゲスト";
   workerNameText.textContent = displayName;
   workerAvatar.innerHTML = displayName && displayName !== "ゲスト" && displayName !== "未設定"
     ? escapeHtml(displayName.charAt(0))
@@ -873,10 +873,11 @@ function renderRegistrationForm(alertText = "", mode = "login") {
     if (!event.currentTarget.reportValidity()) return;
     const formData = new FormData(event.currentTarget);
     workerAuthEmail = formData.get("email")?.toString().trim() || "ログイン済み";
-    resetWorkerVerification();
-    renderMyPage("ログインしました。応募には個人情報の入力が必要です。");
+    loginExistingWorker(workerAuthEmail);
   });
-  document.querySelector("#workerGoogleLoginButton")?.addEventListener("click", loginWithGoogle);
+  document.querySelector("#workerGoogleLoginButton")?.addEventListener("click", () => {
+    loginExistingWorker("Googleアカウント認証済み");
+  });
   document.querySelector("#openWorkerSignupButton")?.addEventListener("click", () => {
     renderRegistrationForm("", "signup");
   });
@@ -901,7 +902,7 @@ function renderRegistrationForm(alertText = "", mode = "login") {
   document.querySelector("#backWorkerLoginButton")?.addEventListener("click", () => {
     renderRegistrationForm();
   });
-  document.querySelector("#googleSignupButton")?.addEventListener("click", loginWithGoogle);
+  document.querySelector("#googleSignupButton")?.addEventListener("click", signupWithGoogle);
   refreshIcons();
 }
 
@@ -1440,7 +1441,29 @@ function resetWorkerVerification() {
   updateIdentityUI();
 }
 
-function loginWithGoogle() {
+function applyExistingWorkerProfile(displayEmail = "") {
+  profileData.name = profileData.name || "登録済みユーザー";
+  profileData.kana = profileData.kana || "トウロクズミユーザー";
+  profileData.birthdate = profileData.birthdate || "1990-01-01";
+  profileData.postalCode = profileData.postalCode || "100-0001";
+  profileData.prefecture = profileData.prefecture || "東京都";
+  profileData.addressLine1 = profileData.addressLine1 || "千代田区千代田1-1";
+  profileData.addressLine2 = profileData.addressLine2 || "";
+  profileData.username = profileData.username || (displayEmail ? displayEmail.split("@")[0] : "homeworker");
+  profileData.address = [profileData.prefecture, profileData.addressLine1, profileData.addressLine2].filter(Boolean).join("");
+}
+
+function loginExistingWorker(displayEmail = "ログイン済み") {
+  workerAuthEmail = displayEmail;
+  resetWorkerVerification();
+  applyExistingWorkerProfile(displayEmail.includes("@") ? displayEmail : "");
+  profileSubmitted = true;
+  updateIdentityUI();
+  showRole("worker");
+  renderMyPage("ログインしました。マイページを表示しています。");
+}
+
+function signupWithGoogle() {
   workerAuthEmail = "Googleアカウント認証済み";
   resetWorkerVerification();
   showRole("worker");
@@ -1752,9 +1775,15 @@ function renderFeed() {
             </div>
             <div class="job-actions">
               <button class="mini-button" data-action="detail" data-id="${job.id}" type="button">詳細を見る</button>
-              <button class="mini-button ${savedJobs.has(job.id) ? "active" : ""}" data-action="save" data-id="${job.id}" type="button">
-                ${savedJobs.has(job.id) ? "保存済み" : "保存"}
-              </button>
+              ${
+                isLoggedIn
+                  ? `
+                    <button class="mini-button ${savedJobs.has(job.id) ? "active" : ""}" data-action="save" data-id="${job.id}" type="button">
+                      ${savedJobs.has(job.id) ? "保存済み" : "保存"}
+                    </button>
+                  `
+                  : ""
+              }
               <button class="mini-button" data-action="apply" data-id="${job.id}" type="button">
                 ${getWorkerApprovalLabel()}
               </button>
@@ -1780,6 +1809,7 @@ function renderDetail(job) {
   document.querySelector("#detailTime").textContent = job.time;
   document.querySelector("#detailReview").textContent = job.review;
   saveCurrent.classList.toggle("active", savedJobs.has(job.id));
+  saveCurrent.classList.toggle("is-hidden", !isLoggedIn);
   updateIdentityUI();
 }
 
@@ -1791,6 +1821,10 @@ function selectJob(id) {
 }
 
 function toggleSave(id) {
+  if (!isLoggedIn) {
+    renderRegistrationForm("保存するにはログインまたは会員登録が必要です。");
+    return;
+  }
   if (savedJobs.has(id)) {
     savedJobs.delete(id);
   } else {
