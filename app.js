@@ -835,6 +835,9 @@ function renderRegistrationForm(alertText = "", mode = "login") {
                 <i data-lucide="log-in"></i>
                 ログイン
               </button>
+              <button class="text-link-button" id="forgotPasswordButton" type="button">
+                パスワードを忘れた方はこちら
+              </button>
               <button class="text-link-button" id="openWorkerSignupButton" type="button">
                 会員登録はこちら
               </button>
@@ -854,6 +857,14 @@ function renderRegistrationForm(alertText = "", mode = "login") {
   });
   document.querySelector("#workerGoogleLoginButton")?.addEventListener("click", () => {
     loginExistingWorker("Googleアカウント認証済み");
+  });
+  document.querySelector("#forgotPasswordButton")?.addEventListener("click", () => {
+    const email = document.querySelector("#workerLoginForm input[name='email']")?.value.trim();
+    renderRegistrationForm(
+      email
+        ? `${email} にパスワード再設定メールを送信しました。`
+        : "メールアドレスを入力すると、パスワード再設定メールを送信できます。",
+    );
   });
   document.querySelector("#openWorkerSignupButton")?.addEventListener("click", () => {
     renderRegistrationForm("", "signup");
