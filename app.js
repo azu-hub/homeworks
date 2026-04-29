@@ -1065,7 +1065,8 @@ function renderEmailVerification(alertText = "") {
         <div class="form-grid">
           <label class="span-2">
             認証コード
-            <input id="emailCodeInput" type="text" inputmode="numeric" />
+            <input id="emailCodeInput" type="text" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="one-time-code" />
+            <span class="field-hint">6桁の数字</span>
           </label>
         </div>
         <button class="primary-button wide" type="submit">
@@ -1080,8 +1081,18 @@ function renderEmailVerification(alertText = "") {
     </section>
   `;
 
+  const emailCodeInput = document.querySelector("#emailCodeInput");
+  emailCodeInput?.addEventListener("input", () => {
+    emailCodeInput.value = toHalfWidth(emailCodeInput.value).replace(/[^0-9]/g, "");
+  });
+
   document.querySelector("#emailVerificationForm").addEventListener("submit", (event) => {
     event.preventDefault();
+    const code = emailCodeInput?.value.trim() || "";
+    if (!/^[0-9]{6}$/.test(code)) {
+      renderEmailVerification("認証コードは6桁の数字で入力してください。");
+      return;
+    }
     emailVerified = true;
     identityVerified = false;
     recordWorkerLogin();
@@ -1114,7 +1125,7 @@ function renderPostVerificationSetup(alertText = "") {
           <label>
             パスワード
             <span class="password-field">
-              <input name="password" type="password" autocomplete="new-password" minlength="8" required />
+              <input name="password" type="password" autocomplete="new-password" minlength="6" required />
               <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
                 <i data-lucide="eye"></i>
               </button>
@@ -1123,7 +1134,7 @@ function renderPostVerificationSetup(alertText = "") {
           <label>
             パスワード（確認）
             <span class="password-field">
-              <input name="passwordConfirm" type="password" autocomplete="new-password" minlength="8" required />
+              <input name="passwordConfirm" type="password" autocomplete="new-password" minlength="6" required />
               <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
                 <i data-lucide="eye"></i>
               </button>
