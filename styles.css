@@ -1477,6 +1477,35 @@ button {
   gap: 10px;
 }
 
+.verified-email-box {
+  display: grid;
+  gap: 5px;
+  padding: 12px 14px;
+  border: 1px solid rgba(72, 181, 140, 0.3);
+  border-radius: var(--radius);
+  background: rgba(72, 181, 140, 0.12);
+}
+
+.verified-email-box span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.verified-email-box strong {
+  overflow: hidden;
+  color: #86e6bd;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-step-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .onboarding-step {
   display: grid;
   grid-template-columns: 14px minmax(0, 1fr) auto;
@@ -1608,6 +1637,12 @@ button {
 
 .login-profile-form {
   margin-top: 4px;
+}
+
+.staged-profile-form,
+.profile-gate-step {
+  display: grid;
+  gap: 14px;
 }
 
 .applicant-list,

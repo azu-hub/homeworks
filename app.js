@@ -139,11 +139,18 @@ let vuzzApplicationSubmitted = false;
 let identityVerified = false;
 let lifetimeEarnings = 0;
 let isEditingProfile = false;
+let profileFormStep = 1;
+let workerAuthEmail = "";
 const profileData = {
   name: "",
+  kana: "",
   birthdate: "",
   gender: "",
   postalCode: "",
+  prefecture: "",
+  addressLine1: "",
+  addressLine2: "",
+  username: "",
   phone: "",
   address: "",
   workHistory: "",
@@ -465,9 +472,11 @@ function getRewardSummary() {
 
 function updateIdentityUI() {
   const rewardSummary = getRewardSummary();
-  const displayName = profileData.name || (isLoggedIn ? "未設定" : "ゲスト");
+  const displayName = profileData.username || profileData.name || (isLoggedIn ? "未設定" : "ゲスト");
   workerNameText.textContent = displayName;
-  workerAvatar.innerHTML = profileData.name ? escapeHtml(profileData.name.charAt(0)) : '<i data-lucide="user"></i>';
+  workerAvatar.innerHTML = displayName && displayName !== "ゲスト" && displayName !== "未設定"
+    ? escapeHtml(displayName.charAt(0))
+    : '<i data-lucide="user"></i>';
   workerIdentityText.textContent = getWorkerApprovalStatus();
   workerRankText.textContent = isLoggedIn
     ? `${rewardSummary.currentRank.label}・${rewardSummary.points.toLocaleString("ja-JP")}pt`
@@ -482,6 +491,10 @@ function updateIdentityUI() {
         ? '<i data-lucide="check-circle-2"></i> この案件に応募'
         : '<i data-lucide="badge-alert"></i> 運営承認後に応募';
   refreshIcons();
+}
+
+function getWorkerAuthDisplay() {
+  return workerAuthEmail || "認証済みメールアドレス";
 }
 
 function escapeHtml(value) {
@@ -687,12 +700,12 @@ function renderRegistrationForm(alertText = "") {
         <div class="form-grid">
           <label>
             メールアドレス
-            <input type="email" />
+            <input name="email" type="email" required />
           </label>
           <label>
             パスワード
             <span class="password-field">
-              <input type="password" />
+              <input type="password" required />
               <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
                 <i data-lucide="eye"></i>
               </button>
@@ -744,6 +757,9 @@ function renderRegistrationForm(alertText = "") {
 
   document.querySelector("#workerRegistrationForm").addEventListener("submit", (event) => {
     event.preventDefault();
+    if (!event.currentTarget.reportValidity()) return;
+    const formData = new FormData(event.currentTarget);
+    workerAuthEmail = formData.get("email")?.toString().trim() || "メール認証済み";
     isLoggedIn = true;
     emailVerified = false;
     profileSubmitted = false;
@@ -753,6 +769,7 @@ function renderRegistrationForm(alertText = "") {
     vuzzApplicationSubmitted = false;
     identityVerified = false;
     isEditingProfile = false;
+    profileFormStep = 1;
     updateIdentityUI();
     renderEmailVerification("登録が完了しました。メールに届いた認証コードを確認してください。");
   });
@@ -795,7 +812,7 @@ function renderEmailVerification(alertText = "") {
           </div>
           <span class="status-badge">未認証</span>
         </div>
-        <p class="form-note">登録したメールアドレスに6桁の認証コードを送信しました。</p>
+        <p class="form-note">${escapeHtml(getWorkerAuthDisplay())} に6桁の認証コードを送信しました。</p>
         <div class="form-grid">
           <label class="span-2">
             認証コード
@@ -921,48 +938,70 @@ function renderMyPage(alertText = "") {
       </button>
     `
     : "";
+  const profileStepBadge = profileFormStep === 1 ? "1 / 2" : "2 / 2";
   const profileForm = `
     <form class="onboarding-action" id="profileForm">
+      <div class="verified-email-box">
+        <span>認証済みメールアドレス</span>
+        <strong>${escapeHtml(getWorkerAuthDisplay())}</strong>
+      </div>
       <div class="form-grid">
-        <label>
-          氏名
-          <input name="name" type="text" value="${escapeHtml(profileData.name)}" />
-        </label>
-        <label>
-          生年月日
-          <input name="birthdate" type="date" value="${escapeHtml(profileData.birthdate)}" />
-        </label>
-        <fieldset class="gender-options span-2">
-          <legend>性別</legend>
-          <label>
-            <input name="gender" type="radio" value="男性" ${profileData.gender === "男性" ? "checked" : ""} />
-            男性
-          </label>
-          <label>
-            <input name="gender" type="radio" value="女性" ${profileData.gender === "女性" ? "checked" : ""} />
-            女性
-          </label>
-        </fieldset>
-        <label>
-          郵便番号
-          <input name="postalCode" type="text" value="${escapeHtml(profileData.postalCode)}" />
-        </label>
-        <label>
-          電話番号
-          <input name="phone" type="tel" value="${escapeHtml(profileData.phone)}" />
-        </label>
-        <label class="span-2">
-          住所
-          <input name="address" type="text" value="${escapeHtml(profileData.address)}" />
-        </label>
-        <label class="span-2">
-          職歴
-          <textarea name="workHistory" rows="4" placeholder="例) 2020-2023 ◯◯株式会社 経理事務 / 2018-2020 ▲▲スーパー 商品管理">${escapeHtml(profileData.workHistory)}</textarea>
-        </label>
+        ${
+          profileFormStep === 1
+            ? `
+              <label>
+                氏名
+                <input name="name" type="text" value="${escapeHtml(profileData.name)}" required />
+              </label>
+              <label>
+                仮名
+                <input name="kana" type="text" value="${escapeHtml(profileData.kana)}" required />
+              </label>
+              <label class="span-2">
+                生年月日
+                <input name="birthdate" type="date" value="${escapeHtml(profileData.birthdate)}" required />
+              </label>
+            `
+            : `
+              <label>
+                郵便番号
+                <input name="postalCode" type="text" value="${escapeHtml(profileData.postalCode)}" required />
+              </label>
+              <label>
+                都道府県
+                <input name="prefecture" type="text" value="${escapeHtml(profileData.prefecture)}" required />
+              </label>
+              <label class="span-2">
+                住所（番地まで）
+                <input name="addressLine1" type="text" value="${escapeHtml(profileData.addressLine1)}" required />
+              </label>
+              <label class="span-2">
+                住所（ビル名など）
+                <input name="addressLine2" type="text" value="${escapeHtml(profileData.addressLine2)}" />
+              </label>
+              <label class="span-2">
+                ユーザー名
+                <input name="username" type="text" value="${escapeHtml(profileData.username)}" required />
+              </label>
+            `
+        }
+      </div>
+      <div class="profile-step-actions">
+        <span class="status-badge">${profileStepBadge}</span>
+        ${
+          profileFormStep === 2
+            ? `
+              <button class="secondary-button" id="profileStepBackButton" type="button">
+                <i data-lucide="arrow-left"></i>
+                戻る
+              </button>
+            `
+            : ""
+        }
       </div>
       <button class="primary-button wide" type="submit">
-        <i data-lucide="save"></i>
-        ${profileSubmitted ? "個人情報を更新" : "個人情報を保存"}
+        <i data-lucide="${profileFormStep === 1 ? "arrow-right" : "save"}"></i>
+        ${profileFormStep === 1 ? "次へ" : profileSubmitted ? "個人情報を更新" : "個人情報を保存"}
       </button>
     </form>
   `;
@@ -1165,22 +1204,37 @@ function renderMyPage(alertText = "") {
 
   document.querySelector("#profileForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
+    if (!event.currentTarget.reportValidity()) return;
     const formData = new FormData(event.currentTarget);
-    profileData.name = formData.get("name")?.toString().trim() || "";
-    profileData.birthdate = formData.get("birthdate")?.toString() || "";
-    profileData.gender = formData.get("gender")?.toString() || "";
+    if (profileFormStep === 1) {
+      profileData.name = formData.get("name")?.toString().trim() || "";
+      profileData.kana = formData.get("kana")?.toString().trim() || "";
+      profileData.birthdate = formData.get("birthdate")?.toString() || "";
+      profileFormStep = 2;
+      updateIdentityUI();
+      renderMyPage("続けて住所とユーザー名を入力してください。");
+      return;
+    }
     profileData.postalCode = formData.get("postalCode")?.toString().trim() || "";
-    profileData.phone = formData.get("phone")?.toString().trim() || "";
-    profileData.address = formData.get("address")?.toString().trim() || "";
-    profileData.workHistory = formData.get("workHistory")?.toString().trim() || "";
+    profileData.prefecture = formData.get("prefecture")?.toString().trim() || "";
+    profileData.addressLine1 = formData.get("addressLine1")?.toString().trim() || "";
+    profileData.addressLine2 = formData.get("addressLine2")?.toString().trim() || "";
+    profileData.username = formData.get("username")?.toString().trim() || "";
+    profileData.address = [profileData.prefecture, profileData.addressLine1, profileData.addressLine2].filter(Boolean).join("");
     const wasEditing = isEditingProfile;
     profileSubmitted = true;
+    profileFormStep = 1;
     isEditingProfile = false;
     updateIdentityUI();
     renderMyPage(wasEditing ? "個人情報を更新しました。元の手続きに戻れます。" : "個人情報を保存しました。続けて身分証を提出してください。");
   });
+  document.querySelector("#profileStepBackButton")?.addEventListener("click", () => {
+    profileFormStep = 1;
+    renderMyPage("氏名、仮名、生年月日を修正できます。");
+  });
   document.querySelector("#editProfileButton")?.addEventListener("click", () => {
     isEditingProfile = true;
+    profileFormStep = 1;
     renderMyPage("個人情報を修正できます。保存すると元の手続きに戻ります。");
   });
   document.querySelector("#submitIdButton")?.addEventListener("click", () => {
@@ -1246,10 +1300,12 @@ function resetWorkerVerification() {
   vuzzApplicationSubmitted = false;
   identityVerified = false;
   isEditingProfile = false;
+  profileFormStep = 1;
   updateIdentityUI();
 }
 
 function loginWithGoogle() {
+  workerAuthEmail = "Googleアカウント認証済み";
   resetWorkerVerification();
   showRole("worker");
   renderMyPage("Google認証が完了しました。続けて個人情報を入力してください。");
@@ -1270,6 +1326,17 @@ function setLoginStep(step) {
     if (!el) return;
     el.classList.toggle("is-hidden", name !== step);
   });
+  if (step === "workerProfile") {
+    document.getElementById("workerProfileGateEmail").textContent = getWorkerAuthDisplay();
+    setWorkerProfileGateStep(1);
+  }
+  refreshIcons();
+}
+
+function setWorkerProfileGateStep(step) {
+  document.querySelectorAll("[data-profile-gate-step]").forEach((section) => {
+    section.classList.toggle("is-hidden", section.dataset.profileGateStep !== String(step));
+  });
   refreshIcons();
 }
 
@@ -1282,6 +1349,10 @@ function profileStepFor(role) {
 function startRegistrationFlow(role) {
   pendingLoginRole = role;
   pendingLoginMethod = null;
+  if (role === "worker") {
+    workerAuthEmail = "";
+    profileFormStep = 1;
+  }
   const heading = document.getElementById("methodHeading");
   if (heading) {
     heading.textContent = role === "company" ? "企業として登録方法を選択" : "ワーカーとして登録方法を選択";
@@ -1292,6 +1363,9 @@ function startRegistrationFlow(role) {
 function chooseAuthMethod(method) {
   pendingLoginMethod = method;
   if (method === "google") {
+    if (pendingLoginRole === "worker") {
+      workerAuthEmail = "Googleアカウント認証済み";
+    }
     completeAuthentication();
     return;
   }
@@ -1796,7 +1870,26 @@ document.getElementById("emailRegisterForm")?.addEventListener("submit", (event)
   event.preventDefault();
   const form = event.currentTarget;
   if (!form.reportValidity()) return;
+  const formData = new FormData(form);
+  workerAuthEmail = formData.get("email")?.toString().trim() || "メール認証済み";
   completeAuthentication();
+});
+
+document.getElementById("workerProfileGateNext")?.addEventListener("click", () => {
+  const form = document.getElementById("workerProfileGate");
+  const firstStep = form?.querySelector("[data-profile-gate-step='1']");
+  if (!form || !firstStep) return;
+  const firstInputs = firstStep.querySelectorAll("input");
+  if (![...firstInputs].every((input) => input.reportValidity())) return;
+  const formData = new FormData(form);
+  profileData.name = formData.get("name")?.toString().trim() || "";
+  profileData.kana = formData.get("kana")?.toString().trim() || "";
+  profileData.birthdate = formData.get("birthdate")?.toString() || "";
+  setWorkerProfileGateStep(2);
+});
+
+document.getElementById("workerProfileGateBack")?.addEventListener("click", () => {
+  setWorkerProfileGateStep(1);
 });
 
 document.getElementById("workerProfileGate")?.addEventListener("submit", (event) => {
@@ -1805,16 +1898,20 @@ document.getElementById("workerProfileGate")?.addEventListener("submit", (event)
   if (!form.reportValidity()) return;
   const formData = new FormData(form);
   profileData.name = formData.get("name")?.toString().trim() || "";
+  profileData.kana = formData.get("kana")?.toString().trim() || "";
   profileData.birthdate = formData.get("birthdate")?.toString() || "";
-  profileData.gender = formData.get("gender")?.toString() || "";
   profileData.postalCode = formData.get("postalCode")?.toString().trim() || "";
-  profileData.phone = formData.get("phone")?.toString().trim() || "";
-  profileData.address = formData.get("address")?.toString().trim() || "";
-  profileData.workHistory = formData.get("workHistory")?.toString().trim() || "";
+  profileData.prefecture = formData.get("prefecture")?.toString().trim() || "";
+  profileData.addressLine1 = formData.get("addressLine1")?.toString().trim() || "";
+  profileData.addressLine2 = formData.get("addressLine2")?.toString().trim() || "";
+  profileData.username = formData.get("username")?.toString().trim() || "";
+  profileData.address = [profileData.prefecture, profileData.addressLine1, profileData.addressLine2].filter(Boolean).join("");
   profileSubmitted = true;
   isEditingProfile = false;
+  profileFormStep = 1;
   updateIdentityUI();
   form.reset();
+  setWorkerProfileGateStep(1);
   enterRoleApp();
 });
 
@@ -1844,6 +1941,8 @@ document.querySelectorAll("[data-logout]").forEach((button) => {
     vuzzApplicationSubmitted = false;
     identityVerified = false;
     isEditingProfile = false;
+    profileFormStep = 1;
+    workerAuthEmail = "";
     companyProfileSubmitted = false;
     pendingLoginRole = null;
     pendingLoginMethod = null;
