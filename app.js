@@ -205,6 +205,7 @@ const profileData = {
   phone: "",
   address: "",
   workHistory: "",
+  avatarUrl: "",
 };
 const companyData = {
   companyName: "",
@@ -223,6 +224,7 @@ const applications = [];
 const bankData = { bankName: "", branchName: "", accountType: "普通", accountNumber: "", holderName: "" };
 let bankSubmitted = false;
 let isBankEditing = false;
+let isProfileCardEditing = false;
 let workerPassword = "";
 const withdrawalHistory = [];
 let withdrawalPending = false;
@@ -553,14 +555,18 @@ function updateIdentityUI() {
   const rewardSummary = getRewardSummary();
   const displayName = isLoggedIn ? profileData.username || profileData.name || "未設定" : "ゲスト";
   workerNameText.textContent = displayName;
-  workerAvatar.innerHTML = displayName && displayName !== "ゲスト" && displayName !== "未設定"
-    ? escapeHtml(displayName.charAt(0))
-    : '<i data-lucide="user"></i>';
+  if (profileData.avatarUrl) {
+    workerAvatar.innerHTML = `<img src="${profileData.avatarUrl}" alt="アイコン" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+  } else {
+    workerAvatar.innerHTML = displayName && displayName !== "ゲスト" && displayName !== "未設定"
+      ? escapeHtml(displayName.charAt(0))
+      : '<i data-lucide="user"></i>';
+  }
   workerIdentityText.textContent = getWorkerApprovalStatus();
-  workerRankText.textContent = isLoggedIn
+  workerRankText.textContent = profileSubmitted
     ? `${rewardSummary.currentRank.label}・${rewardSummary.points.toLocaleString("ja-JP")}pt`
     : "";
-  workerRankText.classList.toggle("is-hidden", !isLoggedIn);
+  workerRankText.classList.toggle("is-hidden", !profileSubmitted);
   workerPresence.classList.toggle("warning", !isLoggedIn || !emailVerified || !identityVerified);
   document.querySelector("#applyButton").innerHTML = !isLoggedIn
     ? '<i data-lucide="log-in"></i> ログインして応募する'
@@ -636,6 +642,12 @@ function populateBirthdateSelects(container) {
       daySel.add(new Option(`${day}日`, day));
     }
   }
+}
+
+function toHalfWidth(str) {
+  return str
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0))
+    .replace(/[^A-Za-z0-9]/g, "");
 }
 
 function escapeHtml(value) {
@@ -869,7 +881,7 @@ function renderRegistrationForm(alertText = "", mode = "login") {
         <div class="form-grid single-column-fields">
           <label>
             メールアドレス
-            <input name="email" type="email" autocomplete="email" required />
+            <input name="email" type="text" inputmode="email" autocomplete="email" required />
           </label>
         </div>
         <button class="primary-button wide" type="submit">
@@ -915,7 +927,7 @@ function renderRegistrationForm(alertText = "", mode = "login") {
         <div class="form-grid single-column-fields">
           <label>
             メールアドレス
-            <input name="email" type="email" autocomplete="email" required />
+            <input name="email" type="text" inputmode="email" autocomplete="email" required />
           </label>
         </div>
         <button class="primary-button wide" type="submit">
@@ -940,7 +952,7 @@ function renderRegistrationForm(alertText = "", mode = "login") {
         <div class="form-grid single-column-fields">
           <label>
             メールアドレス
-            <input name="email" type="email" required />
+            <input name="email" type="text" inputmode="email" autocomplete="email" required />
           </label>
           <label>
             パスワード
@@ -1345,8 +1357,8 @@ function renderMyPage(alertText = "") {
         }
       </div>
       <button class="primary-button wide" type="submit">
-        <i data-lucide="${profileFormStep === 1 ? "arrow-right" : "save"}"></i>
-        ${profileFormStep === 1 ? "次へ" : profileSubmitted ? "個人情報を更新" : "個人情報を保存"}
+        <i data-lucide="${profileFormStep === 1 ? "arrow-right" : "arrow-right"}"></i>
+        ${profileFormStep === 1 ? "次へ" : profileSubmitted ? "個人情報を更新" : "次へ"}
       </button>
     </form>
   `;
@@ -1437,6 +1449,65 @@ function renderMyPage(alertText = "") {
         </span>
       `
       : "";
+  const avatarPreview = profileData.avatarUrl
+    ? `<img src="${profileData.avatarUrl}" alt="アイコン" class="profile-card-avatar-img" />`
+    : `<div class="profile-card-avatar-placeholder">${escapeHtml((profileData.username || profileData.name || "?").charAt(0))}</div>`;
+
+  const profileCardHtml = isProfileCardEditing
+    ? `
+      <article class="portal-panel mypage-card profile-card">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">profile</p>
+            <h2>プロフィール編集</h2>
+          </div>
+        </div>
+        <form id="profileCardForm">
+          <div class="profile-card-avatar-wrap">
+            ${avatarPreview}
+            <label class="profile-card-avatar-label">
+              <input type="file" id="profileAvatarInput" accept="image/*" style="display:none" />
+              <span class="secondary-button" style="cursor:pointer">
+                <i data-lucide="camera"></i> アイコンを変更
+              </span>
+            </label>
+          </div>
+          <div class="form-grid single-column-fields" style="margin-top:12px">
+            <label>
+              ユーザー名
+              <input name="username" type="text" value="${escapeHtml(profileData.username)}" required />
+            </label>
+          </div>
+          <div class="form-actions" style="margin-top:12px">
+            <button class="secondary-button" id="cancelProfileCardButton" type="button">キャンセル</button>
+            <button class="primary-button" type="submit">
+              <i data-lucide="check"></i> 保存
+            </button>
+          </div>
+        </form>
+      </article>
+    `
+    : `
+      <article class="portal-panel mypage-card profile-card">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">profile</p>
+            <h2>プロフィール</h2>
+          </div>
+          <button class="secondary-button" id="editProfileCardButton" type="button">
+            <i data-lucide="pencil"></i> 編集
+          </button>
+        </div>
+        <div class="profile-card-display">
+          <div class="profile-card-avatar-wrap">${avatarPreview}</div>
+          <div>
+            <strong>${escapeHtml(profileData.username || profileData.name || "未設定")}</strong>
+            <span>${escapeHtml(getWorkerAuthDisplay())}</span>
+          </div>
+        </div>
+      </article>
+    `;
+
   const applicationsCard = identityVerified
     ? `
       <article class="portal-panel mypage-card applications-card">
@@ -1679,32 +1750,8 @@ function renderMyPage(alertText = "") {
         ${nextAction}
       </article>
 
-      <article class="portal-panel mypage-card flow-card">
-        <div class="section-head compact-head">
-          <div>
-            <p class="eyebrow">flow</p>
-            <h2>受注開始まで</h2>
-          </div>
-          <span class="status-badge ${identityVerified ? "verified" : ""}">
-            ${identityVerified ? "完了" : "進行中"}
-          </span>
-        </div>
-        <div class="onboarding-steps compact-steps">
-          ${steps
-            .map(
-              ([label, done, status]) => `
-                <div class="onboarding-step ${done ? "done" : ""}">
-                  <span class="status-dot ${done ? "" : "warn"}"></span>
-                  <strong>${label}</strong>
-                  <span>${status}</span>
-                </div>
-              `,
-            )
-            .join("")}
-        </div>
-      </article>
-
       ${applicationsCard}
+      ${profileSubmitted ? profileCardHtml : ""}
       ${bankCard}
       ${withdrawalCard}
     </section>
@@ -1734,7 +1781,12 @@ function renderMyPage(alertText = "") {
       renderMyPage("最後にユーザー名を入力してください。");
       return;
     }
-    profileData.username = formData.get("username")?.toString().trim() || "";
+    const rawUsername = toHalfWidth(formData.get("username")?.toString().trim() || "");
+    if (!rawUsername) {
+      renderMyPage("ユーザー名を入力してください。");
+      return;
+    }
+    profileData.username = rawUsername;
     const wasEditing = isEditingProfile;
     profileSubmitted = true;
     profileFormStep = 1;
@@ -1745,6 +1797,11 @@ function renderMyPage(alertText = "") {
   document.querySelector("#profileStepBackButton")?.addEventListener("click", () => {
     profileFormStep = Math.max(profileFormStep - 1, 1);
     renderMyPage();
+  });
+  const usernameInput = document.querySelector('#profileForm input[name="username"]');
+  usernameInput?.addEventListener("input", () => {
+    const converted = toHalfWidth(usernameInput.value);
+    if (usernameInput.value !== converted) usernameInput.value = converted;
   });
   document.querySelector("#editProfileButton")?.addEventListener("click", () => {
     isEditingProfile = true;
@@ -1805,6 +1862,37 @@ function renderMyPage(alertText = "") {
   document.querySelector("#cancelBankEditButton")?.addEventListener("click", () => {
     isBankEditing = false;
     renderMyPage();
+  });
+
+  document.querySelector("#editProfileCardButton")?.addEventListener("click", () => {
+    isProfileCardEditing = true;
+    renderMyPage();
+  });
+  document.querySelector("#cancelProfileCardButton")?.addEventListener("click", () => {
+    isProfileCardEditing = false;
+    renderMyPage();
+  });
+  document.querySelector("#profileCardForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    profileData.username = formData.get("username")?.toString().trim() || "";
+    isProfileCardEditing = false;
+    updateIdentityUI();
+    renderMyPage("プロフィールを更新しました。");
+  });
+  document.querySelector("#profileAvatarInput")?.addEventListener("change", (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      profileData.avatarUrl = e.target.result;
+      const wrap = document.querySelector(".profile-card-avatar-wrap");
+      if (wrap) {
+        wrap.innerHTML = `<img src="${profileData.avatarUrl}" alt="アイコン" class="profile-card-avatar-img" />`;
+      }
+      updateIdentityUI();
+    };
+    reader.readAsDataURL(file);
   });
   document.querySelector("#withdrawalForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -2505,7 +2593,7 @@ document.getElementById("workerProfileGate")?.addEventListener("submit", (event)
   profileData.prefecture = formData.get("prefecture")?.toString().trim() || "";
   profileData.addressLine1 = formData.get("addressLine1")?.toString().trim() || "";
   profileData.addressLine2 = formData.get("addressLine2")?.toString().trim() || "";
-  profileData.username = formData.get("username")?.toString().trim() || "";
+  profileData.username = toHalfWidth(formData.get("username")?.toString().trim() || "");
   profileData.address = [profileData.prefecture, profileData.addressLine1, profileData.addressLine2].filter(Boolean).join("");
   profileSubmitted = true;
   isEditingProfile = false;
