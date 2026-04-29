@@ -1399,9 +1399,8 @@ function renderMyPage(alertText = "") {
             : profileFormStep === 2
               ? `
               <label>
-                郵便番号
+                <span class="label-with-hint">郵便番号<span class="field-hint">ハイフンなし7桁</span></span>
                 <input name="postalCode" type="text" inputmode="numeric" pattern="[0-9]{7}" maxlength="8" placeholder="1234567" value="${escapeHtml(profileData.postalCode.replace(/-/g, ""))}" required />
-                <span class="field-hint">ハイフンなし7桁</span>
               </label>
               <label>
                 都道府県
@@ -1767,7 +1766,7 @@ function renderMyPage(alertText = "") {
   feed.innerHTML = `
     ${alertText ? `<div class="mypage-alert">${alertText}</div>` : ""}
     <section class="mypage-grid ${profileSubmitted ? "" : "profile-required"}">
-      <article class="portal-panel mypage-card membership-card">
+      ${identityVerified ? `<article class="portal-panel mypage-card membership-card">
         <div class="section-head">
           <div>
             <p class="eyebrow">member rank</p>
@@ -1821,7 +1820,7 @@ function renderMyPage(alertText = "") {
             )
             .join("")}
         </div>
-      </article>
+      </article>` : ""}
 
       <article class="portal-panel mypage-card action-card">
         <div class="section-head">
