@@ -827,40 +827,45 @@ function renderRegistrationForm(alertText = "", mode = "login") {
                 <i data-lucide="log-in"></i>
                 ログイン
               </button>
-              <button class="secondary-button wide" id="openWorkerSignupButton" type="button">
-                <i data-lucide="user-plus"></i>
+              <button class="text-link-button" id="openWorkerSignupButton" type="button">
                 会員登録はこちら
               </button>
             </form>
           `
       }
 
-      <aside class="portal-panel mypage-card">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">next step</p>
-            <h2>登録後の流れ</h2>
-          </div>
-        </div>
-        <dl class="ops-metrics">
-          <div>
-            <dt>1. 認証</dt>
-            <dd>メール / Google</dd>
-          </div>
-          <div>
-            <dt>2. 個人情報</dt>
-            <dd>必須</dd>
-          </div>
-          <div>
-            <dt>3. 身分証提出</dt>
-            <dd>必須</dd>
-          </div>
-          <div>
-            <dt>4. 運営承認後に応募</dt>
-            <dd>可能</dd>
-          </div>
-        </dl>
-      </aside>
+      ${
+        isSignup
+          ? `
+            <aside class="portal-panel mypage-card">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">next step</p>
+                  <h2>登録後の流れ</h2>
+                </div>
+              </div>
+              <dl class="ops-metrics">
+                <div>
+                  <dt>1. 認証</dt>
+                  <dd>メール / Google</dd>
+                </div>
+                <div>
+                  <dt>2. 個人情報</dt>
+                  <dd>必須</dd>
+                </div>
+                <div>
+                  <dt>3. 身分証提出</dt>
+                  <dd>必須</dd>
+                </div>
+                <div>
+                  <dt>4. 運営承認後に応募</dt>
+                  <dd>可能</dd>
+                </div>
+              </dl>
+            </aside>
+          `
+          : ""
+      }
     </section>
   `;
 
