@@ -1967,10 +1967,11 @@ button {
 
 .login-popup-text strong {
   display: block;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--fg);
+  color: var(--text);
   margin-bottom: 2px;
+  white-space: nowrap;
 }
 
 .login-popup-text span {
@@ -2398,10 +2399,31 @@ button {
   }
 
   .channel-panel {
-    position: static;
-    height: auto;
-    z-index: 4;
-    border-right: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 282px;
+    height: 100vh;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .app-shell.panel-open > .channel-panel {
+    transform: translateX(0);
+  }
+
+  .panel-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 199;
+  }
+
+  .app-shell.panel-open .panel-backdrop {
+    display: block;
   }
 
   .worker-card,
@@ -2554,6 +2576,23 @@ button {
   .composer {
     right: 10px;
     left: 10px;
+  }
+
+  #loginRequiredPopup {
+    padding: 0 10px 12px;
+  }
+
+  .login-popup-text span {
+    display: none;
+  }
+
+  .login-popup-icon {
+    display: none;
+  }
+
+  .login-popup-login-btn {
+    padding: 7px 12px;
+    font-size: 13px;
   }
 }
 
