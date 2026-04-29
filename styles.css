@@ -1470,6 +1470,10 @@ button {
   grid-template-columns: minmax(320px, 560px);
 }
 
+.registration-grid:has(#workerRegistrationForm) {
+  grid-template-columns: minmax(320px, 560px);
+}
+
 .registration-form {
   display: grid;
   gap: 16px;

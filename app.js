@@ -187,7 +187,7 @@ let contractIssued = false;
 let lineRegistered = false;
 let vuzzApplicationSubmitted = false;
 let identityVerified = false;
-let loginRecordCount = 0;
+const loginRecordDays = new Set();
 let completedJobCount = 0;
 let isEditingProfile = false;
 let profileFormStep = 1;
@@ -483,7 +483,8 @@ function getWorkerApprovalLabel() {
 }
 
 function getRewardSummary() {
-  const loginPoints = loginRecordCount * 10;
+  const loginDayCount = loginRecordDays.size;
+  const loginPoints = loginDayCount * 10;
   const completedJobPoints = completedJobCount * 120;
   const points = loginPoints + completedJobPoints;
   const ranks = [
@@ -515,6 +516,7 @@ function getRewardSummary() {
     nextRank,
     nextReward,
     rankProgress,
+    loginDayCount,
     loginPoints,
     completedJobPoints,
     pointsToNextRank: nextRank ? nextRank.threshold - points : 0,
@@ -522,7 +524,13 @@ function getRewardSummary() {
 }
 
 function recordWorkerLogin() {
-  loginRecordCount += 1;
+  const now = new Date();
+  const todayKey = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
+  loginRecordDays.add(todayKey);
 }
 
 function renderPrefectureOptions(selected = "") {
@@ -747,7 +755,7 @@ function renderRegistrationForm(alertText = "", mode = "login") {
   channelTitle.textContent = isSignup ? "ワーカー会員登録" : "ワーカーログイン";
   feedTitle.textContent = isSignup ? "ワーカー会員登録" : "ワーカーログイン";
   feedIntroText.textContent = isSignup
-    ? "はじめて利用する方は会員登録後、個人情報と本人確認を完了してください。"
+    ? "メールアドレスとパスワードを入力してください。"
     : "案件は登録なしで閲覧できます。応募するにはログインまたは会員登録が必要です。";
   workerMainGrid.classList.add("support-mode");
   filterRow?.classList.add("is-hidden");
@@ -833,38 +841,6 @@ function renderRegistrationForm(alertText = "", mode = "login") {
           `
       }
 
-      ${
-        isSignup
-          ? `
-            <aside class="portal-panel mypage-card">
-              <div class="section-head">
-                <div>
-                  <p class="eyebrow">next step</p>
-                  <h2>登録後の流れ</h2>
-                </div>
-              </div>
-              <dl class="ops-metrics">
-                <div>
-                  <dt>1. 認証</dt>
-                  <dd>メール / Google</dd>
-                </div>
-                <div>
-                  <dt>2. 個人情報</dt>
-                  <dd>必須</dd>
-                </div>
-                <div>
-                  <dt>3. 身分証提出</dt>
-                  <dd>必須</dd>
-                </div>
-                <div>
-                  <dt>4. 運営承認後に応募</dt>
-                  <dd>可能</dd>
-                </div>
-              </dl>
-            </aside>
-          `
-          : ""
-      }
     </section>
   `;
 
@@ -1247,8 +1223,8 @@ function renderMyPage(alertText = "") {
         </div>
         <div class="rank-overview">
           <div>
-            <span>ログイン記録</span>
-            <strong>${loginRecordCount.toLocaleString("ja-JP")}回</strong>
+            <span>ログイン日数</span>
+            <strong>${rewardSummary.loginDayCount.toLocaleString("ja-JP")}日</strong>
           </div>
           <div>
             <span>完了案件数</span>
