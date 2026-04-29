@@ -215,6 +215,7 @@ button {
 
 .login-form input,
 .form-grid input,
+.form-grid select,
 .form-grid textarea {
   width: 100%;
   border: 1px solid var(--line);
@@ -225,9 +226,14 @@ button {
 }
 
 .login-form input,
-.form-grid input {
+.form-grid input,
+.form-grid select {
   height: 42px;
   padding: 0 12px;
+}
+
+.form-grid select {
+  appearance: none;
 }
 
 .oauth-row {

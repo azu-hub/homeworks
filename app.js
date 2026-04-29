@@ -21,6 +21,56 @@ const categories = {
   creative: "画像チェック",
 };
 
+const prefectures = [
+  "北海道",
+  "青森県",
+  "岩手県",
+  "宮城県",
+  "秋田県",
+  "山形県",
+  "福島県",
+  "茨城県",
+  "栃木県",
+  "群馬県",
+  "埼玉県",
+  "千葉県",
+  "東京都",
+  "神奈川県",
+  "新潟県",
+  "富山県",
+  "石川県",
+  "福井県",
+  "山梨県",
+  "長野県",
+  "岐阜県",
+  "静岡県",
+  "愛知県",
+  "三重県",
+  "滋賀県",
+  "京都府",
+  "大阪府",
+  "兵庫県",
+  "奈良県",
+  "和歌山県",
+  "鳥取県",
+  "島根県",
+  "岡山県",
+  "広島県",
+  "山口県",
+  "徳島県",
+  "香川県",
+  "愛媛県",
+  "高知県",
+  "福岡県",
+  "佐賀県",
+  "長崎県",
+  "熊本県",
+  "大分県",
+  "宮崎県",
+  "鹿児島県",
+  "沖縄県",
+];
+
 const jobs = [
   {
     id: 1,
@@ -137,7 +187,8 @@ let contractIssued = false;
 let lineRegistered = false;
 let vuzzApplicationSubmitted = false;
 let identityVerified = false;
-let lifetimeEarnings = 0;
+let loginRecordCount = 0;
+let completedJobCount = 0;
 let isEditingProfile = false;
 let profileFormStep = 1;
 let workerAuthEmail = "";
@@ -431,12 +482,10 @@ function getWorkerApprovalLabel() {
   return "この案件に応募";
 }
 
-function formatCurrency(value) {
-  return `${value.toLocaleString("ja-JP")}円`;
-}
-
 function getRewardSummary() {
-  const points = Math.floor(lifetimeEarnings / 100);
+  const loginPoints = loginRecordCount * 10;
+  const completedJobPoints = completedJobCount * 120;
+  const points = loginPoints + completedJobPoints;
   const ranks = [
     { id: "bronze", label: "ブロンズ会員", threshold: 0 },
     { id: "silver", label: "シルバー会員", threshold: 500 },
@@ -466,8 +515,24 @@ function getRewardSummary() {
     nextRank,
     nextReward,
     rankProgress,
+    loginPoints,
+    completedJobPoints,
     pointsToNextRank: nextRank ? nextRank.threshold - points : 0,
   };
+}
+
+function recordWorkerLogin() {
+  loginRecordCount += 1;
+}
+
+function renderPrefectureOptions(selected = "") {
+  return [
+    '<option value="">選択してください</option>',
+    ...prefectures.map(
+      (prefecture) =>
+        `<option value="${escapeHtml(prefecture)}" ${selected === prefecture ? "selected" : ""}>${escapeHtml(prefecture)}</option>`,
+    ),
+  ].join("");
 }
 
 function updateIdentityUI() {
@@ -858,6 +923,7 @@ function renderEmailVerification(alertText = "") {
     event.preventDefault();
     emailVerified = true;
     identityVerified = false;
+    recordWorkerLogin();
     updateIdentityUI();
     renderMyPage("メール認証が完了しました。続けて個人情報を入力してください。");
   });
@@ -891,9 +957,6 @@ function renderMyPage(alertText = "") {
   const nextRankText = rewardSummary.nextRank
     ? `${rewardSummary.nextRank.label}まで${rewardSummary.pointsToNextRank.toLocaleString("ja-JP")}pt`
     : "最高ランクです";
-  const nextRewardText = rewardSummary.nextReward
-    ? `${rewardSummary.nextReward.label}まであと${(rewardSummary.nextReward.threshold - rewardSummary.points).toLocaleString("ja-JP")}pt`
-    : "すべてのギフト特典を獲得済み";
   const applicationRows = applications.length
     ? applications
         .map(
@@ -938,7 +1001,6 @@ function renderMyPage(alertText = "") {
       </button>
     `
     : "";
-  const profileStepBadge = `${profileFormStep} / 3`;
   const profileForm = `
     <form class="onboarding-action" id="profileForm">
       <div class="verified-email-box">
@@ -970,7 +1032,9 @@ function renderMyPage(alertText = "") {
               </label>
               <label>
                 都道府県
-                <input name="prefecture" type="text" value="${escapeHtml(profileData.prefecture)}" required />
+                <select name="prefecture" required>
+                  ${renderPrefectureOptions(profileData.prefecture)}
+                </select>
               </label>
               <label class="span-2">
                 住所（番地まで）
@@ -990,7 +1054,6 @@ function renderMyPage(alertText = "") {
         }
       </div>
       <div class="profile-step-actions">
-        <span class="status-badge">${profileStepBadge}</span>
         ${
           profileFormStep > 1
             ? `
@@ -1087,7 +1150,14 @@ function renderMyPage(alertText = "") {
           : !identityVerified
             ? "運営承認待ち"
             : "応募できます";
-  const actionBadge = isEditingProfile ? "修正中" : identityVerified ? "応募可" : "登録中";
+  const actionBadgeMarkup =
+    isEditingProfile || identityVerified
+      ? `
+        <span class="status-badge ${identityVerified ? "verified" : ""}">
+          ${identityVerified ? "応募可" : "修正中"}
+        </span>
+      `
+      : "";
   const applicationsCard = identityVerified
     ? `
       <article class="portal-panel mypage-card applications-card">
@@ -1117,16 +1187,16 @@ function renderMyPage(alertText = "") {
         </div>
         <div class="rank-overview">
           <div>
-            <span>累計獲得金額</span>
-            <strong>${formatCurrency(lifetimeEarnings)}</strong>
+            <span>ログイン記録</span>
+            <strong>${loginRecordCount.toLocaleString("ja-JP")}回</strong>
+          </div>
+          <div>
+            <span>完了案件数</span>
+            <strong>${completedJobCount.toLocaleString("ja-JP")}件</strong>
           </div>
           <div>
             <span>次のランク</span>
             <strong>${nextRankText}</strong>
-          </div>
-          <div>
-            <span>次の特典</span>
-            <strong>${nextRewardText}</strong>
           </div>
         </div>
         <div class="rank-progress" aria-label="ランク進捗">
@@ -1169,9 +1239,7 @@ function renderMyPage(alertText = "") {
             <p class="eyebrow">next action</p>
             <h2>${actionTitle}</h2>
           </div>
-          <span class="status-badge ${identityVerified ? "verified" : ""}">
-            ${actionBadge}
-          </span>
+          ${actionBadgeMarkup}
         </div>
         ${nextAction}
       </article>
@@ -1238,7 +1306,7 @@ function renderMyPage(alertText = "") {
   });
   document.querySelector("#profileStepBackButton")?.addEventListener("click", () => {
     profileFormStep = Math.max(profileFormStep - 1, 1);
-    renderMyPage(profileFormStep === 1 ? "氏名、仮名、生年月日を修正できます。" : "住所を修正できます。");
+    renderMyPage();
   });
   document.querySelector("#editProfileButton")?.addEventListener("click", () => {
     isEditingProfile = true;
@@ -1301,6 +1369,7 @@ function showRole(role) {
 function resetWorkerVerification() {
   isLoggedIn = true;
   emailVerified = true;
+  recordWorkerLogin();
   profileSubmitted = false;
   idSubmitted = false;
   contractIssued = false;
@@ -1904,7 +1973,7 @@ document.getElementById("workerProfileGateAddressNext")?.addEventListener("click
   const form = document.getElementById("workerProfileGate");
   const addressStep = form?.querySelector("[data-profile-gate-step='2']");
   if (!form || !addressStep) return;
-  const addressInputs = addressStep.querySelectorAll("input");
+  const addressInputs = addressStep.querySelectorAll("input, select");
   if (![...addressInputs].every((input) => input.reportValidity())) return;
   const formData = new FormData(form);
   profileData.postalCode = formData.get("postalCode")?.toString().trim() || "";
