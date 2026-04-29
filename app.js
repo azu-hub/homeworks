@@ -220,6 +220,12 @@ let pendingLoginRole = null;
 let pendingLoginMethod = null;
 const savedJobs = new Set();
 const applications = [];
+const bankData = { bankName: "", branchName: "", accountType: "普通", accountNumber: "", holderName: "" };
+let bankSubmitted = false;
+let isBankEditing = false;
+let workerPassword = "";
+const withdrawalHistory = [];
+let withdrawalPending = false;
 
 const feed = document.querySelector("#jobFeed");
 const channelTitle = document.querySelector("#channelTitle");
@@ -465,7 +471,7 @@ function renderVuzzChannel(channelKey) {
 }
 
 function getWorkerApprovalStatus() {
-  if (!isLoggedIn) return "ゲスト閲覧中・応募には登録";
+  if (!isLoggedIn) return "ログイン/登録してください";
   if (!emailVerified) return "メール未認証・応募制限中";
   if (!profileSubmitted) return "個人情報未入力・応募制限中";
   if (!idSubmitted) return "身分証未提出・応募制限中";
@@ -557,7 +563,7 @@ function updateIdentityUI() {
   workerRankText.classList.toggle("is-hidden", !isLoggedIn);
   workerPresence.classList.toggle("warning", !isLoggedIn || !emailVerified || !identityVerified);
   document.querySelector("#applyButton").innerHTML = !isLoggedIn
-    ? '<i data-lucide="user-plus"></i> 登録して認証へ'
+    ? '<i data-lucide="log-in"></i> ログインして応募する'
     : !emailVerified
       ? '<i data-lucide="mail-check"></i> メール認証後に応募'
       : identityVerified
@@ -568,6 +574,68 @@ function updateIdentityUI() {
 
 function getWorkerAuthDisplay() {
   return workerAuthEmail || "認証済みメールアドレス";
+}
+
+function birthdateSelectsHtml(birthdate = "") {
+  const [y = "", m = "", d = ""] = birthdate.split("-");
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 1929 }, (_, i) => currentYear - i);
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  const days = Array.from({ length: 31 }, (_, i) => i + 1);
+  const opt = (val, selected, label) =>
+    `<option value="${val}" ${selected === String(val) ? "selected" : ""}>${label ?? val}</option>`;
+  return `
+    <div class="birthdate-selects">
+      <div class="select-wrap">
+        <select name="birthdateYear" required>
+          <option value="">年</option>
+          ${years.map((v) => opt(v, y)).join("")}
+        </select>
+      </div>
+      <div class="select-wrap">
+        <select name="birthdateMonth" required>
+          <option value="">月</option>
+          ${months.map((v) => opt(v, m.replace(/^0/, ""), `${v}月`)).join("")}
+        </select>
+      </div>
+      <div class="select-wrap">
+        <select name="birthdateDay" required>
+          <option value="">日</option>
+          ${days.map((v) => opt(v, d.replace(/^0/, ""), `${v}日`)).join("")}
+        </select>
+      </div>
+    </div>
+  `;
+}
+
+function parseBirthdate(formData) {
+  const y = formData.get("birthdateYear")?.toString() || "";
+  const m = (formData.get("birthdateMonth")?.toString() || "").padStart(2, "0");
+  const d = (formData.get("birthdateDay")?.toString() || "").padStart(2, "0");
+  return y && m && d ? `${y}-${m}-${d}` : "";
+}
+
+function populateBirthdateSelects(container) {
+  if (!container) return;
+  const currentYear = new Date().getFullYear();
+  const yearSel = container.querySelector("select[name='birthdateYear']");
+  const monthSel = container.querySelector("select[name='birthdateMonth']");
+  const daySel = container.querySelector("select[name='birthdateDay']");
+  if (yearSel && yearSel.options.length <= 1) {
+    for (let y = currentYear; y >= 1930; y--) {
+      yearSel.add(new Option(y, y));
+    }
+  }
+  if (monthSel && monthSel.options.length <= 1) {
+    for (let mo = 1; mo <= 12; mo++) {
+      monthSel.add(new Option(`${mo}月`, mo));
+    }
+  }
+  if (daySel && daySel.options.length <= 1) {
+    for (let day = 1; day <= 31; day++) {
+      daySel.add(new Option(`${day}日`, day));
+    }
+  }
 }
 
 function escapeHtml(value) {
@@ -587,7 +655,7 @@ function getAiReply(message) {
   const normalizedMessage = message.toLowerCase();
 
   if (message.includes("本人") || message.includes("認証") || message.includes("登録")) {
-    return "応募するには、メール認証またはGoogle認証、個人情報入力、身分証提出、契約書受領、運営承認の順に進みます。公式LINE登録は任意です。";
+    return "応募するには、メール認証、個人情報入力、身分証提出、契約書受領、運営承認の順に進みます。公式LINE登録は任意です。";
   }
 
   if (message.includes("応募") || message.includes("仕事")) {
@@ -705,6 +773,26 @@ function renderUtilityPopover(type) {
   refreshIcons();
 }
 
+function showLoginRequired() {
+  const popup = document.getElementById("loginRequiredPopup");
+  if (!popup) return;
+
+  popup.classList.add("is-visible");
+  refreshIcons();
+
+  const loginBtn = document.getElementById("loginPopupLoginBtn");
+  const closeBtn = document.getElementById("loginPopupCloseBtn");
+
+  const hidePopup = () => popup.classList.remove("is-visible");
+
+  loginBtn?.addEventListener("click", () => {
+    hidePopup();
+    renderRegistrationForm();
+  }, { once: true });
+
+  closeBtn?.addEventListener("click", hidePopup, { once: true });
+}
+
 function applyToJob(jobId) {
   const job = jobs.find((item) => item.id === jobId);
   if (!job) return;
@@ -751,100 +839,137 @@ function renderRegistrationForm(alertText = "", mode = "login") {
   }
 
   const isSignup = mode === "signup";
+  const isPasswordReset = mode === "passwordReset";
+  const isPasswordResetSent = mode === "passwordResetSent";
+
+  const titleMap = { signup: "ワーカー会員登録", passwordReset: "パスワード再設定", passwordResetSent: "パスワード再設定", login: "ワーカーログイン" };
   document.querySelectorAll("#workerApp .channel").forEach((item) => item.classList.remove("active"));
-  channelTitle.textContent = isSignup ? "ワーカー会員登録" : "ワーカーログイン";
-  feedTitle.textContent = isSignup ? "ワーカー会員登録" : "ワーカーログイン";
+  channelTitle.textContent = titleMap[mode] || "ワーカーログイン";
+  feedTitle.textContent = titleMap[mode] || "ワーカーログイン";
   feedIntroText.textContent = isSignup
     ? "メールアドレスとパスワードを入力してください。"
+    : isPasswordReset
+    ? "登録したメールアドレスを入力してください。"
     : "案件は登録なしで閲覧できます。応募するにはログインまたは会員登録が必要です。";
   workerMainGrid.classList.add("support-mode");
   filterRow?.classList.add("is-hidden");
   channelComposer.classList.add("is-hidden");
 
-  feed.innerHTML = `
-    ${alertText ? `<div class="mypage-alert">${alertText}</div>` : ""}
-    <section class="registration-grid">
-      ${
-        isSignup
-          ? `
-            <form class="portal-panel registration-form" id="workerRegistrationForm">
-              <div class="section-head">
-                <div>
-                  <p class="eyebrow">worker signup</p>
-                  <h2>会員登録</h2>
-                </div>
-              </div>
-              <div class="form-grid">
-                <label>
-                  メールアドレス
-                  <input name="email" type="email" required />
-                </label>
-                <label>
-                  パスワード
-                  <span class="password-field">
-                    <input type="password" required />
-                    <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
-                      <i data-lucide="eye"></i>
-                    </button>
-                  </span>
-                </label>
-              </div>
-              <button class="primary-button wide" type="submit">
-                <i data-lucide="mail-check"></i>
-                メール認証へ進む
+  let formHtml;
+  if (isSignup) {
+    formHtml = `
+      <form class="portal-panel registration-form" id="workerRegistrationForm">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">worker signup</p>
+            <h2>会員登録</h2>
+          </div>
+        </div>
+        <p class="form-note">メールアドレスを入力してください。認証コードを送信します。</p>
+        <div class="form-grid single-column-fields">
+          <label>
+            メールアドレス
+            <input name="email" type="email" autocomplete="email" required />
+          </label>
+        </div>
+        <button class="primary-button wide" type="submit">
+          <i data-lucide="mail-check"></i>
+          認証コードを送信
+        </button>
+        <button class="secondary-button wide" id="backWorkerLoginButton" type="button">
+          <i data-lucide="arrow-left"></i>
+          ログインに戻る
+        </button>
+      </form>
+    `;
+  } else if (isPasswordResetSent) {
+    formHtml = `
+      <div class="portal-panel registration-form password-reset-sent">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">password reset</p>
+            <h2>パスワード再設定</h2>
+          </div>
+        </div>
+        <div class="password-reset-confirm">
+          <i data-lucide="mail-check"></i>
+          <p><strong>${escapeHtml(alertText)}</strong> にパスワード再設定のメールを送信しました。</p>
+          <span>メールに記載のリンクからパスワードを再設定してください。</span>
+        </div>
+        <button class="secondary-button wide" id="backWorkerLoginButton" type="button">
+          <i data-lucide="arrow-left"></i>
+          ログインに戻る
+        </button>
+      </div>
+    `;
+  } else if (isPasswordReset) {
+    formHtml = `
+      <form class="portal-panel registration-form" id="passwordResetForm">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">password reset</p>
+            <h2>パスワードを再設定する</h2>
+          </div>
+        </div>
+        <p class="form-note">登録したメールアドレスを入力してください。パスワード再設定用のリンクをお送りします。</p>
+        <div class="form-grid single-column-fields">
+          <label>
+            メールアドレス
+            <input name="email" type="email" autocomplete="email" required />
+          </label>
+        </div>
+        <button class="primary-button wide" type="submit">
+          <i data-lucide="send"></i>
+          再設定メールを送る
+        </button>
+        <button class="secondary-button wide" id="backWorkerLoginButton" type="button">
+          <i data-lucide="arrow-left"></i>
+          ログインに戻る
+        </button>
+      </form>
+    `;
+  } else {
+    formHtml = `
+      <form class="portal-panel registration-form" id="workerLoginForm">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">worker login</p>
+            <h2>ログイン</h2>
+          </div>
+        </div>
+        <div class="form-grid single-column-fields">
+          <label>
+            メールアドレス
+            <input name="email" type="email" required />
+          </label>
+          <label>
+            パスワード
+            <span class="password-field">
+              <input name="password" type="password" required />
+              <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
+                <i data-lucide="eye"></i>
               </button>
-              <button class="google-button wide" id="googleSignupButton" type="button">
-                <span class="google-mark">G</span>
-                Googleで会員登録する
-              </button>
-              <button class="secondary-button wide" id="backWorkerLoginButton" type="button">
-                <i data-lucide="arrow-left"></i>
-                ログインに戻る
-              </button>
-            </form>
-          `
-          : `
-            <form class="portal-panel registration-form" id="workerLoginForm">
-              <div class="section-head">
-                <div>
-                  <p class="eyebrow">worker login</p>
-                  <h2>ログイン</h2>
-                </div>
-              </div>
-              <button class="google-button wide" id="workerGoogleLoginButton" type="button">
-                <span class="google-mark">G</span>
-                Googleでログインする
-              </button>
-              <div class="auth-divider" aria-hidden="true"><span>または</span></div>
-              <div class="form-grid single-column-fields">
-                <label>
-                  メールアドレス
-                  <input name="email" type="email" required />
-                </label>
-                <label>
-                  パスワード
-                  <span class="password-field">
-                    <input name="password" type="password" required />
-                    <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
-                      <i data-lucide="eye"></i>
-                    </button>
-                  </span>
-                </label>
-              </div>
-              <button class="primary-button wide" type="submit">
-                <i data-lucide="log-in"></i>
-                ログイン
-              </button>
-              <button class="text-link-button" id="forgotPasswordButton" type="button">
-                パスワードを忘れた方はこちら
-              </button>
-              <button class="text-link-button" id="openWorkerSignupButton" type="button">
-                会員登録はこちら
-              </button>
-            </form>
-          `
-      }
+            </span>
+          </label>
+        </div>
+        <button class="primary-button wide" type="submit">
+          <i data-lucide="log-in"></i>
+          ログイン
+        </button>
+        <button class="text-link-button" id="forgotPasswordButton" type="button">
+          パスワードを忘れた方はこちら
+        </button>
+        <button class="text-link-button" id="openWorkerSignupButton" type="button">
+          会員登録はこちら
+        </button>
+      </form>
+    `;
+  }
 
+  feed.innerHTML = `
+    ${!isPasswordResetSent && alertText ? `<div class="mypage-alert">${alertText}</div>` : ""}
+    <section class="registration-grid">
+      ${formHtml}
     </section>
   `;
 
@@ -855,16 +980,15 @@ function renderRegistrationForm(alertText = "", mode = "login") {
     workerAuthEmail = formData.get("email")?.toString().trim() || "ログイン済み";
     loginExistingWorker(workerAuthEmail);
   });
-  document.querySelector("#workerGoogleLoginButton")?.addEventListener("click", () => {
-    loginExistingWorker("Googleアカウント認証済み");
-  });
   document.querySelector("#forgotPasswordButton")?.addEventListener("click", () => {
-    const email = document.querySelector("#workerLoginForm input[name='email']")?.value.trim();
-    renderRegistrationForm(
-      email
-        ? `${email} にパスワード再設定メールを送信しました。`
-        : "メールアドレスを入力すると、パスワード再設定メールを送信できます。",
-    );
+    renderRegistrationForm("", "passwordReset");
+  });
+  document.querySelector("#passwordResetForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!event.currentTarget.reportValidity()) return;
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email")?.toString().trim() || "";
+    renderRegistrationForm(email, "passwordResetSent");
   });
   document.querySelector("#openWorkerSignupButton")?.addEventListener("click", () => {
     renderRegistrationForm("", "signup");
@@ -890,7 +1014,6 @@ function renderRegistrationForm(alertText = "", mode = "login") {
   document.querySelector("#backWorkerLoginButton")?.addEventListener("click", () => {
     renderRegistrationForm();
   });
-  document.querySelector("#googleSignupButton")?.addEventListener("click", signupWithGoogle);
   refreshIcons();
 }
 
@@ -941,29 +1064,6 @@ function renderEmailVerification(alertText = "") {
           認証メールを再送
         </button>
       </form>
-
-      <aside class="portal-panel mypage-card">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">security</p>
-            <h2>認証状況</h2>
-          </div>
-        </div>
-        <dl class="ops-metrics">
-          <div>
-            <dt>メール</dt>
-            <dd>未認証</dd>
-          </div>
-          <div>
-            <dt>本人確認</dt>
-            <dd>未提出</dd>
-          </div>
-          <div>
-            <dt>応募</dt>
-            <dd>制限中</dd>
-          </div>
-        </dl>
-      </aside>
     </section>
   `;
 
@@ -973,10 +1073,132 @@ function renderEmailVerification(alertText = "") {
     identityVerified = false;
     recordWorkerLogin();
     updateIdentityUI();
-    renderMyPage("メール認証が完了しました。続けて個人情報を入力してください。");
+    renderPostVerificationSetup();
   });
   document.querySelector("#resendEmailButton").addEventListener("click", () => {
     renderEmailVerification("認証メールを再送しました。");
+  });
+  refreshIcons();
+}
+
+function renderPostVerificationSetup(alertText = "") {
+  document.querySelectorAll("#workerApp .channel").forEach((item) => item.classList.remove("active"));
+  workerMainGrid.classList.add("support-mode");
+  filterRow?.classList.add("is-hidden");
+  channelComposer.classList.add("is-hidden");
+  channelTitle.textContent = "アカウント設定";
+  feedTitle.textContent = "アカウント設定";
+  feedIntroText.textContent = "パスワードと基本情報を入力してください。";
+
+  feed.innerHTML = `
+    ${alertText ? `<div class="mypage-alert">${alertText}</div>` : ""}
+    <section class="registration-grid">
+      <form class="portal-panel registration-form" id="accountSetupForm">
+        <p class="form-note">パスワードと基本情報を入力してください。（非公開）</p>
+
+        <p class="setup-section-label">パスワード</p>
+        <div class="form-grid single-column-fields">
+          <label>
+            パスワード
+            <span class="password-field">
+              <input name="password" type="password" autocomplete="new-password" minlength="8" required />
+              <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
+                <i data-lucide="eye"></i>
+              </button>
+            </span>
+          </label>
+          <label>
+            パスワード（確認）
+            <span class="password-field">
+              <input name="passwordConfirm" type="password" autocomplete="new-password" minlength="8" required />
+              <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
+                <i data-lucide="eye"></i>
+              </button>
+            </span>
+          </label>
+        </div>
+
+        <p class="setup-section-label">基本情報</p>
+        <div class="form-grid">
+          <label>
+            氏名
+            <input name="name" type="text" placeholder="山田 太郎" value="${escapeHtml(profileData.name)}" required />
+          </label>
+          <label>
+            かな
+            <input name="kana" type="text" placeholder="やまだ たろう" value="${escapeHtml(profileData.kana)}" required />
+          </label>
+          <div class="span-2 birthdate-field-wrap">
+            <span class="birthdate-field-label">生年月日</span>
+            ${birthdateSelectsHtml(profileData.birthdate)}
+          </div>
+          <fieldset class="gender-options span-2">
+            <legend>性別</legend>
+            <div class="gender-radio-row">
+              ${["男性", "女性", "その他"].map((g) => `
+                <label>
+                  <input type="radio" name="gender" value="${g}" ${profileData.gender === g ? "checked" : ""} required />
+                  ${g}
+                </label>
+              `).join("")}
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="form-actions">
+          <button class="secondary-button" id="backToLoginButton" type="button">
+            <i data-lucide="arrow-left"></i>
+            ログインに戻る
+          </button>
+          <button class="primary-button" type="submit">
+            <i data-lucide="arrow-right"></i>
+            次へ
+          </button>
+        </div>
+      </form>
+    </section>
+  `;
+
+  document.querySelector("#backToLoginButton")?.addEventListener("click", () => {
+    renderRegistrationForm();
+  });
+
+  document.querySelector("#accountSetupForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!event.currentTarget.reportValidity()) return;
+    const formData = new FormData(event.currentTarget);
+    const pw = formData.get("password")?.toString() || "";
+    const pwConfirm = formData.get("passwordConfirm")?.toString() || "";
+    if (pw !== pwConfirm) {
+      let errorEl = event.currentTarget.querySelector(".pw-mismatch-error");
+      if (!errorEl) {
+        errorEl = document.createElement("p");
+        errorEl.className = "pw-mismatch-error mypage-alert";
+        event.currentTarget.querySelector("button[type='submit']").before(errorEl);
+      }
+      errorEl.textContent = "パスワードが一致しません。もう一度入力してください。";
+      return;
+    }
+    event.currentTarget.querySelector(".pw-mismatch-error")?.remove();
+    workerPassword = pw;
+    profileData.name = formData.get("name")?.toString().trim() || "";
+    profileData.kana = formData.get("kana")?.toString().trim() || "";
+    profileData.birthdate = parseBirthdate(formData);
+    profileData.gender = formData.get("gender")?.toString() || "";
+    profileFormStep = 2;
+    updateIdentityUI();
+    renderMyPage("基本情報を保存しました。続けて住所を入力してください。");
+  });
+
+  document.querySelectorAll(".password-toggle").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const input = btn.closest(".password-field")?.querySelector("input");
+      if (!input) return;
+      const isHidden = input.type === "password";
+      input.type = isHidden ? "text" : "password";
+      btn.querySelector("i")?.setAttribute("data-lucide", isHidden ? "eye-off" : "eye");
+      refreshIcons();
+    });
   });
   refreshIcons();
 }
@@ -996,7 +1218,7 @@ function renderMyPage(alertText = "") {
   channelTitle.textContent = profileSubmitted ? "マイページ" : "個人情報入力";
   feedTitle.textContent = profileSubmitted ? "マイページ" : "個人情報入力";
   feedIntroText.textContent =
-    "メール認証またはGoogle認証の後、個人情報、身分証、契約書交付を完了すると運営へ申請されます。公式LINE登録は任意です。";
+    "メール認証の後、個人情報、身分証、契約書交付を完了すると運営へ申請されます。公式LINE登録は任意です。";
   workerMainGrid.classList.add("support-mode");
   filterRow?.classList.add("is-hidden");
   channelComposer.classList.add("is-hidden");
@@ -1064,13 +1286,22 @@ function renderMyPage(alertText = "") {
                 <input name="name" type="text" value="${escapeHtml(profileData.name)}" required />
               </label>
               <label>
-                仮名
+                かな
                 <input name="kana" type="text" value="${escapeHtml(profileData.kana)}" required />
               </label>
               <label class="span-2">
                 生年月日
                 <input name="birthdate" type="date" value="${escapeHtml(profileData.birthdate)}" required />
               </label>
+              <fieldset class="gender-options span-2">
+                <legend>性別</legend>
+                ${["男性", "女性", "その他"].map((g) => `
+                  <label>
+                    <input type="radio" name="gender" value="${g}" ${profileData.gender === g ? "checked" : ""} required />
+                    ${g}
+                  </label>
+                `).join("")}
+              </fieldset>
             `
             : profileFormStep === 2
               ? `
@@ -1114,8 +1345,8 @@ function renderMyPage(alertText = "") {
         }
       </div>
       <button class="primary-button wide" type="submit">
-        <i data-lucide="${profileFormStep < 3 ? "arrow-right" : "save"}"></i>
-        ${profileFormStep < 3 ? "次へ" : profileSubmitted ? "個人情報を更新" : "個人情報を保存"}
+        <i data-lucide="${profileFormStep === 1 ? "arrow-right" : "save"}"></i>
+        ${profileFormStep === 1 ? "次へ" : profileSubmitted ? "個人情報を更新" : "個人情報を保存"}
       </button>
     </form>
   `;
@@ -1186,7 +1417,7 @@ function renderMyPage(alertText = "") {
               </div>
             `;
   const actionTitle = !profileSubmitted
-    ? "個人情報の入力"
+    ? "アカウント情報の入力"
     : isEditingProfile
       ? "個人情報の修正"
     : !idSubmitted
@@ -1221,6 +1452,162 @@ function renderMyPage(alertText = "") {
       </article>
     `
     : "";
+
+  const bankCard = profileSubmitted ? `
+    <article class="portal-panel mypage-card bank-card">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">payment</p>
+          <h2>振込口座</h2>
+        </div>
+        ${bankSubmitted && !isBankEditing ? `<span class="status-badge verified">登録済み</span>` : ""}
+      </div>
+      ${
+        bankSubmitted && !isBankEditing
+          ? `
+            <div class="bank-info-grid">
+              <div><span>金融機関</span><strong>${escapeHtml(bankData.bankName)}</strong></div>
+              <div><span>支店名</span><strong>${escapeHtml(bankData.branchName)}</strong></div>
+              <div><span>口座種別</span><strong>${escapeHtml(bankData.accountType)}</strong></div>
+              <div><span>口座番号</span><strong>${escapeHtml(bankData.accountNumber)}</strong></div>
+              <div class="bank-info-full"><span>口座名義</span><strong>${escapeHtml(bankData.holderName)}</strong></div>
+            </div>
+            <button class="secondary-button wide" id="editBankButton" type="button">
+              <i data-lucide="pencil"></i>
+              口座情報を変更
+            </button>
+          `
+          : `
+            <p class="form-note">報酬の振込先となる口座を登録してください。</p>
+            <form class="onboarding-action" id="bankForm">
+              <div class="form-grid">
+                <label>
+                  金融機関名
+                  <input name="bankName" type="text" placeholder="例：〇〇銀行" value="${escapeHtml(bankData.bankName)}" required />
+                </label>
+                <label>
+                  支店名
+                  <input name="branchName" type="text" placeholder="例：渋谷支店" value="${escapeHtml(bankData.branchName)}" required />
+                </label>
+                <label>
+                  口座種別
+                  <select name="accountType" required>
+                    <option value="普通" ${bankData.accountType === "普通" ? "selected" : ""}>普通</option>
+                    <option value="当座" ${bankData.accountType === "当座" ? "selected" : ""}>当座</option>
+                  </select>
+                </label>
+                <label>
+                  口座番号
+                  <input name="accountNumber" type="text" inputmode="numeric" placeholder="1234567" maxlength="7" value="${escapeHtml(bankData.accountNumber)}" required />
+                </label>
+                <label class="span-2">
+                  口座名義（カナ）
+                  <input name="holderName" type="text" placeholder="ヤマダ タロウ" value="${escapeHtml(bankData.holderName)}" required />
+                </label>
+              </div>
+              ${
+                isBankEditing
+                  ? `
+                    <button class="secondary-button wide" id="cancelBankEditButton" type="button">
+                      <i data-lucide="x"></i>
+                      キャンセル
+                    </button>
+                  `
+                  : ""
+              }
+              <button class="primary-button wide" type="submit">
+                <i data-lucide="building-2"></i>
+                口座を登録
+              </button>
+            </form>
+          `
+      }
+    </article>
+  ` : "";
+
+  const canWithdraw = idSubmitted && bankSubmitted;
+  const withdrawalCard = profileSubmitted ? `
+    <article class="portal-panel mypage-card withdrawal-card">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">payout</p>
+          <h2>出金申請</h2>
+        </div>
+        ${withdrawalPending ? `<span class="status-badge pending">申請中</span>` : ""}
+      </div>
+      ${
+        !idSubmitted
+          ? `
+            <div class="withdrawal-locked">
+              <i data-lucide="lock"></i>
+              <p>身分証を提出するまで出金申請はできません。</p>
+              <span class="withdrawal-lock-hint">「次のアクション」から身分証の提出を完了してください。</span>
+            </div>
+          `
+          : !bankSubmitted
+          ? `
+            <div class="withdrawal-locked">
+              <i data-lucide="lock"></i>
+              <p>振込口座を登録するまで出金申請はできません。</p>
+              <span class="withdrawal-lock-hint">下の「振込口座」カードから口座情報を登録してください。</span>
+            </div>
+          `
+          : withdrawalPending
+          ? `
+            <div class="withdrawal-pending-info">
+              <i data-lucide="clock"></i>
+              <p>出金申請を受け付けました。処理までお待ちください。</p>
+            </div>
+            <button class="secondary-button wide" id="cancelWithdrawalButton" type="button">
+              <i data-lucide="x"></i>
+              申請を取り消す
+            </button>
+          `
+          : `
+            <div class="bank-info-grid withdrawal-bank-preview">
+              <div><span>振込先</span><strong>${escapeHtml(bankData.bankName)} ${escapeHtml(bankData.branchName)}</strong></div>
+              <div><span>口座番号</span><strong>${escapeHtml(bankData.accountType)} ${escapeHtml(bankData.accountNumber)}</strong></div>
+              <div class="bank-info-full"><span>口座名義</span><strong>${escapeHtml(bankData.holderName)}</strong></div>
+            </div>
+            <form class="onboarding-action" id="withdrawalForm">
+              <label class="withdrawal-amount-label">
+                出金希望額（円）
+                <div class="withdrawal-amount-wrap">
+                  <span class="withdrawal-yen">¥</span>
+                  <input
+                    name="amount"
+                    type="number"
+                    inputmode="numeric"
+                    min="1000"
+                    step="1000"
+                    placeholder="10000"
+                    class="withdrawal-amount-input"
+                    required
+                  />
+                </div>
+                <small class="withdrawal-hint">1,000円単位で入力してください（最低1,000円）</small>
+              </label>
+              <button class="primary-button wide" type="submit">
+                <i data-lucide="send"></i>
+                出金を申請する
+              </button>
+            </form>
+          `
+      }
+      ${withdrawalHistory.length > 0 ? `
+        <div class="withdrawal-history">
+          <p class="eyebrow" style="margin-top:1rem">申請履歴</p>
+          ${withdrawalHistory.map(h => `
+            <div class="withdrawal-history-item">
+              <span>${h.date}</span>
+              <strong>¥${h.amount.toLocaleString("ja-JP")}</strong>
+              <span class="status-badge ${h.status === "完了" ? "verified" : "pending"}">${h.status}</span>
+            </div>
+          `).join("")}
+        </div>
+      ` : ""}
+    </article>
+  ` : "";
 
   feed.innerHTML = `
     ${alertText ? `<div class="mypage-alert">${alertText}</div>` : ""}
@@ -1318,6 +1705,8 @@ function renderMyPage(alertText = "") {
       </article>
 
       ${applicationsCard}
+      ${bankCard}
+      ${withdrawalCard}
     </section>
   `;
 
@@ -1328,7 +1717,8 @@ function renderMyPage(alertText = "") {
     if (profileFormStep === 1) {
       profileData.name = formData.get("name")?.toString().trim() || "";
       profileData.kana = formData.get("kana")?.toString().trim() || "";
-      profileData.birthdate = formData.get("birthdate")?.toString() || "";
+      profileData.birthdate = parseBirthdate(formData);
+      profileData.gender = formData.get("gender")?.toString() || "";
       profileFormStep = 2;
       updateIdentityUI();
       renderMyPage("続けて住所を入力してください。");
@@ -1350,7 +1740,7 @@ function renderMyPage(alertText = "") {
     profileFormStep = 1;
     isEditingProfile = false;
     updateIdentityUI();
-    renderMyPage(wasEditing ? "個人情報を更新しました。元の手続きに戻れます。" : "個人情報を保存しました。続けて身分証を提出してください。");
+    renderMyPage(wasEditing ? "個人情報を更新しました。" : "個人情報を保存しました。続けて身分証を提出してください。");
   });
   document.querySelector("#profileStepBackButton")?.addEventListener("click", () => {
     profileFormStep = Math.max(profileFormStep - 1, 1);
@@ -1394,6 +1784,47 @@ function renderMyPage(alertText = "") {
     }
     applyToJob(selectedJobId);
     renderMyPage("選択中の案件に応募しました。");
+  });
+  document.querySelector("#bankForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!event.currentTarget.reportValidity()) return;
+    const formData = new FormData(event.currentTarget);
+    bankData.bankName = formData.get("bankName")?.toString().trim() || "";
+    bankData.branchName = formData.get("branchName")?.toString().trim() || "";
+    bankData.accountType = formData.get("accountType")?.toString() || "普通";
+    bankData.accountNumber = formData.get("accountNumber")?.toString().trim() || "";
+    bankData.holderName = formData.get("holderName")?.toString().trim() || "";
+    bankSubmitted = true;
+    isBankEditing = false;
+    renderMyPage("振込口座を登録しました。");
+  });
+  document.querySelector("#editBankButton")?.addEventListener("click", () => {
+    isBankEditing = true;
+    renderMyPage();
+  });
+  document.querySelector("#cancelBankEditButton")?.addEventListener("click", () => {
+    isBankEditing = false;
+    renderMyPage();
+  });
+  document.querySelector("#withdrawalForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!event.currentTarget.reportValidity()) return;
+    const formData = new FormData(event.currentTarget);
+    const amount = parseInt(formData.get("amount")?.toString() || "0", 10);
+    if (amount < 1000) {
+      renderMyPage("出金額は1,000円以上を入力してください。");
+      return;
+    }
+    const now = new Date();
+    const date = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}`;
+    withdrawalHistory.unshift({ date, amount, status: "申請中" });
+    withdrawalPending = true;
+    renderMyPage(`¥${amount.toLocaleString("ja-JP")} の出金申請を受け付けました。`);
+  });
+  document.querySelector("#cancelWithdrawalButton")?.addEventListener("click", () => {
+    if (withdrawalHistory.length > 0) withdrawalHistory[0].status = "取消";
+    withdrawalPending = false;
+    renderMyPage("出金申請を取り消しました。");
   });
   refreshIcons();
 }
@@ -1451,13 +1882,6 @@ function loginExistingWorker(displayEmail = "ログイン済み") {
   renderMyPage("ログインしました。マイページを表示しています。");
 }
 
-function signupWithGoogle() {
-  workerAuthEmail = "Googleアカウント認証済み";
-  resetWorkerVerification();
-  showRole("worker");
-  renderMyPage("Google認証が完了しました。続けて個人情報を入力してください。");
-}
-
 const loginSteps = ["role", "method", "email", "workerProfile", "companyProfile"];
 const loginStepIds = {
   role: "loginStepRole",
@@ -1475,6 +1899,7 @@ function setLoginStep(step) {
   });
   if (step === "workerProfile") {
     document.getElementById("workerProfileGateEmail").textContent = getWorkerAuthDisplay();
+    populateBirthdateSelects(document.getElementById("workerProfileGate"));
     setWorkerProfileGateStep(1);
   }
   refreshIcons();
@@ -1509,13 +1934,6 @@ function startRegistrationFlow(role) {
 
 function chooseAuthMethod(method) {
   pendingLoginMethod = method;
-  if (method === "google") {
-    if (pendingLoginRole === "worker") {
-      workerAuthEmail = "Googleアカウント認証済み";
-    }
-    completeAuthentication();
-    return;
-  }
   setLoginStep("email");
 }
 
@@ -1706,7 +2124,7 @@ function renderSupportChannel() {
 function renderFeed() {
   const channelLabel = getActiveChannelLabel();
   channelTitle.textContent = channelLabel;
-  feedTitle.textContent = activeChannel === "ai" ? "AI相談ルーム" : `#${channelLabel} へようこそ`;
+  feedTitle.textContent = activeChannel === "ai" ? "AI相談ルーム" : `#${channelLabel} 一覧`;
   workerMainGrid.classList.toggle("support-mode", supportChannels.has(activeChannel));
   filterRow?.classList.toggle("is-hidden", supportChannels.has(activeChannel));
   channelComposer.classList.toggle("is-hidden", !writableChannels.has(activeChannel));
@@ -1769,12 +2187,12 @@ function renderFeed() {
                     <button class="mini-button ${savedJobs.has(job.id) ? "active" : ""}" data-action="save" data-id="${job.id}" type="button">
                       ${savedJobs.has(job.id) ? "保存済み" : "保存"}
                     </button>
+                    <button class="mini-button" data-action="apply" data-id="${job.id}" type="button">
+                      ${getWorkerApprovalLabel()}
+                    </button>
                   `
                   : ""
               }
-              <button class="mini-button" data-action="apply" data-id="${job.id}" type="button">
-                ${getWorkerApprovalLabel()}
-              </button>
             </div>
           </div>
         </article>
@@ -1880,7 +2298,13 @@ feed.addEventListener("click", (event) => {
   if (actionButton) {
     const id = Number(actionButton.dataset.id);
     if (actionButton.dataset.action === "save") toggleSave(id);
-    if (actionButton.dataset.action === "detail") selectJob(id);
+    if (actionButton.dataset.action === "detail") {
+      if (!isLoggedIn) {
+        showLoginRequired();
+        return;
+      }
+      selectJob(id);
+    }
     if (actionButton.dataset.action === "apply") {
       selectJob(id);
       applyToJob(id);
@@ -1987,6 +2411,7 @@ channelComposer.addEventListener("submit", (event) => {
 });
 
 openMyPageButton.addEventListener("click", () => {
+  document.getElementById("loginRequiredPopup")?.classList.remove("is-visible");
   renderMyPage();
 });
 
@@ -2022,7 +2447,6 @@ document.querySelectorAll("[data-login-back]").forEach((button) => {
 });
 
 document.getElementById("chooseEmailButton")?.addEventListener("click", () => chooseAuthMethod("email"));
-document.getElementById("chooseGoogleButton")?.addEventListener("click", () => chooseAuthMethod("google"));
 
 document.getElementById("emailRegisterForm")?.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -2105,6 +2529,15 @@ document.getElementById("companyProfileGate")?.addEventListener("submit", (event
   companyProfileSubmitted = true;
   form.reset();
   enterRoleApp();
+});
+
+document.querySelectorAll("[data-panel-toggle]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const shell = button.closest(".app-shell");
+    if (!shell) return;
+    const collapsed = shell.classList.toggle("panel-collapsed");
+    button.setAttribute("aria-label", collapsed ? "サイドバーを開く" : "サイドバーを閉じる");
+  });
 });
 
 document.querySelectorAll("[data-logout]").forEach((button) => {

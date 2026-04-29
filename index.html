@@ -44,22 +44,15 @@
 
         <div class="login-step is-hidden" id="loginStepMethod">
           <div class="login-copy">
-            <h2 id="methodHeading">登録方法を選択（2つから1つ）</h2>
-            <p>下の <strong>メール</strong> または <strong>Googleアカウント</strong> のどちらか1つを選んでください。</p>
+            <h2 id="methodHeading">登録方法を選択</h2>
+            <p>メールアドレスで登録してください。</p>
           </div>
-          <div class="auth-method-grid" aria-label="登録方法（2つから1つ選択）" role="group">
+          <div class="auth-method-grid" aria-label="登録方法" role="group">
             <button class="auth-method-card" id="chooseEmailButton" type="button">
               <span class="auth-method-badge">1</span>
               <span class="role-icon"><i data-lucide="mail"></i></span>
               <strong>メールアドレスで登録</strong>
               <small>メールアドレスを認証します</small>
-            </button>
-            <span class="auth-method-or" aria-hidden="true">または</span>
-            <button class="auth-method-card" id="chooseGoogleButton" type="button">
-              <span class="auth-method-badge">2</span>
-              <span class="role-icon"><span class="google-mark">G</span></span>
-              <strong>Googleアカウントで登録</strong>
-              <small>Googleで認証して登録します</small>
             </button>
           </div>
           <button class="secondary-button login-back" data-login-back="role" type="button">
@@ -91,8 +84,8 @@
 
         <div class="login-step is-hidden" id="loginStepWorkerProfile">
           <div class="login-copy">
-            <h2>個人情報の入力</h2>
-            <p>メール認証またはGoogle認証が完了しました。応募の前に必須の個人情報を入力してください。</p>
+            <h2>アカウント情報の入力</h2>
+            <p>アカウントに必要な情報を入力してください（非公開）</p>
           </div>
           <form class="login-profile-form staged-profile-form" id="workerProfileGate" novalidate>
             <div class="verified-email-box span-2">
@@ -109,10 +102,20 @@
                   仮名
                   <input name="kana" type="text" required />
                 </label>
-                <label class="span-2">
-                  生年月日
-                  <input name="birthdate" type="date" required />
-                </label>
+                <div class="span-2 birthdate-field-wrap">
+                  <span class="birthdate-field-label">生年月日</span>
+                  <div class="birthdate-selects">
+                    <select name="birthdateYear" required>
+                      <option value="">年</option>
+                    </select>
+                    <select name="birthdateMonth" required>
+                      <option value="">月</option>
+                    </select>
+                    <select name="birthdateDay" required>
+                      <option value="">日</option>
+                    </select>
+                  </div>
+                </div>
               </div>
               <button class="primary-button wide" id="workerProfileGateNext" type="button">
                 <i data-lucide="arrow-right"></i>
@@ -282,7 +285,7 @@
           <div>
             <strong id="workerNameText">ゲスト</strong>
             <span class="rank-line is-hidden" id="workerRankText"></span>
-            <span id="workerIdentityText">ゲスト閲覧中・応募には登録</span>
+            <span id="workerIdentityText">ログイン/登録してください</span>
           </div>
           <span class="presence warning" id="workerPresence"></span>
         </button>
@@ -450,6 +453,9 @@
 
       <main class="content-area">
         <header class="topbar">
+          <button class="icon-button panel-toggle" data-panel-toggle type="button" aria-label="サイドバーを閉じる">
+            <i data-lucide="panel-left-close"></i>
+          </button>
           <div class="channel-heading">
             <i data-lucide="hash"></i>
             <div>
@@ -540,6 +546,27 @@
           </aside>
         </div>
       </main>
+
+      <div id="loginRequiredPopup" role="status" aria-live="polite">
+        <div class="login-required-popup-inner">
+          <div class="login-popup-icon">
+            <i data-lucide="lock"></i>
+          </div>
+          <div class="login-popup-text">
+            <strong>ログイン/登録が必要です</strong>
+            <span>案件の詳細を見るにはログイン/登録が必要です</span>
+          </div>
+          <div class="login-popup-actions">
+            <button class="login-popup-login-btn" id="loginPopupLoginBtn" type="button">
+              <i data-lucide="log-in"></i>
+              ログイン/登録する
+            </button>
+            <button class="login-popup-close-btn" id="loginPopupCloseBtn" type="button" aria-label="閉じる">
+              <i data-lucide="x"></i>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="app-shell app-view is-hidden" id="companyApp">
@@ -593,6 +620,9 @@
 
       <main class="content-area">
         <header class="topbar">
+          <button class="icon-button panel-toggle" data-panel-toggle type="button" aria-label="サイドバーを閉じる">
+            <i data-lucide="panel-left-close"></i>
+          </button>
           <div class="channel-heading">
             <i data-lucide="building-2"></i>
             <div>
@@ -756,6 +786,9 @@
 
       <main class="content-area">
         <header class="topbar">
+          <button class="icon-button panel-toggle" data-panel-toggle type="button" aria-label="サイドバーを閉じる">
+            <i data-lucide="panel-left-close"></i>
+          </button>
           <div class="channel-heading">
             <i data-lucide="shield-check"></i>
             <div>
