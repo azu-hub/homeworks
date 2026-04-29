@@ -702,7 +702,7 @@ function applyToJob(jobId) {
   if (!job) return;
 
   if (!isLoggedIn) {
-    renderRegistrationForm("応募するには無料登録が必要です。");
+    renderRegistrationForm("応募するにはログインまたは会員登録が必要です。");
     return;
   }
 
@@ -732,7 +732,7 @@ function applyToJob(jobId) {
   refreshIcons();
 }
 
-function renderRegistrationForm(alertText = "") {
+function renderRegistrationForm(alertText = "", mode = "login") {
   if (isLoggedIn) {
     if (!emailVerified) {
       renderEmailVerification("登録済みです。メール認証を完了してください。");
@@ -742,11 +742,13 @@ function renderRegistrationForm(alertText = "") {
     return;
   }
 
+  const isSignup = mode === "signup";
   document.querySelectorAll("#workerApp .channel").forEach((item) => item.classList.remove("active"));
-  channelTitle.textContent = "ワーカー登録";
-  feedTitle.textContent = "ワーカー登録";
-  feedIntroText.textContent =
-    "案件は登録なしで閲覧できます。応募するにはアカウント登録後、本人確認を完了してください。";
+  channelTitle.textContent = isSignup ? "ワーカー会員登録" : "ワーカーログイン";
+  feedTitle.textContent = isSignup ? "ワーカー会員登録" : "ワーカーログイン";
+  feedIntroText.textContent = isSignup
+    ? "はじめて利用する方は会員登録後、個人情報と本人確認を完了してください。"
+    : "案件は登録なしで閲覧できます。応募するにはログインまたは会員登録が必要です。";
   workerMainGrid.classList.add("support-mode");
   filterRow?.classList.add("is-hidden");
   channelComposer.classList.add("is-hidden");
@@ -754,42 +756,84 @@ function renderRegistrationForm(alertText = "") {
   feed.innerHTML = `
     ${alertText ? `<div class="mypage-alert">${alertText}</div>` : ""}
     <section class="registration-grid">
-      <form class="portal-panel registration-form" id="workerRegistrationForm">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">worker signup</p>
-            <h2>認証して登録</h2>
-          </div>
-          <span class="status-badge">認証後に個人情報</span>
-        </div>
-        <div class="form-grid">
-          <label>
-            メールアドレス
-            <input name="email" type="email" required />
-          </label>
-          <label>
-            パスワード
-            <span class="password-field">
-              <input type="password" required />
-              <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
-                <i data-lucide="eye"></i>
+      ${
+        isSignup
+          ? `
+            <form class="portal-panel registration-form" id="workerRegistrationForm">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">worker signup</p>
+                  <h2>会員登録</h2>
+                </div>
+                <span class="status-badge">認証後に個人情報</span>
+              </div>
+              <div class="form-grid">
+                <label>
+                  メールアドレス
+                  <input name="email" type="email" required />
+                </label>
+                <label>
+                  パスワード
+                  <span class="password-field">
+                    <input type="password" required />
+                    <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
+                      <i data-lucide="eye"></i>
+                    </button>
+                  </span>
+                </label>
+              </div>
+              <button class="primary-button wide" type="submit">
+                <i data-lucide="mail-check"></i>
+                メール認証へ進む
               </button>
-            </span>
-          </label>
-        </div>
-        <button class="primary-button wide" type="submit">
-          <i data-lucide="mail-check"></i>
-          メール認証へ進む
-        </button>
-        <button class="secondary-button wide" id="existingLoginButton" type="button">
-          <i data-lucide="log-in"></i>
-          ログイン
-        </button>
-        <button class="google-button wide" id="googleSignupButton" type="button">
-          <span class="google-mark">G</span>
-          Google認証で進む
-        </button>
-      </form>
+              <button class="google-button wide" id="googleSignupButton" type="button">
+                <span class="google-mark">G</span>
+                Googleで会員登録する
+              </button>
+              <button class="secondary-button wide" id="backWorkerLoginButton" type="button">
+                <i data-lucide="arrow-left"></i>
+                ログインに戻る
+              </button>
+            </form>
+          `
+          : `
+            <form class="portal-panel registration-form" id="workerLoginForm">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">worker login</p>
+                  <h2>ログイン</h2>
+                </div>
+              </div>
+              <button class="google-button wide" id="workerGoogleLoginButton" type="button">
+                <span class="google-mark">G</span>
+                Googleでログインする
+              </button>
+              <div class="form-grid">
+                <label>
+                  メールアドレス
+                  <input name="email" type="email" required />
+                </label>
+                <label>
+                  パスワード
+                  <span class="password-field">
+                    <input name="password" type="password" required />
+                    <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
+                      <i data-lucide="eye"></i>
+                    </button>
+                  </span>
+                </label>
+              </div>
+              <button class="primary-button wide" type="submit">
+                <i data-lucide="log-in"></i>
+                ログイン
+              </button>
+              <button class="secondary-button wide" id="openWorkerSignupButton" type="button">
+                <i data-lucide="user-plus"></i>
+                会員登録はこちら
+              </button>
+            </form>
+          `
+      }
 
       <aside class="portal-panel mypage-card">
         <div class="section-head">
@@ -820,7 +864,19 @@ function renderRegistrationForm(alertText = "") {
     </section>
   `;
 
-  document.querySelector("#workerRegistrationForm").addEventListener("submit", (event) => {
+  document.querySelector("#workerLoginForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!event.currentTarget.reportValidity()) return;
+    const formData = new FormData(event.currentTarget);
+    workerAuthEmail = formData.get("email")?.toString().trim() || "ログイン済み";
+    resetWorkerVerification();
+    renderMyPage("ログインしました。応募には個人情報の入力が必要です。");
+  });
+  document.querySelector("#workerGoogleLoginButton")?.addEventListener("click", loginWithGoogle);
+  document.querySelector("#openWorkerSignupButton")?.addEventListener("click", () => {
+    renderRegistrationForm("", "signup");
+  });
+  document.querySelector("#workerRegistrationForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
     if (!event.currentTarget.reportValidity()) return;
     const formData = new FormData(event.currentTarget);
@@ -838,17 +894,16 @@ function renderRegistrationForm(alertText = "") {
     updateIdentityUI();
     renderEmailVerification("登録が完了しました。メールに届いた認証コードを確認してください。");
   });
-  document.querySelector("#existingLoginButton").addEventListener("click", () => {
-    resetWorkerVerification();
-    renderMyPage("ログインしました。応募には本人確認が必要です。");
+  document.querySelector("#backWorkerLoginButton")?.addEventListener("click", () => {
+    renderRegistrationForm();
   });
-  document.querySelector("#googleSignupButton").addEventListener("click", loginWithGoogle);
+  document.querySelector("#googleSignupButton")?.addEventListener("click", loginWithGoogle);
   refreshIcons();
 }
 
 function renderEmailVerification(alertText = "") {
   if (!isLoggedIn) {
-    renderRegistrationForm("メール認証の前に登録が必要です。");
+    renderRegistrationForm("メール認証の前に会員登録が必要です。", "signup");
     return;
   }
 
