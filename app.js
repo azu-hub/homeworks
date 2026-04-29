@@ -765,7 +765,6 @@ function renderRegistrationForm(alertText = "", mode = "login") {
                   <p class="eyebrow">worker signup</p>
                   <h2>会員登録</h2>
                 </div>
-                <span class="status-badge">認証後に個人情報</span>
               </div>
               <div class="form-grid">
                 <label>
