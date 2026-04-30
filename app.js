@@ -1395,6 +1395,27 @@ function renderPostVerificationSetup(alertText = "") {
     });
   });
   setupPasswordInputs(feed);
+
+  const pwInput = feed.querySelector('input[name="password"]');
+  const pwConfirmInput = feed.querySelector('input[name="passwordConfirm"]');
+  function checkPasswordMatch() {
+    if (!pwConfirmInput.value) return;
+    const isMatch = pwInput.value === pwConfirmInput.value;
+    let errorEl = feed.querySelector(".pw-mismatch-inline");
+    if (!isMatch) {
+      if (!errorEl) {
+        errorEl = document.createElement("span");
+        errorEl.className = "pw-mismatch-inline field-error";
+        pwConfirmInput.closest("label")?.appendChild(errorEl);
+      }
+      errorEl.textContent = "パスワードが一致しません";
+    } else {
+      errorEl?.remove();
+    }
+  }
+  pwInput?.addEventListener("input", checkPasswordMatch);
+  pwConfirmInput?.addEventListener("input", checkPasswordMatch);
+
   refreshIcons();
 }
 

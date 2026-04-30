@@ -242,6 +242,24 @@ button {
 
 .form-grid select {
   appearance: none;
+  padding-right: 32px;
+}
+
+.form-grid label:has(> select) {
+  position: relative;
+}
+
+.form-grid label:has(> select)::after {
+  content: "";
+  position: absolute;
+  right: 12px;
+  bottom: 18px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--muted);
+  pointer-events: none;
 }
 
 .oauth-row {
@@ -1771,6 +1789,7 @@ button {
 .registration-grid:has(#emailVerificationForm),
 .registration-grid:has(#passwordResetForm),
 .registration-grid:has(#accountSetupForm),
+.registration-grid:has(#usernameSetupForm),
 .registration-grid:has(.password-reset-sent) {
   grid-template-columns: minmax(320px, 560px);
 }
@@ -1793,10 +1812,12 @@ button {
   gap: 8px;
 }
 
+.select-wrap,
 .birthdate-selects .select-wrap {
   position: relative;
 }
 
+.select-wrap::after,
 .birthdate-selects .select-wrap::after {
   content: "";
   position: absolute;
@@ -1811,6 +1832,18 @@ button {
   pointer-events: none;
 }
 
+.select-wrap select {
+  width: 100%;
+  height: 42px;
+  padding: 0 32px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #191b20;
+  color: var(--text);
+  appearance: none;
+  cursor: pointer;
+}
+
 .birthdate-selects select {
   width: 100%;
   height: 42px;
@@ -1821,6 +1854,31 @@ button {
   color: var(--text);
   appearance: none;
   cursor: pointer;
+}
+
+.field-hint {
+  margin-top: 4px;
+  color: var(--muted-2);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.field-error {
+  display: block;
+  margin-top: 4px;
+  color: #f04747;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.label-with-hint {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.label-with-hint .field-hint {
+  margin-top: 0;
 }
 
 .setup-section-label {
@@ -2050,7 +2108,8 @@ button {
 }
 
 .mypage-alert {
-  margin: 0 12px 14px 0;
+  width: fit-content;
+  margin: 0 0 14px;
   padding: 12px 14px;
   border: 1px solid rgba(240, 184, 75, 0.32);
   border-radius: var(--radius);
@@ -2497,10 +2556,19 @@ button {
     left: 14px;
   }
 
-  .topbar,
   .notice-band {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .topbar {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 56px;
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 
   .topbar-actions,
@@ -2515,6 +2583,27 @@ button {
   .topbar-actions .secondary-button,
   .topbar-actions .primary-button {
     width: 100%;
+  }
+
+  #guestTopbarActions {
+    flex-direction: row;
+    align-items: center;
+    width: auto;
+    flex-shrink: 0;
+    gap: 6px;
+  }
+
+  #guestTopbarActions .secondary-button,
+  #guestTopbarActions .primary-button {
+    width: auto;
+    padding: 0 10px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  #guestTopbarActions .secondary-button svg,
+  #guestTopbarActions .primary-button svg {
+    display: none;
   }
 
   .primary-button {
@@ -2547,6 +2636,14 @@ button {
 
   .topbar-actions .primary-button {
     width: 100%;
+  }
+
+  #guestTopbarActions {
+    flex-wrap: nowrap;
+  }
+
+  #guestTopbarActions .primary-button {
+    width: auto;
   }
 
   .notice-metrics {
@@ -2591,4 +2688,3 @@ button {
     font-size: 13px;
   }
 }
-
