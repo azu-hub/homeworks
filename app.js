@@ -773,19 +773,13 @@ function renderWorkerListChannel() {
                           <span class="worker-id-optional-badge">任意</span>
                           ${
                             hasId
-                              ? `<span class="worker-id-status submitted">提出済み</span>`
+                              ? `<span class="worker-id-status submitted">提出済み</span>
+                                 <button class="id-view-btn" type="button" data-view-id="${i}">
+                                   <i data-lucide="id-card"></i>身分証を確認
+                                 </button>`
                               : `<span class="worker-id-status not-submitted">未提出</span>`
                           }
                         </div>
-                        ${
-                          hasId
-                            ? `<div class="id-images-row">
-                                ${w.idImages.front ? `<figure><button class="id-thumb-btn" data-lightbox-src="${w.idImages.front}" data-lightbox-caption="マイナンバーカード（表面）" type="button"><img src="${w.idImages.front}" alt="マイナンバー表面" /><span class="id-thumb-overlay"><i data-lucide="zoom-in"></i></span></button><figcaption>表面</figcaption></figure>` : ""}
-                                ${w.idImages.back ? `<figure><button class="id-thumb-btn" data-lightbox-src="${w.idImages.back}" data-lightbox-caption="マイナンバーカード（裏面）" type="button"><img src="${w.idImages.back}" alt="マイナンバー裏面" /><span class="id-thumb-overlay"><i data-lucide="zoom-in"></i></span></button><figcaption>裏面</figcaption></figure>` : ""}
-                                ${w.idImages.face ? `<figure><button class="id-thumb-btn" data-lightbox-src="${w.idImages.face}" data-lightbox-caption="顔写真" type="button"><img src="${w.idImages.face}" alt="顔写真" /><span class="id-thumb-overlay"><i data-lucide="zoom-in"></i></span></button><figcaption>顔写真</figcaption></figure>` : ""}
-                              </div>`
-                            : `<p class="worker-id-empty">ユーザーが身分証を提出すると、ここに表示されます。</p>`
-                        }
                       </div>
                     </article>
                   `;
@@ -810,9 +804,10 @@ function renderWorkerListChannel() {
       renderWorkerListChannel();
     });
   });
-  vuzzContent.querySelectorAll("[data-lightbox-src]").forEach((btn) => {
+  vuzzContent.querySelectorAll("[data-view-id]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      openIdLightbox(btn.dataset.lightboxSrc, btn.dataset.lightboxCaption);
+      const w = registeredWorkers[Number(btn.dataset.viewId)];
+      if (w) openIdAllLightbox(w);
     });
   });
   refreshIcons();
@@ -849,6 +844,58 @@ function openIdLightbox(src, caption) {
 
 function closeIdLightbox() {
   document.getElementById("idLightboxOverlay")?.classList.remove("open");
+}
+
+function openIdAllLightbox(w) {
+  let overlay = document.getElementById("idAllLightboxOverlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "idAllLightboxOverlay";
+    overlay.innerHTML = `
+      <div class="id-lightbox-backdrop"></div>
+      <div class="id-lightbox-box id-all-lightbox-box">
+        <div class="id-lightbox-header">
+          <span id="idAllLightboxName"></span>
+          <button class="id-lightbox-close" type="button" aria-label="閉じる"><i data-lucide="x"></i></button>
+        </div>
+        <div class="id-all-lightbox-body" id="idAllLightboxBody"></div>
+      </div>
+    `;
+    overlay.querySelector(".id-lightbox-backdrop").addEventListener("click", closeIdAllLightbox);
+    overlay.querySelector(".id-lightbox-close").addEventListener("click", closeIdAllLightbox);
+    document.body.appendChild(overlay);
+  }
+  const name = `${w.lastName} ${w.firstName}`;
+  document.getElementById("idAllLightboxName").textContent = `身分証確認 — ${name}`;
+  const items = [
+    { src: w.idImages?.front, label: "マイナンバーカード（表面）" },
+    { src: w.idImages?.back,  label: "マイナンバーカード（裏面）" },
+    { src: w.idImages?.face,  label: "顔写真" },
+  ].filter((it) => it.src);
+  document.getElementById("idAllLightboxBody").innerHTML = items
+    .map(
+      (it) => `
+        <figure class="id-all-lightbox-figure">
+          <button class="id-thumb-btn id-all-thumb" data-lightbox-src="${it.src}" data-lightbox-caption="${it.label}" type="button">
+            <img src="${it.src}" alt="${it.label}" />
+            <span class="id-thumb-overlay"><i data-lucide="zoom-in"></i></span>
+          </button>
+          <figcaption>${it.label}</figcaption>
+        </figure>
+      `,
+    )
+    .join("");
+  overlay.querySelectorAll("[data-lightbox-src]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      openIdLightbox(btn.dataset.lightboxSrc, btn.dataset.lightboxCaption);
+    });
+  });
+  overlay.classList.add("open");
+  refreshIcons();
+}
+
+function closeIdAllLightbox() {
+  document.getElementById("idAllLightboxOverlay")?.classList.remove("open");
 }
 
 function getWorkerApprovalStatus() {

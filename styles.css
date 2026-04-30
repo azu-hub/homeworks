@@ -2493,6 +2493,33 @@ button {
   color: var(--muted);
 }
 
+.id-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+
+.id-view-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.id-view-btn svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
 .worker-id-empty {
   font-size: 11px;
   color: var(--muted);
@@ -2667,6 +2694,42 @@ button {
   object-fit: contain;
   border-radius: 6px;
   display: block;
+}
+
+/* All-images lightbox */
+.id-all-lightbox-box {
+  width: min(900px, 95vw);
+}
+
+.id-all-lightbox-body {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  overflow-x: auto;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.id-all-lightbox-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.id-all-lightbox-figure figcaption {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.id-all-thumb img {
+  width: 220px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+  border: 1px solid rgba(255,255,255,0.1);
 }
 
 /* Empty state */
