@@ -577,6 +577,7 @@ function renderVuzzChannel(channelKey) {
 
   vuzzTitle.textContent = channel.title;
   vuzzSubtitle.textContent = channel.subtitle;
+  vuzzNoticeTitle.parentElement?.classList.remove("is-hidden");
   vuzzNoticeTitle.textContent = channel.noticeTitle;
   vuzzNoticeText.textContent = channel.noticeText;
   vuzzMetrics.innerHTML = channel.metrics
@@ -637,8 +638,9 @@ function renderCompanyAccountsChannel(alertText = "") {
   const count = companyAccounts.length;
   vuzzTitle.textContent = channel.title;
   vuzzSubtitle.textContent = channel.subtitle;
-  vuzzNoticeTitle.textContent = channel.noticeTitle;
-  vuzzNoticeText.textContent = channel.noticeText;
+  vuzzNoticeTitle.parentElement?.classList.add("is-hidden");
+  vuzzNoticeTitle.textContent = "";
+  vuzzNoticeText.textContent = "";
   vuzzMetrics.innerHTML = `
     <span><b>${count}</b> 登録済み</span>
     <span><b>${count ? "発行済み" : "未発行"}</b> ログイン情報</span>
@@ -853,6 +855,7 @@ function renderWorkerListChannel() {
   const pending = total - approved;
   vuzzTitle.textContent = ch.title;
   vuzzSubtitle.textContent = ch.subtitle;
+  vuzzNoticeTitle.parentElement?.classList.remove("is-hidden");
   vuzzNoticeTitle.textContent = ch.noticeTitle;
   vuzzNoticeText.textContent = ch.noticeText;
   vuzzMetrics.innerHTML = `
