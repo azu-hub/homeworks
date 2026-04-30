@@ -553,6 +553,36 @@ function renderPrefectureOptions(selected = "") {
   ].join("");
 }
 
+function normalizePasswordValue(value = "") {
+  return value.normalize("NFKC").replace(/[^A-Za-z0-9]/g, "");
+}
+
+function normalizePasswordInput(input) {
+  const normalized = normalizePasswordValue(input.value);
+  if (input.value === normalized) return;
+  const selectionStart = input.selectionStart ?? normalized.length;
+  const removedLength = input.value.length - normalized.length;
+  input.value = normalized;
+  if (document.activeElement === input) {
+    const nextPosition = Math.max(0, Math.min(normalized.length, selectionStart - removedLength));
+    input.setSelectionRange(nextPosition, nextPosition);
+  }
+}
+
+function setupPasswordInputs(scope = document) {
+  scope.querySelectorAll("input[type='password'], input[data-password-input]").forEach((input) => {
+    input.dataset.passwordInput = "true";
+    input.inputMode = "text";
+    input.pattern = "[A-Za-z0-9]+";
+    input.title = "半角英数字で入力してください。全角英数字は自動で半角に変換されます。";
+    input.addEventListener("input", () => normalizePasswordInput(input));
+  });
+}
+
+function normalizePasswordInputs(scope = document) {
+  scope.querySelectorAll("input[data-password-input], input[type='password']").forEach(normalizePasswordInput);
+}
+
 function updateIdentityUI() {
   const rewardSummary = getRewardSummary();
   const displayName = isLoggedIn ? profileData.username || profileData.name || "未設定" : "ゲスト";
@@ -960,7 +990,7 @@ function renderRegistrationForm(alertText = "", mode = "login") {
           <label>
             パスワード
             <span class="password-field">
-              <input name="password" type="password" required />
+              <input name="password" type="password" inputmode="text" pattern="[A-Za-z0-9]+" title="半角英数字で入力してください。全角英数字は自動で半角に変換されます。" required />
               <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
                 <i data-lucide="eye"></i>
               </button>
@@ -990,6 +1020,7 @@ function renderRegistrationForm(alertText = "", mode = "login") {
 
   document.querySelector("#workerLoginForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
+    normalizePasswordInputs(event.currentTarget);
     if (!event.currentTarget.reportValidity()) return;
     const formData = new FormData(event.currentTarget);
     workerAuthEmail = formData.get("email")?.toString().trim() || "ログイン済み";
@@ -1029,6 +1060,7 @@ function renderRegistrationForm(alertText = "", mode = "login") {
   document.querySelector("#backWorkerLoginButton")?.addEventListener("click", () => {
     renderRegistrationForm();
   });
+  setupPasswordInputs(feed);
   refreshIcons();
 }
 
@@ -1127,7 +1159,7 @@ function renderPostVerificationSetup(alertText = "") {
           <label>
             パスワード
             <span class="password-field">
-              <input name="password" type="password" autocomplete="new-password" minlength="6" required />
+              <input name="password" type="password" autocomplete="new-password" inputmode="text" pattern="[A-Za-z0-9]+" title="半角英数字で入力してください。全角英数字は自動で半角に変換されます。" minlength="6" required />
               <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
                 <i data-lucide="eye"></i>
               </button>
@@ -1136,7 +1168,7 @@ function renderPostVerificationSetup(alertText = "") {
           <label>
             パスワード（確認）
             <span class="password-field">
-              <input name="passwordConfirm" type="password" autocomplete="new-password" minlength="6" required />
+              <input name="passwordConfirm" type="password" autocomplete="new-password" inputmode="text" pattern="[A-Za-z0-9]+" title="半角英数字で入力してください。全角英数字は自動で半角に変換されます。" minlength="6" required />
               <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
                 <i data-lucide="eye"></i>
               </button>
@@ -1191,6 +1223,7 @@ function renderPostVerificationSetup(alertText = "") {
 
   document.querySelector("#accountSetupForm").addEventListener("submit", (event) => {
     event.preventDefault();
+    normalizePasswordInputs(event.currentTarget);
     if (!event.currentTarget.reportValidity()) return;
     const formData = new FormData(event.currentTarget);
     const pw = formData.get("password")?.toString() || "";
@@ -1226,6 +1259,7 @@ function renderPostVerificationSetup(alertText = "") {
       refreshIcons();
     });
   });
+  setupPasswordInputs(feed);
   refreshIcons();
 }
 
