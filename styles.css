@@ -1216,6 +1216,42 @@ button {
   color: var(--text);
 }
 
+.company-row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.company-job-list {
+  display: grid;
+  gap: 10px;
+}
+
+.company-job-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius);
+  background: #1e2026;
+}
+
+.company-job-list strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.company-job-list p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .composer {
   display: grid;
   grid-template-columns: 40px minmax(0, 1fr) 40px;

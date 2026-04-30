@@ -660,16 +660,19 @@ function renderVuzzChannel(channelKey) {
 
 function renderCompanyAccountsChannel(alertText = "") {
   const channel = vuzzChannels.companies;
-  const count = companyAccounts.length;
+  const companyRows = getCompanyManagementRows();
+  const count = companyRows.length;
+  const issuedCount = companyRows.filter((row) => Number.isInteger(row.accountIndex)).length;
+  const jobCount = companyRows.reduce((sum, row) => sum + row.jobs.length, 0);
   vuzzTitle.textContent = channel.title;
   vuzzSubtitle.textContent = channel.subtitle;
   vuzzNoticeTitle.parentElement?.classList.add("is-hidden");
   vuzzNoticeTitle.textContent = "";
   vuzzNoticeText.textContent = "";
   vuzzMetrics.innerHTML = `
-    <span><b>${count}</b> 登録済み</span>
-    <span><b>${count ? "発行済み" : "未発行"}</b> ログイン情報</span>
-    <span><b>運営</b> 管理</span>
+    <span><b>${count}</b> 企業</span>
+    <span><b>${issuedCount}</b> アカウント発行済み</span>
+    <span><b>${jobCount}</b> 案件</span>
   `;
   document.getElementById("companyAccountCount").textContent = count;
   vuzzContent.innerHTML = `
@@ -686,17 +689,30 @@ function renderCompanyAccountsChannel(alertText = "") {
       ${alertText ? `<div class="mypage-alert">${escapeHtml(alertText)}</div>` : ""}
       <div class="review-list">
         ${
-          companyAccounts.length
-            ? companyAccounts
+          companyRows.length
+            ? companyRows
                 .map(
-                  (account, index) => `
+                  (row, rowIndex) => `
                     <article>
                       <span class="status-dot"></span>
                       <div>
-                        <strong>${escapeHtml(account.companyName || "企業名未設定")}</strong>
-                        <p>${escapeHtml(account.email)}・パスワード発行済み</p>
+                        <strong>${escapeHtml(row.companyName || "企業名未設定")}</strong>
+                        <p>
+                          ${
+                            row.account
+                              ? `${escapeHtml(row.account.email)}・アカウント発行済み`
+                              : "アカウント未発行"
+                          }・案件 ${row.jobs.length}件
+                        </p>
                       </div>
-                      <button class="mini-button" data-edit-company-account="${index}" type="button">編集</button>
+                      <div class="company-row-actions">
+                        <button class="mini-button" data-view-company-jobs="${rowIndex}" type="button">案件</button>
+                        <button class="mini-button" ${
+                          Number.isInteger(row.accountIndex)
+                            ? `data-edit-company-account="${row.accountIndex}"`
+                            : `data-add-company-account="${rowIndex}"`
+                        } type="button">${Number.isInteger(row.accountIndex) ? "企業編集" : "アカウント追加"}</button>
+                      </div>
                     </article>
                   `,
                 )
@@ -704,8 +720,8 @@ function renderCompanyAccountsChannel(alertText = "") {
             : `<article>
                 <span class="status-dot warn"></span>
                 <div>
-                  <strong>企業アカウント未追加</strong>
-                  <p>右上のプラスボタンから企業のメールアドレスとパスワードを追加してください。</p>
+                  <strong>企業データなし</strong>
+                  <p>右上のプラスボタンから企業アカウントを追加してください。</p>
                 </div>
               </article>`
         }
@@ -722,14 +738,45 @@ function renderCompanyAccountsChannel(alertText = "") {
       openCompanyAccountDialog(Number(button.dataset.editCompanyAccount));
     });
   });
+  vuzzContent.querySelectorAll("[data-add-company-account]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const row = companyRows[Number(button.dataset.addCompanyAccount)];
+      openCompanyAccountDialog(null, { companyName: row?.companyName || "" });
+    });
+  });
+  vuzzContent.querySelectorAll("[data-view-company-jobs]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const row = companyRows[Number(button.dataset.viewCompanyJobs)];
+      if (row) openCompanyJobsDialog(row.companyName);
+    });
+  });
 
   setupPasswordInputs(vuzzContent);
   refreshIcons();
 }
 
-function openCompanyAccountDialog(index = null) {
+function getCompanyManagementRows() {
+  const rows = new Map();
+  companyAccounts.forEach((account, index) => {
+    const companyName = account.companyName || account.email || "企業名未設定";
+    rows.set(companyName, { companyName, account, accountIndex: index, jobs: [] });
+  });
+  jobs.forEach((job) => {
+    const companyName = job.company || "企業名未設定";
+    if (!rows.has(companyName)) {
+      rows.set(companyName, { companyName, account: null, accountIndex: null, jobs: [] });
+    }
+    rows.get(companyName).jobs.push(job);
+  });
+  return [...rows.values()].sort((a, b) => {
+    if (b.jobs.length !== a.jobs.length) return b.jobs.length - a.jobs.length;
+    return a.companyName.localeCompare(b.companyName, "ja");
+  });
+}
+
+function openCompanyAccountDialog(index = null, defaults = {}) {
   const isEdit = Number.isInteger(index);
-  const account = isEdit ? companyAccounts[index] : { companyName: "", email: "", password: "" };
+  const account = isEdit ? companyAccounts[index] : { companyName: defaults.companyName || "", email: "", password: "" };
   if (!account) return;
 
   let dialog = document.getElementById("companyAccountEditModal");
@@ -806,6 +853,142 @@ function openCompanyAccountDialog(index = null) {
     renderCompanyAccountsChannel(isEdit ? "企業アカウントを更新しました。" : "企業アカウントを追加しました。");
   });
 
+  dialog.showModal?.();
+}
+
+function openCompanyJobsDialog(companyName) {
+  const companyJobs = jobs.filter((job) => job.company === companyName);
+  let dialog = document.getElementById("companyJobsModal");
+  if (!dialog) {
+    dialog = document.createElement("dialog");
+    dialog.className = "post-modal";
+    dialog.id = "companyJobsModal";
+    document.body.appendChild(dialog);
+  }
+
+  dialog.innerHTML = `
+    <div class="modal-card company-jobs-modal">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">company jobs</p>
+          <h2>${escapeHtml(companyName)}の案件</h2>
+        </div>
+        <button class="icon-button" id="closeCompanyJobs" type="button" aria-label="閉じる">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="company-job-list">
+        ${
+          companyJobs.length
+            ? companyJobs
+                .map(
+                  (job) => `
+                    <article>
+                      <div>
+                        <strong>${escapeHtml(job.title)}</strong>
+                        <p>${escapeHtml(job.pay)}・${escapeHtml(job.due)}・${escapeHtml(categories[job.channel] || "カテゴリ未設定")}</p>
+                      </div>
+                      <button class="mini-button" data-edit-company-job="${job.id}" type="button">案件編集</button>
+                    </article>
+                  `,
+                )
+                .join("")
+            : `<div class="worker-card-empty compact">
+                <i data-lucide="briefcase"></i>
+                <p>案件なし</p>
+              </div>`
+        }
+      </div>
+    </div>
+  `;
+
+  dialog.querySelector("#closeCompanyJobs")?.addEventListener("click", () => dialog.close());
+  dialog.querySelectorAll("[data-edit-company-job]").forEach((button) => {
+    button.addEventListener("click", () => {
+      dialog.close();
+      openCompanyJobEditDialog(Number(button.dataset.editCompanyJob), companyName);
+    });
+  });
+  refreshIcons();
+  dialog.showModal?.();
+}
+
+function openCompanyJobEditDialog(jobId, companyName) {
+  const job = jobs.find((item) => item.id === jobId);
+  if (!job) return;
+
+  let dialog = document.getElementById("companyJobEditModal");
+  if (!dialog) {
+    dialog = document.createElement("dialog");
+    dialog.className = "post-modal";
+    dialog.id = "companyJobEditModal";
+    document.body.appendChild(dialog);
+  }
+
+  dialog.innerHTML = `
+    <form class="modal-card" id="companyJobEditForm">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">job edit</p>
+          <h2>案件編集</h2>
+        </div>
+        <button class="icon-button" id="closeCompanyJobEdit" type="button" aria-label="閉じる">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <label>
+        案件タイトル
+        <input name="title" type="text" value="${escapeHtml(job.title)}" required />
+      </label>
+      <label>
+        報酬
+        <input name="pay" type="text" value="${escapeHtml(job.pay)}" required />
+      </label>
+      <label>
+        期限
+        <input name="due" type="text" value="${escapeHtml(job.due)}" required />
+      </label>
+      <label>
+        カテゴリ
+        <select name="channel">
+          <option value="inspection"${job.channel === "inspection" ? " selected" : ""}>検品・梱包</option>
+          <option value="typing"${job.channel === "typing" ? " selected" : ""}>データ入力</option>
+          <option value="creative"${job.channel === "creative" ? " selected" : ""}>画像チェック</option>
+        </select>
+      </label>
+      <label>
+        作業内容
+        <textarea name="description" required>${escapeHtml(job.description)}</textarea>
+      </label>
+      <div class="form-actions">
+        <button class="secondary-button" id="cancelCompanyJobEdit" type="button">キャンセル</button>
+        <button class="primary-button" type="submit">
+          <i data-lucide="save"></i>
+          保存
+        </button>
+      </div>
+    </form>
+  `;
+
+  const closeDialog = () => dialog.close();
+  dialog.querySelector("#closeCompanyJobEdit")?.addEventListener("click", closeDialog);
+  dialog.querySelector("#cancelCompanyJobEdit")?.addEventListener("click", closeDialog);
+  dialog.querySelector("#companyJobEditForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!event.currentTarget.reportValidity()) return;
+    const formData = new FormData(event.currentTarget);
+    job.title = formData.get("title")?.toString().trim() || job.title;
+    job.pay = formData.get("pay")?.toString().trim() || job.pay;
+    job.due = formData.get("due")?.toString().trim() || job.due;
+    job.channel = formData.get("channel")?.toString() || job.channel;
+    job.description = formData.get("description")?.toString().trim() || job.description;
+    dialog.close();
+    renderCompanyAccountsChannel("案件情報を更新しました。");
+    if (selectedJobId === job.id) renderDetail(job);
+    renderFeed();
+  });
+
+  refreshIcons();
   dialog.showModal?.();
 }
 
