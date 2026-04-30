@@ -753,6 +753,10 @@ function renderWorkerListChannel() {
                           }
                         </div>
                         <dl class="worker-card-dl">
+                          ${w.username ? `<div>
+                            <dt><i data-lucide="at-sign"></i></dt>
+                            <dd>${escapeHtml(w.username)}</dd>
+                          </div>` : ""}
                           <div>
                             <dt><i data-lucide="mail"></i></dt>
                             <dd>${escapeHtml(w.email)}</dd>
