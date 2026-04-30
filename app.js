@@ -651,44 +651,14 @@ function renderCompanyAccountsChannel(alertText = "") {
     <section class="portal-panel">
       <div class="section-head">
         <div>
-          <p class="eyebrow">company account</p>
-          <h2>企業ログイン情報を追加</h2>
+          <p class="eyebrow">company list</p>
+          <h2>企業一覧</h2>
         </div>
+        <button class="icon-button" id="openCompanyAccountAdd" type="button" aria-label="企業アカウントを追加">
+          <i data-lucide="plus"></i>
+        </button>
       </div>
       ${alertText ? `<div class="mypage-alert">${escapeHtml(alertText)}</div>` : ""}
-      <form class="form-grid" id="companyAccountForm" novalidate>
-        <label class="span-2">
-          会社名
-          <input name="companyName" type="text" placeholder="例：白樺文具株式会社" />
-        </label>
-        <label class="span-2">
-          メールアドレス
-          <input name="email" type="text" inputmode="email" autocomplete="email" required />
-        </label>
-        <label class="span-2">
-          パスワード
-          <span class="password-field">
-            <input name="password" type="password" inputmode="text" pattern="[A-Za-z0-9]+" title="半角英数字で入力してください。全角英数字は自動で半角に変換されます。" required />
-            <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
-              <i data-lucide="eye"></i>
-            </button>
-          </span>
-          <span class="field-hint">半角英数字</span>
-        </label>
-        <button class="primary-button wide span-2" type="submit">
-          <i data-lucide="plus"></i>
-          企業アカウントを追加
-        </button>
-      </form>
-    </section>
-
-    <aside class="portal-panel">
-      <div class="section-head">
-        <div>
-          <p class="eyebrow">issued accounts</p>
-          <h2>追加済み企業</h2>
-        </div>
-      </div>
       <div class="review-list">
         ${
           companyAccounts.length
@@ -710,39 +680,31 @@ function renderCompanyAccountsChannel(alertText = "") {
                 <span class="status-dot warn"></span>
                 <div>
                   <strong>企業アカウント未追加</strong>
-                  <p>左のフォームから企業のメールアドレスとパスワードを追加してください。</p>
+                  <p>右上のプラスボタンから企業のメールアドレスとパスワードを追加してください。</p>
                 </div>
               </article>`
         }
       </div>
-    </aside>
+    </section>
   `;
+
+  document.getElementById("openCompanyAccountAdd")?.addEventListener("click", () => {
+    openCompanyAccountDialog();
+  });
 
   vuzzContent.querySelectorAll("[data-edit-company-account]").forEach((button) => {
     button.addEventListener("click", () => {
-      openCompanyAccountEditDialog(Number(button.dataset.editCompanyAccount));
+      openCompanyAccountDialog(Number(button.dataset.editCompanyAccount));
     });
   });
 
-  document.getElementById("companyAccountForm")?.addEventListener("submit", (event) => {
-    event.preventDefault();
-    normalizePasswordInputs(event.currentTarget);
-    if (!event.currentTarget.reportValidity()) return;
-    const formData = new FormData(event.currentTarget);
-    companyAccounts.unshift({
-      companyName: formData.get("companyName")?.toString().trim() || "",
-      email: formData.get("email")?.toString().trim() || "",
-      password: formData.get("password")?.toString() || "",
-    });
-    saveCompanyAccounts();
-    renderCompanyAccountsChannel("企業アカウントを追加しました。");
-  });
   setupPasswordInputs(vuzzContent);
   refreshIcons();
 }
 
-function openCompanyAccountEditDialog(index) {
-  const account = companyAccounts[index];
+function openCompanyAccountDialog(index = null) {
+  const isEdit = Number.isInteger(index);
+  const account = isEdit ? companyAccounts[index] : { companyName: "", email: "", password: "" };
   if (!account) return;
 
   let dialog = document.getElementById("companyAccountEditModal");
@@ -758,7 +720,7 @@ function openCompanyAccountEditDialog(index) {
       <div class="modal-header">
         <div>
           <p class="eyebrow">company account</p>
-          <h2>企業アカウント編集</h2>
+          <h2>${isEdit ? "企業アカウント編集" : "企業アカウント追加"}</h2>
         </div>
         <button class="icon-button" id="closeCompanyAccountEdit" type="button" aria-label="閉じる">
           <i data-lucide="x"></i>
@@ -771,7 +733,7 @@ function openCompanyAccountEditDialog(index) {
         </label>
         <label>
           メールアドレス
-          <input name="email" type="text" inputmode="email" value="${escapeHtml(account.email || "")}" required />
+          <input name="email" type="text" inputmode="email" autocomplete="email" value="${escapeHtml(account.email || "")}" required />
         </label>
         <label>
           パスワード
@@ -786,8 +748,8 @@ function openCompanyAccountEditDialog(index) {
       <div class="form-actions">
         <button class="secondary-button" id="cancelCompanyAccountEdit" type="button">キャンセル</button>
         <button class="primary-button" type="submit">
-          <i data-lucide="save"></i>
-          保存
+          <i data-lucide="${isEdit ? "save" : "plus"}"></i>
+          ${isEdit ? "保存" : "追加"}
         </button>
       </div>
     </form>
@@ -804,14 +766,19 @@ function openCompanyAccountEditDialog(index) {
     normalizePasswordInputs(event.currentTarget);
     if (!event.currentTarget.reportValidity()) return;
     const formData = new FormData(event.currentTarget);
-    companyAccounts[index] = {
+    const nextAccount = {
       companyName: formData.get("companyName")?.toString().trim() || "",
       email: formData.get("email")?.toString().trim() || "",
       password: formData.get("password")?.toString() || "",
     };
+    if (isEdit) {
+      companyAccounts[index] = nextAccount;
+    } else {
+      companyAccounts.unshift(nextAccount);
+    }
     saveCompanyAccounts();
     dialog.close();
-    renderCompanyAccountsChannel("企業アカウントを更新しました。");
+    renderCompanyAccountsChannel(isEdit ? "企業アカウントを更新しました。" : "企業アカウントを追加しました。");
   });
 
   dialog.showModal?.();
