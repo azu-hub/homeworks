@@ -1237,6 +1237,63 @@ function closeUtilityPopover() {
   settingsButton.setAttribute("aria-expanded", "false");
 }
 
+function setWorkerChannel(channel, priceTier = "all", category = "all") {
+  activeChannel = channel;
+  activePriceTier = priceTier;
+  activeCategory = category;
+  activeFilter = "all";
+  document.querySelectorAll("#workerApp .channel").forEach((item) => {
+    const isActive =
+      item.dataset.channel === channel &&
+      (item.dataset.priceTier || "all") === priceTier &&
+      (item.dataset.category || "all") === category;
+    item.classList.toggle("active", isActive);
+  });
+  document.querySelectorAll("#workerApp .filter").forEach((item) => {
+    item.classList.toggle("active", item.dataset.filter === activeFilter);
+  });
+}
+
+function openJobNotification(jobId) {
+  const job = jobs.find((item) => item.id === jobId) || jobs[0];
+  if (!job) return;
+  showRole("worker");
+  setWorkerChannel("jobs", getJobPriceTier(job), job.channel);
+  selectJob(job.id);
+  closeUtilityPopover();
+}
+
+function openIdentityProgressNotification() {
+  showRole("worker");
+  closeUtilityPopover();
+  if (!isLoggedIn) {
+    renderRegistrationForm("本人確認の進捗を見るにはログインが必要です。");
+    return;
+  }
+  renderMyPage("本人確認の進捗を表示しています。");
+}
+
+function openSavedJobsNotification() {
+  showRole("worker");
+  setWorkerChannel("saved");
+  renderFeed();
+  closeUtilityPopover();
+}
+
+function handleNotificationClick(action) {
+  if (action === "new-job") {
+    openJobNotification(1);
+    return;
+  }
+  if (action === "identity-progress") {
+    openIdentityProgressNotification();
+    return;
+  }
+  if (action === "saved-jobs") {
+    openSavedJobsNotification();
+  }
+}
+
 function renderUtilityPopover(type) {
   const activeButton = type === "notifications" ? notificationsButton : settingsButton;
   const otherButton = type === "notifications" ? settingsButton : notificationsButton;
@@ -1261,27 +1318,27 @@ function renderUtilityPopover(type) {
           <span>3件</span>
         </div>
         <div class="utility-list">
-          <article class="utility-item">
+          <button class="utility-item" data-notification-action="new-job" type="button">
             <span class="utility-icon"><i data-lucide="briefcase-business"></i></span>
             <div>
               <strong>新しい案件が追加されました</strong>
               <p>検品・梱包に「封入作業 300セット」が届いています。</p>
             </div>
-          </article>
-          <article class="utility-item">
+          </button>
+          <button class="utility-item" data-notification-action="identity-progress" type="button">
             <span class="utility-icon"><i data-lucide="shield-check"></i></span>
             <div>
               <strong>本人確認の進捗</strong>
               <p>${getWorkerApprovalStatus()}</p>
             </div>
-          </article>
-          <article class="utility-item">
+          </button>
+          <button class="utility-item" data-notification-action="saved-jobs" type="button">
             <span class="utility-icon"><i data-lucide="bookmark"></i></span>
             <div>
               <strong>保存済み案件</strong>
               <p>${savedJobs.size}件の案件を保存しています。</p>
             </div>
-          </article>
+          </button>
         </div>
       `
       : `
@@ -1320,6 +1377,9 @@ function renderUtilityPopover(type) {
       button.classList.toggle("is-on", isOn);
       button.setAttribute("aria-pressed", String(isOn));
     });
+  });
+  utilityPopover.querySelectorAll("[data-notification-action]").forEach((button) => {
+    button.addEventListener("click", () => handleNotificationClick(button.dataset.notificationAction));
   });
 
   refreshIcons();

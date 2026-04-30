@@ -781,11 +781,18 @@ button {
 .utility-item {
   display: grid;
   grid-template-columns: 30px minmax(0, 1fr);
+  width: 100%;
   gap: 9px;
   align-items: start;
   padding: 10px;
   border-radius: var(--radius);
   background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  text-align: left;
+}
+
+.utility-item:hover {
+  background: rgba(72, 181, 140, 0.1);
 }
 
 .utility-icon {
