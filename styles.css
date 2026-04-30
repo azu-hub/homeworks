@@ -1958,11 +1958,16 @@ button {
 }
 
 #openWorkerSignupButton {
-  color: #2746a0;
+  padding: 6px 12px;
+  border: 1px solid rgba(72, 181, 140, 0.34);
+  border-radius: var(--radius);
+  background: rgba(72, 181, 140, 0.1);
+  color: #86e6bd;
 }
 
 #openWorkerSignupButton:hover {
-  color: #3a5ec0;
+  background: rgba(72, 181, 140, 0.18);
+  color: #b6f4d7;
 }
 
 .form-note {
