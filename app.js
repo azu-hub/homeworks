@@ -1110,7 +1110,10 @@ function updateIdentityUI() {
         : '<i data-lucide="badge-alert"></i> 運営承認後に応募';
   document.querySelector("#guestTopbarActions")?.classList.toggle("is-hidden", isLoggedIn);
   document.querySelectorAll("[data-logout]").forEach((btn) => {
-    btn.classList.toggle("is-hidden", !isLoggedIn);
+    const inVuzz = !!btn.closest("#vuzzApp");
+    const inCompany = !!btn.closest("#companyApp");
+    const visible = inVuzz ? isVuzzLoggedIn : inCompany ? true : isLoggedIn;
+    btn.classList.toggle("is-hidden", !visible);
   });
   refreshIcons();
 }
