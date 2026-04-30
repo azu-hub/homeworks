@@ -228,6 +228,7 @@ let isProfileCardEditing = false;
 let workerPassword = "";
 const withdrawalHistory = [];
 let withdrawalPending = false;
+let pendingLogoutButton = null;
 
 const feed = document.querySelector("#jobFeed");
 const channelTitle = document.querySelector("#channelTitle");
@@ -238,6 +239,7 @@ const allJobsCount = document.querySelector("#allJobsCount");
 const saveCurrent = document.querySelector("#saveCurrent");
 const savedCount = document.querySelector("#savedCount");
 const postModal = document.querySelector("#postModal");
+const logoutModal = document.querySelector("#logoutModal");
 const workerMainGrid = document.querySelector("#workerApp .main-grid");
 const filterRow = document.querySelector("#workerApp .filter-row");
 const channelComposer = document.querySelector("#channelComposer");
@@ -2749,31 +2751,50 @@ document.querySelectorAll("[data-panel-toggle]").forEach((button) => {
   });
 });
 
+function completeLogout(button) {
+  isLoggedIn = false;
+  emailVerified = false;
+  profileSubmitted = false;
+  idSubmitted = false;
+  contractIssued = false;
+  lineRegistered = false;
+  vuzzApplicationSubmitted = false;
+  identityVerified = false;
+  isEditingProfile = false;
+  profileFormStep = 1;
+  workerAuthEmail = "";
+  companyProfileSubmitted = false;
+  pendingLoginRole = null;
+  pendingLoginMethod = null;
+  updateIdentityUI();
+  closeUtilityPopover();
+  setLoginStep("role");
+  if (button?.closest("#workerApp")) {
+    showRole("worker");
+    renderFeed();
+  } else {
+    showLogin();
+  }
+}
+
+logoutModal?.addEventListener("close", () => {
+  const shouldLogout = logoutModal.returnValue === "confirm";
+  const sourceButton = pendingLogoutButton;
+  pendingLogoutButton = null;
+  logoutModal.returnValue = "";
+  if (shouldLogout) completeLogout(sourceButton);
+});
+
 document.querySelectorAll("[data-logout]").forEach((button) => {
   button.addEventListener("click", () => {
-    isLoggedIn = false;
-    emailVerified = false;
-    profileSubmitted = false;
-    idSubmitted = false;
-    contractIssued = false;
-    lineRegistered = false;
-    vuzzApplicationSubmitted = false;
-    identityVerified = false;
-    isEditingProfile = false;
-    profileFormStep = 1;
-    workerAuthEmail = "";
-    companyProfileSubmitted = false;
-    pendingLoginRole = null;
-    pendingLoginMethod = null;
-    updateIdentityUI();
-    closeUtilityPopover();
-    setLoginStep("role");
-    if (button.closest("#workerApp")) {
-      showRole("worker");
-      renderFeed();
-    } else {
-      showLogin();
+    pendingLogoutButton = button;
+    if (logoutModal?.showModal) {
+      logoutModal.returnValue = "";
+      logoutModal.showModal();
+      refreshIcons();
+      return;
     }
+    if (window.confirm("ログアウトしますか？")) completeLogout(button);
   });
 });
 

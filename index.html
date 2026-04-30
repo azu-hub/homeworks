@@ -930,6 +930,28 @@
       </form>
     </dialog>
 
+    <dialog class="post-modal" id="logoutModal">
+      <form method="dialog" class="modal-card">
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">confirm</p>
+            <h2>ログアウトしますか？</h2>
+          </div>
+          <button class="icon-button" value="cancel" aria-label="閉じる">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <p class="form-note">ログアウト後も案件一覧は閲覧できます。</p>
+        <div class="form-actions">
+          <button class="secondary-button" value="cancel" type="submit">キャンセル</button>
+          <button class="primary-button" value="confirm" type="submit">
+            <i data-lucide="log-out"></i>
+            ログアウト
+          </button>
+        </div>
+      </form>
+    </dialog>
+
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <script src="./app.js"></script>
   </body>
