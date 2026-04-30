@@ -780,9 +780,9 @@ function renderWorkerListChannel() {
                         ${
                           hasId
                             ? `<div class="id-images-row">
-                                ${w.idImages.front ? `<figure><figcaption>表面</figcaption><img src="${w.idImages.front}" alt="マイナンバー表面" /></figure>` : ""}
-                                ${w.idImages.back ? `<figure><figcaption>裏面</figcaption><img src="${w.idImages.back}" alt="マイナンバー裏面" /></figure>` : ""}
-                                ${w.idImages.face ? `<figure><figcaption>顔写真</figcaption><img src="${w.idImages.face}" alt="顔写真" /></figure>` : ""}
+                                ${w.idImages.front ? `<figure><button class="id-thumb-btn" data-lightbox-src="${w.idImages.front}" data-lightbox-caption="マイナンバーカード（表面）" type="button"><img src="${w.idImages.front}" alt="マイナンバー表面" /><span class="id-thumb-overlay"><i data-lucide="zoom-in"></i></span></button><figcaption>表面</figcaption></figure>` : ""}
+                                ${w.idImages.back ? `<figure><button class="id-thumb-btn" data-lightbox-src="${w.idImages.back}" data-lightbox-caption="マイナンバーカード（裏面）" type="button"><img src="${w.idImages.back}" alt="マイナンバー裏面" /><span class="id-thumb-overlay"><i data-lucide="zoom-in"></i></span></button><figcaption>裏面</figcaption></figure>` : ""}
+                                ${w.idImages.face ? `<figure><button class="id-thumb-btn" data-lightbox-src="${w.idImages.face}" data-lightbox-caption="顔写真" type="button"><img src="${w.idImages.face}" alt="顔写真" /><span class="id-thumb-overlay"><i data-lucide="zoom-in"></i></span></button><figcaption>顔写真</figcaption></figure>` : ""}
                               </div>`
                             : `<p class="worker-id-empty">ユーザーが身分証を提出すると、ここに表示されます。</p>`
                         }
@@ -810,7 +810,45 @@ function renderWorkerListChannel() {
       renderWorkerListChannel();
     });
   });
+  vuzzContent.querySelectorAll("[data-lightbox-src]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      openIdLightbox(btn.dataset.lightboxSrc, btn.dataset.lightboxCaption);
+    });
+  });
   refreshIcons();
+}
+
+function openIdLightbox(src, caption) {
+  let overlay = document.getElementById("idLightboxOverlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "idLightboxOverlay";
+    overlay.innerHTML = `
+      <div class="id-lightbox-backdrop"></div>
+      <div class="id-lightbox-box">
+        <div class="id-lightbox-header">
+          <span id="idLightboxCaption"></span>
+          <button class="id-lightbox-close" type="button" aria-label="閉じる"><i data-lucide="x"></i></button>
+        </div>
+        <div class="id-lightbox-img-wrap">
+          <img id="idLightboxImg" src="" alt="" />
+        </div>
+      </div>
+    `;
+    overlay.querySelector(".id-lightbox-backdrop").addEventListener("click", closeIdLightbox);
+    overlay.querySelector(".id-lightbox-close").addEventListener("click", closeIdLightbox);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeIdLightbox(); });
+    document.body.appendChild(overlay);
+  }
+  document.getElementById("idLightboxImg").src = src;
+  document.getElementById("idLightboxImg").alt = caption;
+  document.getElementById("idLightboxCaption").textContent = caption;
+  overlay.classList.add("open");
+  refreshIcons();
+}
+
+function closeIdLightbox() {
+  document.getElementById("idLightboxOverlay")?.classList.remove("open");
 }
 
 function getWorkerApprovalStatus() {
