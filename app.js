@@ -183,6 +183,7 @@ let isLoggedIn = false;
 let emailVerified = false;
 let profileSubmitted = false;
 let idSubmitted = false;
+let idImages = { front: null, back: null, face: null };
 let contractIssued = false;
 let lineRegistered = false;
 let vuzzApplicationSubmitted = false;
@@ -231,6 +232,68 @@ let workerPassword = "";
 let isVuzzLoggedIn = false;
 const vuzzAdminCredentials = { email: "admin@vuzz.jp", password: "vuzz2026" };
 const companyAccounts = [];
+const registeredWorkers = [
+  {
+    email: "tanaka.yui@example.com",
+    lastName: "田中",
+    firstName: "結衣",
+    kanaLast: "タナカ",
+    kanaFirst: "ユイ",
+    username: "yui_t",
+    prefecture: "東京都",
+    registeredAt: "2026/04/28 10:23:05",
+    emailVerified: true,
+    approved: true,
+  },
+  {
+    email: "sato.kenji@example.com",
+    lastName: "佐藤",
+    firstName: "健二",
+    kanaLast: "サトウ",
+    kanaFirst: "ケンジ",
+    username: "kenji_s",
+    prefecture: "大阪府",
+    registeredAt: "2026/04/28 14:07:42",
+    emailVerified: true,
+    approved: false,
+  },
+  {
+    email: "yamamoto.rin@example.com",
+    lastName: "山本",
+    firstName: "凛",
+    kanaLast: "ヤマモト",
+    kanaFirst: "リン",
+    username: "rin_y",
+    prefecture: "神奈川県",
+    registeredAt: "2026/04/29 09:15:30",
+    emailVerified: false,
+    approved: false,
+  },
+  {
+    email: "ito.haruki@example.com",
+    lastName: "伊藤",
+    firstName: "春樹",
+    kanaLast: "イトウ",
+    kanaFirst: "ハルキ",
+    username: "haruki_i",
+    prefecture: "愛知県",
+    registeredAt: "2026/04/29 18:44:11",
+    emailVerified: true,
+    approved: false,
+  },
+  {
+    email: "nakamura.moe@example.com",
+    lastName: "中村",
+    firstName: "萌",
+    kanaLast: "ナカムラ",
+    kanaFirst: "モエ",
+    username: "moe_n",
+    prefecture: "福岡県",
+    registeredAt: "2026/04/30 08:02:59",
+    emailVerified: false,
+    approved: false,
+  },
+];
 const withdrawalHistory = [];
 let withdrawalPending = false;
 let pendingLogoutButton = null;
@@ -350,9 +413,9 @@ const vuzzChannels = {
     eyebrow: "identity queue",
     healthTitle: "確認状況",
     rows: [
-      ["warn", "佐藤 美咲", "住所確認書類の文字が一部不鮮明", "再提出"],
-      ["", "青葉ギフト", "法人番号と担当者情報の照合待ち", "承認"],
-      ["danger", "worker-2048", "重複登録の可能性あり", "保留"],
+      ["warn", "佐藤 美咲", "住所確認書類の文字が一部不鮮明", "再提出", "misaki"],
+      ["", "青葉ギフト", "法人番号と担当者情報の照合待ち", "承認", ""],
+      ["danger", "worker-2048", "重複登録の可能性あり", "保留", ""],
     ],
     metricsSide: [
       ["ワーカー確認", "12件"],
@@ -422,6 +485,13 @@ const vuzzChannels = {
       ["運営発行", "ログイン情報"],
     ],
   },
+  workers: {
+    title: "ユーザー一覧",
+    subtitle: "登録済みワーカーの確認・承認",
+    noticeTitle: "ユーザー管理",
+    noticeText: "ワーカーが個人情報を登録すると一覧に表示されます",
+    metrics: [],
+  },
 };
 
 function refreshIcons() {
@@ -436,6 +506,10 @@ function renderVuzzChannel(channelKey) {
 
   if (channelKey === "companies") {
     renderCompanyAccountsChannel();
+    return;
+  }
+  if (channelKey === "workers") {
+    renderWorkerListChannel();
     return;
   }
 
@@ -457,8 +531,8 @@ function renderVuzzChannel(channelKey) {
       <div class="review-list">
         ${channel.rows
           .map(
-            ([tone, title, description, action]) => `
-              <article>
+            ([tone, title, description, action, workerId = ""]) => `
+              <article${workerId ? ` data-vuzz-worker-id="${workerId}"` : ""}>
                 <span class="status-dot ${tone}"></span>
                 <div>
                   <strong>${title}</strong>
@@ -523,11 +597,11 @@ function renderCompanyAccountsChannel(alertText = "") {
           会社名
           <input name="companyName" type="text" placeholder="例：白樺文具株式会社" />
         </label>
-        <label>
+        <label class="span-2">
           メールアドレス
           <input name="email" type="text" inputmode="email" autocomplete="email" required />
         </label>
-        <label>
+        <label class="span-2">
           パスワード
           <span class="password-field">
             <input name="password" type="password" inputmode="text" pattern="[A-Za-z0-9]+" title="半角英数字で入力してください。全角英数字は自動で半角に変換されます。" required />
@@ -593,6 +667,149 @@ function renderCompanyAccountsChannel(alertText = "") {
     renderCompanyAccountsChannel("企業アカウントを追加しました。");
   });
   setupPasswordInputs(vuzzContent);
+  refreshIcons();
+}
+
+function upsertRegisteredWorker() {
+  const email = workerAuthEmail || "不明";
+  const idx = registeredWorkers.findIndex((w) => w.email === email);
+  const entry = {
+    email,
+    lastName: profileData.lastName,
+    firstName: profileData.firstName,
+    kanaLast: profileData.kanaLast,
+    kanaFirst: profileData.kanaFirst,
+    username: profileData.username,
+    prefecture: profileData.prefecture,
+    registeredAt: new Date().toLocaleString("ja-JP"),
+    postalCode: profileData.postalCode,
+    addressLine1: profileData.addressLine1,
+    addressLine2: profileData.addressLine2,
+    birthdate: profileData.birthdate,
+    gender: profileData.gender,
+    emailVerified,
+    idSubmitted,
+    idImages: { ...idImages },
+    approved: identityVerified,
+  };
+  if (idx >= 0) {
+    registeredWorkers[idx] = { ...registeredWorkers[idx], ...entry };
+  } else {
+    registeredWorkers.unshift(entry);
+  }
+  const badge = document.getElementById("workerCount");
+  if (badge) badge.textContent = registeredWorkers.length;
+}
+
+function renderWorkerListChannel() {
+  const ch = vuzzChannels.workers;
+  const total = registeredWorkers.length;
+  const approved = registeredWorkers.filter((w) => w.approved).length;
+  const pending = total - approved;
+  vuzzTitle.textContent = ch.title;
+  vuzzSubtitle.textContent = ch.subtitle;
+  vuzzNoticeTitle.textContent = ch.noticeTitle;
+  vuzzNoticeText.textContent = ch.noticeText;
+  vuzzMetrics.innerHTML = `
+    <span><b>${total}</b> 登録済み</span>
+    <span><b>${approved}</b> 承認済み</span>
+    <span><b>${pending}</b> 承認待ち</span>
+  `;
+  document.getElementById("workerCount").textContent = total;
+  vuzzContent.innerHTML = `
+    <aside class="portal-panel" style="flex:1">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">registered workers</p>
+          <h2>登録ユーザー一覧</h2>
+        </div>
+      </div>
+      <div class="worker-card-list">
+        ${
+          registeredWorkers.length
+            ? registeredWorkers
+                .map((w, i) => {
+                  const hasId = w.idImages && (w.idImages.front || w.idImages.back || w.idImages.face);
+                  const addressParts = [
+                    w.postalCode ? `〒${w.postalCode.replace(/(\d{3})(\d{4})/, "$1-$2")}` : "",
+                    w.prefecture || "",
+                    w.addressLine1 || "",
+                    w.addressLine2 || "",
+                  ].filter(Boolean);
+                  const addressStr = addressParts.length ? addressParts.join(" ") : "住所未設定";
+                  return `
+                    <article class="worker-card">
+                      <div class="worker-card-required">
+                        <div class="worker-card-name-row">
+                          <span class="status-dot${w.approved ? "" : " warn"}"></span>
+                          <div class="worker-card-name">
+                            <strong>${escapeHtml(w.lastName + " " + w.firstName)}</strong>
+                            <span class="worker-card-kana">${escapeHtml(w.kanaLast + " " + w.kanaFirst)}</span>
+                          </div>
+                          ${
+                            w.approved
+                              ? `<span class="worker-status-badge approved">承認済み</span>`
+                              : `<button class="worker-approve-btn" type="button" data-approve-worker="${i}">承認する</button>`
+                          }
+                        </div>
+                        <dl class="worker-card-dl">
+                          <div>
+                            <dt><i data-lucide="mail"></i></dt>
+                            <dd>${escapeHtml(w.email)}</dd>
+                          </div>
+                          <div>
+                            <dt><i data-lucide="map-pin"></i></dt>
+                            <dd>${escapeHtml(addressStr)}</dd>
+                          </div>
+                          <div>
+                            <dt><i data-lucide="clock"></i></dt>
+                            <dd>登録日時：${escapeHtml(w.registeredAt)}</dd>
+                          </div>
+                        </dl>
+                      </div>
+                      <div class="worker-card-id-section">
+                        <div class="worker-card-id-header">
+                          <span class="worker-card-id-label">本人確認書類</span>
+                          <span class="worker-id-optional-badge">任意</span>
+                          ${
+                            hasId
+                              ? `<span class="worker-id-status submitted">提出済み</span>`
+                              : `<span class="worker-id-status not-submitted">未提出</span>`
+                          }
+                        </div>
+                        ${
+                          hasId
+                            ? `<div class="id-images-row">
+                                ${w.idImages.front ? `<figure><figcaption>表面</figcaption><img src="${w.idImages.front}" alt="マイナンバー表面" /></figure>` : ""}
+                                ${w.idImages.back ? `<figure><figcaption>裏面</figcaption><img src="${w.idImages.back}" alt="マイナンバー裏面" /></figure>` : ""}
+                                ${w.idImages.face ? `<figure><figcaption>顔写真</figcaption><img src="${w.idImages.face}" alt="顔写真" /></figure>` : ""}
+                              </div>`
+                            : `<p class="worker-id-empty">ユーザーが身分証を提出すると、ここに表示されます。</p>`
+                        }
+                      </div>
+                    </article>
+                  `;
+                })
+                .join("")
+            : `<div class="worker-card-empty">
+                <i data-lucide="users"></i>
+                <p>登録ユーザーなし</p>
+                <span>ユーザーが個人情報を登録すると、ここに表示されます。</span>
+              </div>`
+        }
+      </div>
+    </aside>
+  `;
+  vuzzContent.querySelectorAll("[data-approve-worker]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const idx = Number(btn.dataset.approveWorker);
+      registeredWorkers[idx] = { ...registeredWorkers[idx], approved: true };
+      identityVerified = true;
+      upsertRegisteredWorker();
+      updateIdentityUI();
+      renderWorkerListChannel();
+    });
+  });
   refreshIcons();
 }
 
@@ -1163,6 +1380,17 @@ function renderRegistrationForm(alertText = "", mode = "login") {
           会員登録はこちら
         </button>
       </form>
+      <div class="dev-bypass">
+        <p class="dev-bypass-label"><i data-lucide="flask-conical"></i> テスト用ショートカット（本番では非表示）</p>
+        <div class="dev-bypass-buttons">
+          <button class="dev-bypass-btn" id="devBypassAdminFromLogin" type="button">
+            <i data-lucide="shield-check"></i> 運営ページへ（認証スキップ）
+          </button>
+          <button class="dev-bypass-btn" id="devBypassCompanyFromLogin" type="button">
+            <i data-lucide="building-2"></i> クライアントページへ（認証スキップ）
+          </button>
+        </div>
+      </div>
     `;
   }
 
@@ -1211,13 +1439,44 @@ function renderRegistrationForm(alertText = "", mode = "login") {
     profileFormStep = 1;
     updateIdentityUI();
     renderEmailVerification("登録が完了しました。メールに届いた認証コードを確認してください。");
+    sendVerificationEmail(workerAuthEmail);
   });
   document.querySelector("#backWorkerLoginButton")?.addEventListener("click", () => {
     renderRegistrationForm();
   });
+  document.getElementById("devBypassAdminFromLogin")?.addEventListener("click", () => {
+    isVuzzLoggedIn = true;
+    showRole("vuzz");
+    renderVuzzChannel("review");
+  });
+  document.getElementById("devBypassCompanyFromLogin")?.addEventListener("click", () => {
+    showRole("company");
+  });
   setupPasswordInputs(feed);
   setupEmailValidation(feed);
   refreshIcons();
+}
+
+async function sendVerificationEmail(email) {
+  try {
+    await fetch("/api/send-verification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+  } catch (_err) {
+    // silent — user can retry via resend button
+  }
+}
+
+async function verifyEmailCode(email, code) {
+  const res = await fetch("/api/verify-code", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, code }),
+  });
+  const data = await res.json();
+  return data.success === true;
 }
 
 function renderEmailVerification(alertText = "") {
@@ -1276,20 +1535,34 @@ function renderEmailVerification(alertText = "") {
     emailCodeInput.value = toHalfWidth(emailCodeInput.value).replace(/[^0-9]/g, "");
   });
 
-  document.querySelector("#emailVerificationForm").addEventListener("submit", (event) => {
+  const submitBtn = document.querySelector("#emailVerificationForm button[type='submit']");
+  document.querySelector("#emailVerificationForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const code = emailCodeInput?.value.trim() || "";
     if (!/^[0-9]{6}$/.test(code)) {
       renderEmailVerification("認証コードは6桁の数字で入力してください。");
       return;
     }
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "確認中…"; }
+    try {
+      const ok = await verifyEmailCode(workerAuthEmail, code);
+      if (!ok) {
+        renderEmailVerification("認証コードが正しくありません。再度お確かめください。");
+        return;
+      }
+    } catch (_err) {
+      renderEmailVerification("通信エラーが発生しました。再度お試しください。");
+      return;
+    }
     emailVerified = true;
     identityVerified = false;
+    upsertRegisteredWorker();
     recordWorkerLogin();
     updateIdentityUI();
     renderPostVerificationSetup();
   });
-  document.querySelector("#resendEmailButton").addEventListener("click", () => {
+  document.querySelector("#resendEmailButton").addEventListener("click", async () => {
+    await sendVerificationEmail(workerAuthEmail);
     renderEmailVerification("認証メールを再送しました。");
   });
   refreshIcons();
@@ -1509,6 +1782,7 @@ function renderUsernameSetup(alertText = "") {
     profileSubmitted = true;
     profileFormStep = 1;
     isEditingProfile = false;
+    upsertRegisteredWorker();
     updateIdentityUI();
     renderMyPage(wasEditing ? "個人情報を更新しました。" : "個人情報を保存しました。続けて身分証を提出してください。");
   });
@@ -1683,11 +1957,28 @@ function renderMyPage(alertText = "") {
     : !idSubmitted
       ? `
         <div class="onboarding-action">
-          <p class="form-note">運転免許証、マイナンバーカード、在留カードなどの本人確認書類を提出してください。</p>
-          <button class="primary-button wide" id="submitIdButton" type="button">
-            <i data-lucide="id-card"></i>
-            身分証を提出
-          </button>
+          <p class="form-note">マイナンバーカードの表面・裏面の画像と、顔写真を提出してください。</p>
+          <form id="idUploadForm" class="id-upload-form">
+            <label class="id-upload-label">
+              <span>マイナンバーカード（表面）</span>
+              <input type="file" id="idFrontInput" accept="image/*" required />
+              <span class="id-upload-preview-wrap"><img id="idFrontPreview" class="id-upload-preview" /></span>
+            </label>
+            <label class="id-upload-label">
+              <span>マイナンバーカード（裏面）</span>
+              <input type="file" id="idBackInput" accept="image/*" required />
+              <span class="id-upload-preview-wrap"><img id="idBackPreview" class="id-upload-preview" /></span>
+            </label>
+            <label class="id-upload-label">
+              <span>顔写真</span>
+              <input type="file" id="idFaceInput" accept="image/*" required />
+              <span class="id-upload-preview-wrap"><img id="idFacePreview" class="id-upload-preview" /></span>
+            </label>
+            <button class="primary-button wide" id="submitIdButton" type="submit">
+              <i data-lucide="id-card"></i>
+              身分証を提出
+            </button>
+          </form>
           ${editProfileButton}
         </div>
       `
@@ -2117,11 +2408,48 @@ function renderMyPage(alertText = "") {
     profileFormStep = 1;
     renderMyPage("個人情報を修正できます。保存すると元の手続きに戻ります。");
   });
-  document.querySelector("#submitIdButton")?.addEventListener("click", () => {
-    idSubmitted = true;
-    updateIdentityUI();
-    renderMyPage("身分証を提出しました。続けて契約書を確認してください。");
-  });
+  const idUploadForm = document.querySelector("#idUploadForm");
+  if (idUploadForm) {
+    ["Front", "Back", "Face"].forEach((key) => {
+      const input = document.getElementById(`id${key}Input`);
+      const preview = document.getElementById(`id${key}Preview`);
+      input?.addEventListener("change", () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          preview.src = e.target.result;
+          preview.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+    idUploadForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const frontFile = document.getElementById("idFrontInput")?.files?.[0];
+      const backFile = document.getElementById("idBackInput")?.files?.[0];
+      const faceFile = document.getElementById("idFaceInput")?.files?.[0];
+      if (!frontFile || !backFile || !faceFile) {
+        alert("3枚すべての画像を選択してください。");
+        return;
+      }
+      const readFile = (file) =>
+        new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => resolve(ev.target.result);
+          reader.readAsDataURL(file);
+        });
+      Promise.all([readFile(frontFile), readFile(backFile), readFile(faceFile)]).then(
+        ([front, back, face]) => {
+          idImages = { front, back, face };
+          idSubmitted = true;
+          upsertRegisteredWorker();
+          updateIdentityUI();
+          renderMyPage("身分証を提出しました。続けて契約書を確認してください。");
+        },
+      );
+    });
+  }
   document.querySelector("#issueContractButton")?.addEventListener("click", () => {
     contractIssued = true;
     vuzzApplicationSubmitted = true;
@@ -2140,6 +2468,7 @@ function renderMyPage(alertText = "") {
   });
   document.querySelector("#approveWorkerButton")?.addEventListener("click", () => {
     identityVerified = true;
+    upsertRegisteredWorker();
     updateIdentityUI();
     renderMyPage("運営承認が完了しました。仕事を受けられます。");
   });
@@ -2303,6 +2632,7 @@ function loginExistingWorker(displayEmail = "ログイン済み") {
   resetWorkerVerification();
   applyExistingWorkerProfile(displayEmail.includes("@") ? displayEmail : "");
   profileSubmitted = true;
+  upsertRegisteredWorker();
   updateIdentityUI();
   showRole("worker");
   renderMyPage("ログインしました。マイページを表示しています。");
@@ -2912,6 +3242,16 @@ document.getElementById("backToWorkerFromVuzzLogin")?.addEventListener("click", 
   renderFeed();
 });
 
+document.getElementById("devBypassAdmin")?.addEventListener("click", () => {
+  isVuzzLoggedIn = true;
+  showRole("vuzz");
+  renderVuzzChannel("review");
+});
+
+document.getElementById("devBypassCompany")?.addEventListener("click", () => {
+  showRole("company");
+});
+
 document.getElementById("emailRegisterForm")?.addEventListener("submit", (event) => {
   event.preventDefault();
   const form = event.currentTarget;
@@ -2978,10 +3318,135 @@ document.getElementById("workerProfileGate")?.addEventListener("submit", (event)
   profileSubmitted = true;
   isEditingProfile = false;
   profileFormStep = 1;
+  upsertRegisteredWorker();
   updateIdentityUI();
   form.reset();
   setWorkerProfileGateStep(1);
   enterRoleApp();
+});
+
+document.querySelector("#companyApp .channel-list")?.addEventListener("click", (event) => {
+  const btn = event.target.closest(".channel");
+  if (!btn) return;
+  const tab = btn.dataset.companyTab;
+  if (!tab) return;
+
+  document.querySelectorAll("#companyApp .channel").forEach((b) => b.classList.remove("active"));
+  btn.classList.add("active");
+
+  document.querySelectorAll("#companyApp [data-company-section]").forEach((section) => {
+    section.classList.toggle("is-hidden", section.dataset.companySection !== tab);
+  });
+
+  const headings = {
+    dashboard: { title: "企業ダッシュボード", sub: "案件投稿から応募者選定までを管理" },
+    post: { title: "案件投稿", sub: "新しい案件を作成・審査に送る" },
+    applicants: { title: "応募者管理", sub: "応募者の確認・採用を行う" },
+    payment: { title: "支払い・検収", sub: "完了報告の承認と報酬支払いを管理" },
+  };
+  const h = headings[tab];
+  if (h) {
+    const titleEl = document.querySelector("#companyApp .channel-heading strong");
+    const subEl = document.querySelector("#companyApp .channel-heading span");
+    if (titleEl) titleEl.textContent = h.title;
+    if (subEl) subEl.textContent = h.sub;
+  }
+});
+
+const APPLICANT_DATA = {
+  misaki: { name: "佐藤 美咲", sub: "検品経験 12件・評価 4.9", avatar: "美", myNumber: true, approved: false },
+  ryo:    { name: "田中 亮",   sub: "データ入力 8件・即日対応",  avatar: "田", myNumber: true, approved: true  },
+  kana:   { name: "Kana S.",  sub: "本人確認済み・納期遵守率 100%", avatar: "K", myNumber: false, approved: false },
+};
+
+const applicantApprovalState = new Map(
+  Object.entries(APPLICANT_DATA).map(([id, d]) => [id, d.approved])
+);
+
+function renderApplicantModal(id, context = "company") {
+  const data = APPLICANT_DATA[id];
+  if (!data) return;
+  const approved = applicantApprovalState.get(id) ?? false;
+  const approveLabel = context === "vuzz"
+    ? (approved ? "承認取り消し" : "本人確認を承認")
+    : (approved ? "承認取り消し" : "採用する");
+
+  const titleEl = document.querySelector("#applicantModalTitle h2");
+  if (titleEl) titleEl.textContent = data.name;
+
+  const body = document.getElementById("applicantModalBody");
+  if (body) {
+    const idCardHtml = data.myNumber
+      ? `<div class="id-card-placeholder">
+           <div class="card-chip"></div>
+           <div class="card-row"></div>
+           <div class="card-row short"></div>
+         </div>`
+      : `<div class="id-card-empty">
+           <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+           <span>マイナンバーカード 未提出</span>
+         </div>`;
+
+    body.innerHTML = `
+      <div class="applicant-modal-profile">
+        <div class="applicant-modal-avatar">${data.avatar}</div>
+        <div>
+          <strong>${data.name}</strong>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px">${data.sub}</div>
+        </div>
+      </div>
+      <div class="id-card-section">
+        <p class="eyebrow">マイナンバーカード</p>
+        ${idCardHtml}
+      </div>`;
+  }
+
+  const approveBtn = document.getElementById("applicantModalApproveBtn");
+  if (approveBtn) {
+    approveBtn.textContent = approveLabel;
+    approveBtn.dataset.applicantId = id;
+    approveBtn.dataset.context = context;
+  }
+
+  const modal = document.getElementById("applicantDetailModal");
+  if (modal) {
+    modal.showModal();
+    refreshIcons();
+  }
+}
+
+document.getElementById("applicantDetailModal")?.addEventListener("click", (event) => {
+  const approveBtn = event.target.closest("#applicantModalApproveBtn");
+  if (approveBtn) {
+    const id = approveBtn.dataset.applicantId;
+    if (!id) return;
+    const ctx = approveBtn.dataset.context ?? "company";
+    const current = applicantApprovalState.get(id) ?? false;
+    applicantApprovalState.set(id, !current);
+    const nextApproved = !current;
+    approveBtn.textContent = nextApproved
+      ? "承認取り消し"
+      : (ctx === "vuzz" ? "本人確認を承認" : "採用する");
+    return;
+  }
+
+  if (event.target.closest("#applicantModalClose") || event.target.closest("#applicantModalCancelBtn")) {
+    document.getElementById("applicantDetailModal")?.close();
+  }
+});
+
+document.getElementById("companyApp")?.addEventListener("click", (event) => {
+  if (event.target.closest("button")) return;
+  const article = event.target.closest("article[data-applicant-id]");
+  if (!article) return;
+  renderApplicantModal(article.dataset.applicantId);
+});
+
+document.getElementById("vuzzApp")?.addEventListener("click", (event) => {
+  if (event.target.closest("button")) return;
+  const article = event.target.closest("article[data-vuzz-worker-id]");
+  if (!article || !article.dataset.vuzzWorkerId) return;
+  renderApplicantModal(article.dataset.vuzzWorkerId, "vuzz");
 });
 
 document.getElementById("companyProfileGate")?.addEventListener("submit", (event) => {

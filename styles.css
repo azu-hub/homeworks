@@ -448,6 +448,7 @@ button {
   border-radius: var(--radius);
   background: transparent;
   color: var(--muted);
+  cursor: pointer;
 }
 
 .icon-button:hover {
@@ -1996,6 +1997,63 @@ button {
   pointer-events: auto;
 }
 
+.dev-bypass {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px dashed rgba(255, 200, 60, 0.4);
+  border-radius: var(--radius);
+  background: rgba(255, 200, 60, 0.06);
+}
+
+.dev-bypass-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #f0b429;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.dev-bypass-label svg {
+  width: 13px;
+  height: 13px;
+}
+
+.dev-bypass-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dev-bypass-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 200, 60, 0.3);
+  border-radius: var(--radius);
+  background: rgba(255, 200, 60, 0.08);
+  color: #f0b429;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+}
+
+.dev-bypass-btn:hover {
+  background: rgba(255, 200, 60, 0.16);
+}
+
+.dev-bypass-btn svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
 .login-required-popup-inner {
   width: 100%;
   max-width: 480px;
@@ -2276,6 +2334,268 @@ button {
   grid-template-columns: 12px minmax(0, 1fr) auto;
 }
 
+/* ── Worker card list (admin user list) ── */
+.worker-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.worker-card {
+  border-radius: var(--radius);
+  background: #1e2026;
+  overflow: hidden;
+}
+
+/* Required info section – always shown */
+.worker-card-required {
+  padding: 14px 16px 12px;
+}
+
+.worker-card-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.worker-card-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.worker-card-name strong {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.worker-card-kana {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.worker-status-badge {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.worker-status-badge.approved {
+  background: rgba(72, 181, 140, 0.15);
+  color: var(--accent);
+}
+
+.worker-approve-btn {
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.worker-approve-btn:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.worker-card-dl {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+}
+
+.worker-card-dl > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+}
+
+.worker-card-dl dt {
+  flex-shrink: 0;
+  width: 14px;
+  color: var(--muted);
+  margin: 0;
+  padding: 0;
+}
+
+.worker-card-dl dt svg {
+  width: 13px;
+  height: 13px;
+  display: block;
+  margin-top: 1px;
+}
+
+.worker-card-dl dd {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+/* Optional ID section – always shown but marked optional */
+.worker-card-id-section {
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 10px 16px 14px;
+  background: rgba(0,0,0,0.12);
+}
+
+.worker-card-id-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.worker-card-id-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  opacity: 0.8;
+}
+
+.worker-id-optional-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.07);
+  color: var(--muted);
+  letter-spacing: 0.03em;
+}
+
+.worker-id-status {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: auto;
+}
+
+.worker-id-status.submitted {
+  background: rgba(72, 181, 140, 0.13);
+  color: var(--accent);
+}
+
+.worker-id-status.not-submitted {
+  background: rgba(255,255,255,0.05);
+  color: var(--muted);
+}
+
+.worker-id-empty {
+  font-size: 11px;
+  color: var(--muted);
+  opacity: 0.55;
+  margin: 0;
+}
+
+/* ID images row */
+.id-images-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.id-images-row figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+}
+
+.id-images-row figcaption {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.id-images-row img {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.id-images-row img:hover {
+  opacity: 0.85;
+}
+
+/* Empty state */
+.worker-card-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 20px;
+  color: var(--muted);
+  opacity: 0.5;
+  text-align: center;
+}
+
+.worker-card-empty svg {
+  width: 32px;
+  height: 32px;
+}
+
+.worker-card-empty p {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.worker-card-empty span {
+  font-size: 12px;
+}
+
+/* ID upload form in mypage */
+.id-upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.id-upload-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.id-upload-label input[type="file"] {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.id-upload-preview-wrap {
+  display: block;
+  min-height: 0;
+}
+
+.id-upload-preview {
+  display: none;
+  max-width: 100%;
+  max-height: 140px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.1);
+  object-fit: contain;
+}
+
 .status-dot {
   width: 10px;
   height: 10px;
@@ -2380,6 +2700,88 @@ button {
   min-height: 96px;
   resize: vertical;
   padding: 12px;
+}
+
+.applicant-list article[data-applicant-id] {
+  cursor: pointer;
+}
+
+.applicant-list article[data-applicant-id]:hover {
+  background: var(--surface-soft);
+}
+
+.applicant-modal-profile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.applicant-modal-avatar {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.id-card-section {
+  display: grid;
+  gap: 8px;
+}
+
+.id-card-section > p.eyebrow {
+  margin: 0;
+}
+
+.id-card-placeholder {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, #2a2d35 0%, #1e2026 100%);
+  padding: 16px 18px;
+  display: grid;
+  gap: 10px;
+}
+
+.id-card-placeholder .card-chip {
+  width: 32px;
+  height: 24px;
+  border-radius: 4px;
+  background: var(--accent-2);
+  opacity: 0.8;
+}
+
+.id-card-placeholder .card-row {
+  height: 10px;
+  border-radius: 3px;
+  background: var(--surface-soft);
+}
+
+.id-card-placeholder .card-row.short {
+  width: 55%;
+}
+
+.id-card-empty {
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-2);
+  font-size: 13px;
+}
+
+.id-card-empty svg {
+  width: 28px;
+  height: 28px;
+  stroke: var(--muted-2);
 }
 
 @media (max-width: 1120px) {

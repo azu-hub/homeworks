@@ -40,6 +40,17 @@
               <small>審査・監視・支払い状況を管理する</small>
             </button>
           </div>
+          <div class="dev-bypass">
+            <p class="dev-bypass-label"><i data-lucide="flask-conical"></i> テスト用ショートカット（本番では非表示）</p>
+            <div class="dev-bypass-buttons">
+              <button class="dev-bypass-btn" id="devBypassAdmin" type="button">
+                <i data-lucide="shield-check"></i> 運営ページへ（認証スキップ）
+              </button>
+              <button class="dev-bypass-btn" id="devBypassCompany" type="button">
+                <i data-lucide="building-2"></i> クライアントページへ（認証スキップ）
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="login-step is-hidden" id="loginStepMethod">
@@ -633,22 +644,22 @@
               <i data-lucide="chevron-down"></i>
               企業メニュー
             </button>
-            <button class="channel active" type="button">
+            <button class="channel active" type="button" data-company-tab="dashboard">
               <i data-lucide="layout-dashboard"></i>
               ダッシュボード
               <span>3</span>
             </button>
-            <button class="channel" type="button">
+            <button class="channel" type="button" data-company-tab="post">
               <i data-lucide="send"></i>
               案件投稿
               <span>2</span>
             </button>
-            <button class="channel" type="button">
+            <button class="channel" type="button" data-company-tab="applicants">
               <i data-lucide="users"></i>
               応募者管理
               <span>14</span>
             </button>
-            <button class="channel" type="button">
+            <button class="channel" type="button" data-company-tab="payment">
               <i data-lucide="receipt"></i>
               支払い・検収
               <span>5</span>
@@ -681,95 +692,202 @@
           </div>
         </header>
 
-        <section class="notice-band">
-          <div>
-            <strong>掲載前チェック</strong>
-            <span>報酬・納期・検収条件が揃った案件は運営審査へ送れます</span>
-          </div>
-          <div class="notice-metrics">
-            <span><b>3</b> 掲載中</span>
-            <span><b>14</b> 応募者</span>
-            <span><b>2</b> 審査待ち</span>
-          </div>
-        </section>
-
-        <div class="portal-grid">
-          <section class="portal-panel">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">post template</p>
-                <h2>案件投稿フォーム</h2>
-              </div>
-              <span class="status-badge">下書き保存中</span>
+        <!-- ダッシュボード -->
+        <div data-company-section="dashboard">
+          <section class="notice-band">
+            <div>
+              <strong>掲載前チェック</strong>
+              <span>報酬・納期・検収条件が揃った案件は運営審査へ送れます</span>
             </div>
-            <div class="form-grid">
-              <label>
-                案件タイトル
-                <input type="text" value="ラベル貼り 500枚" />
-              </label>
-              <label>
-                報酬
-                <input type="text" value="18,500円" />
-              </label>
-              <label>
-                募集人数
-                <input type="text" value="5名" />
-              </label>
-              <label>
-                納期
-                <input type="text" value="5月8日" />
-              </label>
-              <label class="span-2">
-                作業内容
-                <textarea>商品ラベルの貼付、数量チェック、写真での完了報告をお願いします。</textarea>
-              </label>
-            </div>
-            <div class="detail-actions horizontal">
-              <button class="primary-button" type="button">
-                <i data-lucide="shield-check"></i>
-                運営審査へ送る
-              </button>
-              <button class="secondary-button" type="button">
-                <i data-lucide="eye"></i>
-                投稿プレビュー
-              </button>
+            <div class="notice-metrics">
+              <span><b>3</b> 掲載中</span>
+              <span><b>14</b> 応募者</span>
+              <span><b>2</b> 審査待ち</span>
             </div>
           </section>
-
-          <aside class="portal-panel">
-            <div class="section-head">
-              <div>
-                <p class="eyebrow">applicants</p>
-                <h2>応募者</h2>
+          <div class="portal-grid">
+            <section class="portal-panel">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">summary</p>
+                  <h2>直近の案件</h2>
+                </div>
               </div>
-            </div>
-            <div class="applicant-list">
-              <article>
-                <div class="worker-avatar">美</div>
+              <div class="applicant-list">
+                <article>
+                  <div class="worker-avatar"><i data-lucide="package"></i></div>
+                  <div>
+                    <strong>ラベル貼り 500枚</strong>
+                    <span>掲載中・応募者 5名</span>
+                  </div>
+                  <span class="status-badge">審査済</span>
+                </article>
+                <article>
+                  <div class="worker-avatar"><i data-lucide="keyboard"></i></div>
+                  <div>
+                    <strong>データ入力 Excel 300行</strong>
+                    <span>審査待ち・応募者 9名</span>
+                  </div>
+                  <span class="status-badge warning">審査中</span>
+                </article>
+              </div>
+            </section>
+            <aside class="portal-panel">
+              <div class="section-head">
                 <div>
-                  <strong>佐藤 美咲</strong>
-                  <span>検品経験 12件・評価 4.9</span>
+                  <p class="eyebrow">recent</p>
+                  <h2>最近の応募者</h2>
                 </div>
-                <button class="mini-button" type="button">採用</button>
-              </article>
-              <article>
-                <div class="worker-avatar">田</div>
+              </div>
+              <div class="applicant-list">
+                <article data-applicant-id="misaki">
+                  <div class="worker-avatar">美</div>
+                  <div>
+                    <strong>佐藤 美咲</strong>
+                    <span>検品経験 12件・評価 4.9</span>
+                  </div>
+                  <button class="mini-button" type="button">確認</button>
+                </article>
+                <article data-applicant-id="ryo">
+                  <div class="worker-avatar">田</div>
+                  <div>
+                    <strong>田中 亮</strong>
+                    <span>データ入力 8件・即日対応</span>
+                  </div>
+                  <button class="mini-button" type="button">確認</button>
+                </article>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <!-- 案件投稿 -->
+        <div data-company-section="post" class="is-hidden">
+          <div class="portal-grid">
+            <section class="portal-panel">
+              <div class="section-head">
                 <div>
-                  <strong>田中 亮</strong>
-                  <span>データ入力 8件・即日対応</span>
+                  <p class="eyebrow">post template</p>
+                  <h2>案件投稿フォーム</h2>
                 </div>
-                <button class="mini-button" type="button">確認</button>
-              </article>
-              <article>
-                <div class="worker-avatar">K</div>
+                <span class="status-badge">下書き保存中</span>
+              </div>
+              <div class="form-grid">
+                <label>
+                  案件タイトル
+                  <input type="text" value="ラベル貼り 500枚" />
+                </label>
+                <label>
+                  報酬
+                  <input type="text" value="18,500円" />
+                </label>
+                <label>
+                  募集人数
+                  <input type="text" value="5名" />
+                </label>
+                <label>
+                  納期
+                  <input type="text" value="5月8日" />
+                </label>
+                <label class="span-2">
+                  作業内容
+                  <textarea>商品ラベルの貼付、数量チェック、写真での完了報告をお願いします。</textarea>
+                </label>
+              </div>
+              <div class="detail-actions horizontal">
+                <button class="primary-button" type="button">
+                  <i data-lucide="shield-check"></i>
+                  運営審査へ送る
+                </button>
+                <button class="secondary-button" type="button">
+                  <i data-lucide="eye"></i>
+                  投稿プレビュー
+                </button>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <!-- 応募者管理 -->
+        <div data-company-section="applicants" class="is-hidden">
+          <div class="portal-grid">
+            <section class="portal-panel">
+              <div class="section-head">
                 <div>
-                  <strong>Kana S.</strong>
-                  <span>本人確認済み・納期遵守率 100%</span>
+                  <p class="eyebrow">applicants</p>
+                  <h2>応募者一覧</h2>
                 </div>
-                <button class="mini-button" type="button">確認</button>
-              </article>
-            </div>
-          </aside>
+                <span class="status-badge">14名</span>
+              </div>
+              <div class="applicant-list">
+                <article data-applicant-id="misaki">
+                  <div class="worker-avatar">美</div>
+                  <div>
+                    <strong>佐藤 美咲</strong>
+                    <span>検品経験 12件・評価 4.9</span>
+                  </div>
+                  <button class="mini-button" type="button">採用</button>
+                </article>
+                <article data-applicant-id="ryo">
+                  <div class="worker-avatar">田</div>
+                  <div>
+                    <strong>田中 亮</strong>
+                    <span>データ入力 8件・即日対応</span>
+                  </div>
+                  <button class="mini-button" type="button">確認</button>
+                </article>
+                <article data-applicant-id="kana">
+                  <div class="worker-avatar">K</div>
+                  <div>
+                    <strong>Kana S.</strong>
+                    <span>本人確認済み・納期遵守率 100%</span>
+                  </div>
+                  <button class="mini-button" type="button">確認</button>
+                </article>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <!-- 支払い・検収 -->
+        <div data-company-section="payment" class="is-hidden">
+          <div class="portal-grid">
+            <section class="portal-panel">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">payment</p>
+                  <h2>支払い・検収</h2>
+                </div>
+                <span class="status-badge warning">5件 未処理</span>
+              </div>
+              <div class="applicant-list">
+                <article data-applicant-id="misaki">
+                  <div class="worker-avatar">美</div>
+                  <div>
+                    <strong>佐藤 美咲 — ラベル貼り</strong>
+                    <span>完了報告済み・報酬 3,700円</span>
+                  </div>
+                  <button class="mini-button" type="button">検収承認</button>
+                </article>
+                <article data-applicant-id="ryo">
+                  <div class="worker-avatar">田</div>
+                  <div>
+                    <strong>田中 亮 — データ入力</strong>
+                    <span>完了報告済み・報酬 4,200円</span>
+                  </div>
+                  <button class="mini-button" type="button">検収承認</button>
+                </article>
+                <article data-applicant-id="kana">
+                  <div class="worker-avatar">K</div>
+                  <div>
+                    <strong>Kana S. — データ入力</strong>
+                    <span>完了報告済み・報酬 4,200円</span>
+                  </div>
+                  <button class="mini-button" type="button">検収承認</button>
+                </article>
+              </div>
+            </section>
+          </div>
         </div>
       </main>
     </div>
@@ -823,6 +941,11 @@
               <i data-lucide="building-2"></i>
               企業アカウント
               <span id="companyAccountCount">0</span>
+            </button>
+            <button class="channel" data-vuzz-channel="workers" type="button">
+              <i data-lucide="users"></i>
+              ユーザー一覧
+              <span id="workerCount">0</span>
             </button>
           </div>
         </nav>
@@ -984,6 +1107,25 @@
           </button>
         </div>
       </form>
+    </dialog>
+
+    <dialog class="post-modal" id="applicantDetailModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div id="applicantModalTitle">
+            <p class="eyebrow">applicant</p>
+            <h2>応募者詳細</h2>
+          </div>
+          <button class="icon-button" id="applicantModalClose" aria-label="閉じる">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div id="applicantModalBody"></div>
+        <div class="form-actions">
+          <button class="secondary-button" id="applicantModalCancelBtn" type="button">閉じる</button>
+          <button class="primary-button" id="applicantModalApproveBtn" type="button">採用する</button>
+        </div>
+      </div>
     </dialog>
 
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
