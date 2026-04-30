@@ -1943,6 +1943,19 @@ function renderMyPage(alertText = "") {
   feed.innerHTML = `
     ${alertText ? `<div class="mypage-alert">${alertText}</div>` : ""}
     <section class="mypage-grid ${profileSubmitted ? "" : "profile-required"}">
+      ${profileSubmitted ? profileCardHtml : ""}
+
+      <article class="portal-panel mypage-card action-card">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">next action</p>
+            <h2>${actionTitle}</h2>
+          </div>
+          ${actionBadgeMarkup}
+        </div>
+        ${nextAction}
+      </article>
+
       ${identityVerified ? `<article class="portal-panel mypage-card membership-card">
         <div class="section-head">
           <div>
@@ -1999,19 +2012,7 @@ function renderMyPage(alertText = "") {
         </div>
       </article>` : ""}
 
-      <article class="portal-panel mypage-card action-card">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">next action</p>
-            <h2>${actionTitle}</h2>
-          </div>
-          ${actionBadgeMarkup}
-        </div>
-        ${nextAction}
-      </article>
-
       ${applicationsCard}
-      ${profileSubmitted ? profileCardHtml : ""}
       ${bankCard}
       ${withdrawalCard}
     </section>
@@ -2633,6 +2634,7 @@ document.querySelectorAll("#workerApp .channel").forEach((button) => {
     activePriceTier = button.dataset.priceTier || "all";
     activeCategory = button.dataset.category || "all";
     renderFeed();
+    closeAppPanel(button.closest(".app-shell"));
   });
 });
 
@@ -2952,14 +2954,8 @@ function closeMobilePanel(shell) {
 }
 
 function closeAppPanel(shell) {
-  if (!shell) return;
-  if (MOBILE_MQ.matches) {
-    closeMobilePanel(shell);
-    return;
-  }
-  shell.classList.add("panel-collapsed");
-  const btn = shell.querySelector("[data-panel-toggle]");
-  if (btn) btn.setAttribute("aria-label", "サイドバーを開く");
+  if (!shell || !MOBILE_MQ.matches) return;
+  closeMobilePanel(shell);
 }
 
 document.querySelectorAll(".app-shell").forEach((shell) => {
