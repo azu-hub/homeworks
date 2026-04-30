@@ -226,6 +226,9 @@ let bankSubmitted = false;
 let isBankEditing = false;
 let isProfileCardEditing = false;
 let workerPassword = "";
+let isVuzzLoggedIn = false;
+const vuzzAdminCredentials = { email: "admin@vuzz.jp", password: "vuzz2026" };
+const companyAccounts = [];
 const withdrawalHistory = [];
 let withdrawalPending = false;
 let pendingLogoutButton = null;
@@ -406,6 +409,17 @@ const vuzzChannels = {
       ["平均解決", "18h"],
     ],
   },
+  companies: {
+    title: "企業アカウント",
+    subtitle: "企業ログイン用のメールアドレスとパスワードを管理",
+    noticeTitle: "企業アカウント管理",
+    noticeText: "運営が企業ごとにログイン情報を発行します",
+    metrics: [
+      ["0", "登録済み"],
+      ["0", "本日追加"],
+      ["運営発行", "ログイン情報"],
+    ],
+  },
 };
 
 function refreshIcons() {
@@ -417,6 +431,11 @@ function refreshIcons() {
 function renderVuzzChannel(channelKey) {
   const channel = vuzzChannels[channelKey];
   if (!channel) return;
+
+  if (channelKey === "companies") {
+    renderCompanyAccountsChannel();
+    return;
+  }
 
   vuzzTitle.textContent = channel.title;
   vuzzSubtitle.textContent = channel.subtitle;
@@ -472,6 +491,105 @@ function renderVuzzChannel(channelKey) {
       </dl>
     </aside>
   `;
+  refreshIcons();
+}
+
+function renderCompanyAccountsChannel(alertText = "") {
+  const channel = vuzzChannels.companies;
+  const count = companyAccounts.length;
+  vuzzTitle.textContent = channel.title;
+  vuzzSubtitle.textContent = channel.subtitle;
+  vuzzNoticeTitle.textContent = channel.noticeTitle;
+  vuzzNoticeText.textContent = channel.noticeText;
+  vuzzMetrics.innerHTML = `
+    <span><b>${count}</b> 登録済み</span>
+    <span><b>${count ? "発行済み" : "未発行"}</b> ログイン情報</span>
+    <span><b>運営</b> 管理</span>
+  `;
+  document.getElementById("companyAccountCount").textContent = count;
+  vuzzContent.innerHTML = `
+    <section class="portal-panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">company account</p>
+          <h2>企業ログイン情報を追加</h2>
+        </div>
+      </div>
+      ${alertText ? `<div class="mypage-alert">${escapeHtml(alertText)}</div>` : ""}
+      <form class="form-grid" id="companyAccountForm" novalidate>
+        <label class="span-2">
+          会社名
+          <input name="companyName" type="text" placeholder="例：白樺文具株式会社" />
+        </label>
+        <label>
+          メールアドレス
+          <input name="email" type="text" inputmode="email" autocomplete="email" required />
+        </label>
+        <label>
+          パスワード
+          <span class="password-field">
+            <input name="password" type="password" inputmode="text" pattern="[A-Za-z0-9]+" title="半角英数字で入力してください。全角英数字は自動で半角に変換されます。" required />
+            <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
+              <i data-lucide="eye"></i>
+            </button>
+          </span>
+        </label>
+        <button class="primary-button wide span-2" type="submit">
+          <i data-lucide="plus"></i>
+          企業アカウントを追加
+        </button>
+      </form>
+    </section>
+
+    <aside class="portal-panel">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">issued accounts</p>
+          <h2>追加済み企業</h2>
+        </div>
+      </div>
+      <div class="review-list">
+        ${
+          companyAccounts.length
+            ? companyAccounts
+                .map(
+                  (account) => `
+                    <article>
+                      <span class="status-dot"></span>
+                      <div>
+                        <strong>${escapeHtml(account.companyName || "企業名未設定")}</strong>
+                        <p>${escapeHtml(account.email)}・パスワード発行済み</p>
+                      </div>
+                      <button class="mini-button" type="button">確認</button>
+                    </article>
+                  `,
+                )
+                .join("")
+            : `<article>
+                <span class="status-dot warn"></span>
+                <div>
+                  <strong>企業アカウント未追加</strong>
+                  <p>左のフォームから企業のメールアドレスとパスワードを追加してください。</p>
+                </div>
+              </article>`
+        }
+      </div>
+    </aside>
+  `;
+
+  document.getElementById("companyAccountForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    normalizePasswordInputs(event.currentTarget);
+    if (!event.currentTarget.reportValidity()) return;
+    const formData = new FormData(event.currentTarget);
+    companyAccounts.unshift({
+      companyName: formData.get("companyName")?.toString().trim() || "",
+      email: formData.get("email")?.toString().trim() || "",
+      password: formData.get("password")?.toString() || "",
+    });
+    renderCompanyAccountsChannel("企業アカウントを追加しました。");
+  });
+  setupPasswordInputs(vuzzContent);
   refreshIcons();
 }
 
@@ -2029,22 +2147,43 @@ function renderMyPage(alertText = "") {
 
 function bindGuestTopbarButtons() {
   document.querySelector("#topbarLoginButton")?.addEventListener("click", showLogin);
-  document.querySelector("#topbarRegisterButton")?.addEventListener("click", showLogin);
+  document.querySelector("#topbarRegisterButton")?.addEventListener("click", () => {
+    showRole("worker");
+    renderRegistrationForm("", "signup");
+  });
 }
 
 function showLogin() {
-  loginView.classList.remove("is-hidden");
-  Object.values(appViews).forEach((view) => view.classList.add("is-hidden"));
-  window.location.hash = "";
-  refreshIcons();
+  showRole("worker");
+  renderRegistrationForm();
 }
 
 function showRole(role) {
+  if (role === "vuzz" && !isVuzzLoggedIn) {
+    renderVuzzLogin();
+    return;
+  }
   loginView.classList.add("is-hidden");
   Object.entries(appViews).forEach(([viewRole, view]) => {
     view.classList.toggle("is-hidden", viewRole !== role);
   });
   window.location.hash = role;
+  refreshIcons();
+}
+
+function renderVuzzLogin(alertText = "") {
+  loginView.classList.remove("is-hidden");
+  Object.values(appViews).forEach((view) => view.classList.add("is-hidden"));
+  pendingLoginRole = null;
+  pendingLoginMethod = null;
+  window.location.hash = "vuzz";
+  setLoginStep("vuzzAuth");
+  const alert = document.getElementById("vuzzLoginAlert");
+  if (alert) {
+    alert.textContent = alertText;
+    alert.classList.toggle("is-hidden", !alertText);
+  }
+  setupPasswordInputs(loginView);
   refreshIcons();
 }
 
@@ -2085,11 +2224,12 @@ function loginExistingWorker(displayEmail = "ログイン済み") {
   renderMyPage("ログインしました。マイページを表示しています。");
 }
 
-const loginSteps = ["role", "method", "email", "workerProfile", "companyProfile"];
+const loginSteps = ["role", "method", "email", "vuzzAuth", "workerProfile", "companyProfile"];
 const loginStepIds = {
   role: "loginStepRole",
   method: "loginStepMethod",
   email: "loginStepEmail",
+  vuzzAuth: "loginStepVuzzAuth",
   workerProfile: "loginStepWorkerProfile",
   companyProfile: "loginStepCompanyProfile",
 };
@@ -2649,8 +2789,9 @@ utilityPopover.addEventListener("click", (event) => {
 document.querySelectorAll("[data-login-role]").forEach((button) => {
   button.addEventListener("click", () => {
     const role = button.dataset.loginRole;
+    if (role === "vuzz") isVuzzLoggedIn = false;
     if (role === "vuzz") {
-      showRole(role);
+      renderVuzzLogin();
       return;
     }
     startRegistrationFlow(role);
@@ -2664,6 +2805,27 @@ document.querySelectorAll("[data-login-back]").forEach((button) => {
 });
 
 document.getElementById("chooseEmailButton")?.addEventListener("click", () => chooseAuthMethod("email"));
+
+document.getElementById("vuzzLoginForm")?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  normalizePasswordInputs(event.currentTarget);
+  if (!event.currentTarget.reportValidity()) return;
+  const formData = new FormData(event.currentTarget);
+  const email = formData.get("email")?.toString().trim() || "";
+  const password = formData.get("password")?.toString() || "";
+  if (email !== vuzzAdminCredentials.email || password !== vuzzAdminCredentials.password) {
+    renderVuzzLogin("メールアドレスまたはパスワードが違います。");
+    return;
+  }
+  isVuzzLoggedIn = true;
+  showRole("vuzz");
+  renderVuzzChannel("review");
+});
+
+document.getElementById("backToWorkerFromVuzzLogin")?.addEventListener("click", () => {
+  showRole("worker");
+  renderFeed();
+});
 
 document.getElementById("emailRegisterForm")?.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -2834,6 +2996,9 @@ function completeLogout(button) {
   if (button?.closest("#workerApp")) {
     showRole("worker");
     renderFeed();
+  } else if (button?.closest("#vuzzApp")) {
+    isVuzzLoggedIn = false;
+    renderVuzzLogin("ログアウトしました。");
   } else {
     showLogin();
   }
