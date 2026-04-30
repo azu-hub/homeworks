@@ -1064,6 +1064,9 @@ function updateIdentityUI() {
         ? '<i data-lucide="check-circle-2"></i> この案件に応募'
         : '<i data-lucide="badge-alert"></i> 運営承認後に応募';
   document.querySelector("#guestTopbarActions")?.classList.toggle("is-hidden", isLoggedIn);
+  document.querySelectorAll("[data-logout]").forEach((btn) => {
+    btn.classList.toggle("is-hidden", !isLoggedIn);
+  });
   refreshIcons();
 }
 
