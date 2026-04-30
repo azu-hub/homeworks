@@ -193,8 +193,10 @@ let isEditingProfile = false;
 let profileFormStep = 1;
 let workerAuthEmail = "";
 const profileData = {
-  name: "",
-  kana: "",
+  lastName: "",
+  firstName: "",
+  kanaLast: "",
+  kanaFirst: "",
   birthdate: "",
   gender: "",
   postalCode: "",
@@ -533,6 +535,7 @@ function renderCompanyAccountsChannel(alertText = "") {
               <i data-lucide="eye"></i>
             </button>
           </span>
+          <span class="field-hint">半角英数字</span>
         </label>
         <button class="primary-button wide span-2" type="submit">
           <i data-lucide="plus"></i>
@@ -704,7 +707,7 @@ function normalizePasswordInputs(scope = document) {
 
 function updateIdentityUI() {
   const rewardSummary = getRewardSummary();
-  const displayName = isLoggedIn ? profileData.username || profileData.name || "未設定" : "ゲスト";
+  const displayName = isLoggedIn ? profileData.username || (profileData.lastName && profileData.firstName ? `${profileData.lastName} ${profileData.firstName}` : profileData.lastName || profileData.firstName) || "未設定" : "ゲスト";
   workerNameText.textContent = displayName;
   if (profileData.avatarUrl) {
     workerAvatar.innerHTML = `<img src="${profileData.avatarUrl}" alt="アイコン" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
@@ -1114,6 +1117,7 @@ function renderRegistrationForm(alertText = "", mode = "login") {
                 <i data-lucide="eye"></i>
               </button>
             </span>
+            <span class="field-hint">半角英数字</span>
           </label>
         </div>
         <button class="primary-button wide" type="submit">
@@ -1283,6 +1287,7 @@ function renderPostVerificationSetup(alertText = "") {
                 <i data-lucide="eye"></i>
               </button>
             </span>
+            <span class="field-hint">半角英数字6文字以上</span>
           </label>
           <label>
             パスワード（確認）
@@ -1292,18 +1297,27 @@ function renderPostVerificationSetup(alertText = "") {
                 <i data-lucide="eye"></i>
               </button>
             </span>
+            <span class="field-hint">半角英数字6文字以上</span>
           </label>
         </div>
 
         <p class="setup-section-label">基本情報</p>
         <div class="form-grid">
           <label>
-            氏名
-            <input name="name" type="text" placeholder="山田 太郎" value="${escapeHtml(profileData.name)}" required />
+            姓
+            <input name="lastName" type="text" placeholder="山田" value="${escapeHtml(profileData.lastName)}" required />
           </label>
           <label>
-            かな
-            <input name="kana" type="text" placeholder="やまだ たろう" value="${escapeHtml(profileData.kana)}" required />
+            名
+            <input name="firstName" type="text" placeholder="太郎" value="${escapeHtml(profileData.firstName)}" required />
+          </label>
+          <label>
+            かな（姓）
+            <input name="kanaLast" type="text" placeholder="やまだ" value="${escapeHtml(profileData.kanaLast)}" required />
+          </label>
+          <label>
+            かな（名）
+            <input name="kanaFirst" type="text" placeholder="たろう" value="${escapeHtml(profileData.kanaFirst)}" required />
           </label>
           <div class="span-2 birthdate-field-wrap">
             <span class="birthdate-field-label">生年月日</span>
@@ -1359,8 +1373,10 @@ function renderPostVerificationSetup(alertText = "") {
     }
     event.currentTarget.querySelector(".pw-mismatch-error")?.remove();
     workerPassword = pw;
-    profileData.name = formData.get("name")?.toString().trim() || "";
-    profileData.kana = formData.get("kana")?.toString().trim() || "";
+    profileData.lastName = formData.get("lastName")?.toString().trim() || "";
+    profileData.firstName = formData.get("firstName")?.toString().trim() || "";
+    profileData.kanaLast = formData.get("kanaLast")?.toString().trim() || "";
+    profileData.kanaFirst = formData.get("kanaFirst")?.toString().trim() || "";
     profileData.birthdate = parseBirthdate(formData);
     profileData.gender = formData.get("gender")?.toString() || "";
     profileFormStep = 2;
@@ -1530,12 +1546,20 @@ function renderMyPage(alertText = "") {
           profileFormStep === 1
             ? `
               <label>
-                氏名
-                <input name="name" type="text" value="${escapeHtml(profileData.name)}" required />
+                姓
+                <input name="lastName" type="text" placeholder="山田" value="${escapeHtml(profileData.lastName)}" required />
               </label>
               <label>
-                かな
-                <input name="kana" type="text" value="${escapeHtml(profileData.kana)}" required />
+                名
+                <input name="firstName" type="text" placeholder="太郎" value="${escapeHtml(profileData.firstName)}" required />
+              </label>
+              <label>
+                かな（姓）
+                <input name="kanaLast" type="text" placeholder="やまだ" value="${escapeHtml(profileData.kanaLast)}" required />
+              </label>
+              <label>
+                かな（名）
+                <input name="kanaFirst" type="text" placeholder="たろう" value="${escapeHtml(profileData.kanaFirst)}" required />
               </label>
               <label class="span-2">
                 生年月日
@@ -1687,7 +1711,7 @@ function renderMyPage(alertText = "") {
       : "";
   const avatarPreview = profileData.avatarUrl
     ? `<img src="${profileData.avatarUrl}" alt="アイコン" class="profile-card-avatar-img" />`
-    : `<div class="profile-card-avatar-placeholder">${escapeHtml((profileData.username || profileData.name || "?").charAt(0))}</div>`;
+    : `<div class="profile-card-avatar-placeholder">${escapeHtml((profileData.username || profileData.lastName || "?").charAt(0))}</div>`;
 
   const profileCardHtml = isProfileCardEditing
     ? `
@@ -1737,7 +1761,7 @@ function renderMyPage(alertText = "") {
         <div class="profile-card-display">
           <div class="profile-card-avatar-wrap">${avatarPreview}</div>
           <div>
-            <strong>${escapeHtml(profileData.username || profileData.name || "未設定")}</strong>
+            <strong>${escapeHtml(profileData.username || (profileData.lastName && profileData.firstName ? `${profileData.lastName} ${profileData.firstName}` : profileData.lastName || profileData.firstName) || "未設定")}</strong>
             <span>${escapeHtml(getWorkerAuthDisplay())}</span>
           </div>
         </div>
@@ -1998,8 +2022,10 @@ function renderMyPage(alertText = "") {
     if (!event.currentTarget.reportValidity()) return;
     const formData = new FormData(event.currentTarget);
     if (profileFormStep === 1) {
-      profileData.name = formData.get("name")?.toString().trim() || "";
-      profileData.kana = formData.get("kana")?.toString().trim() || "";
+      profileData.lastName = formData.get("lastName")?.toString().trim() || "";
+      profileData.firstName = formData.get("firstName")?.toString().trim() || "";
+      profileData.kanaLast = formData.get("kanaLast")?.toString().trim() || "";
+      profileData.kanaFirst = formData.get("kanaFirst")?.toString().trim() || "";
       profileData.birthdate = parseBirthdate(formData);
       profileData.gender = formData.get("gender")?.toString() || "";
       profileFormStep = 2;
@@ -2203,8 +2229,10 @@ function resetWorkerVerification() {
 }
 
 function applyExistingWorkerProfile(displayEmail = "") {
-  profileData.name = profileData.name || "登録済みユーザー";
-  profileData.kana = profileData.kana || "トウロクズミユーザー";
+  profileData.lastName = profileData.lastName || "登録済み";
+  profileData.firstName = profileData.firstName || "ユーザー";
+  profileData.kanaLast = profileData.kanaLast || "トウロクズミ";
+  profileData.kanaFirst = profileData.kanaFirst || "ユーザー";
   profileData.birthdate = profileData.birthdate || "1990-01-01";
   profileData.postalCode = profileData.postalCode || "100-0001";
   profileData.prefecture = profileData.prefecture || "東京都";
@@ -2843,8 +2871,10 @@ document.getElementById("workerProfileGateNext")?.addEventListener("click", () =
   const firstInputs = firstStep.querySelectorAll("input");
   if (![...firstInputs].every((input) => input.reportValidity())) return;
   const formData = new FormData(form);
-  profileData.name = formData.get("name")?.toString().trim() || "";
-  profileData.kana = formData.get("kana")?.toString().trim() || "";
+  profileData.lastName = formData.get("lastName")?.toString().trim() || "";
+  profileData.firstName = formData.get("firstName")?.toString().trim() || "";
+  profileData.kanaLast = formData.get("kanaLast")?.toString().trim() || "";
+  profileData.kanaFirst = formData.get("kanaFirst")?.toString().trim() || "";
   profileData.birthdate = formData.get("birthdate")?.toString() || "";
   setWorkerProfileGateStep(2);
 });
@@ -2877,8 +2907,10 @@ document.getElementById("workerProfileGate")?.addEventListener("submit", (event)
   const form = event.currentTarget;
   if (!form.reportValidity()) return;
   const formData = new FormData(form);
-  profileData.name = formData.get("name")?.toString().trim() || "";
-  profileData.kana = formData.get("kana")?.toString().trim() || "";
+  profileData.lastName = formData.get("lastName")?.toString().trim() || "";
+  profileData.firstName = formData.get("firstName")?.toString().trim() || "";
+  profileData.kanaLast = formData.get("kanaLast")?.toString().trim() || "";
+  profileData.kanaFirst = formData.get("kanaFirst")?.toString().trim() || "";
   profileData.birthdate = formData.get("birthdate")?.toString() || "";
   profileData.postalCode = formData.get("postalCode")?.toString().trim() || "";
   profileData.prefecture = formData.get("prefecture")?.toString().trim() || "";
