@@ -773,12 +773,12 @@ function renderWorkerListChannel() {
                           <span class="worker-id-optional-badge">任意</span>
                           ${
                             hasId
-                              ? `<span class="worker-id-status submitted">提出済み</span>
-                                 <button class="id-view-btn" type="button" data-view-id="${i}">
-                                   <i data-lucide="id-card"></i>身分証を確認
-                                 </button>`
+                              ? `<span class="worker-id-status submitted">提出済み</span>`
                               : `<span class="worker-id-status not-submitted">未提出</span>`
                           }
+                          <button class="id-view-btn" type="button" data-view-id="${i}">
+                            <i data-lucide="id-card"></i>身分証を確認
+                          </button>
                         </div>
                       </div>
                     </article>
@@ -872,19 +872,25 @@ function openIdAllLightbox(w) {
     { src: w.idImages?.back,  label: "マイナンバーカード（裏面）" },
     { src: w.idImages?.face,  label: "顔写真" },
   ].filter((it) => it.src);
-  document.getElementById("idAllLightboxBody").innerHTML = items
-    .map(
-      (it) => `
-        <figure class="id-all-lightbox-figure">
-          <button class="id-thumb-btn id-all-thumb" data-lightbox-src="${it.src}" data-lightbox-caption="${it.label}" type="button">
-            <img src="${it.src}" alt="${it.label}" />
-            <span class="id-thumb-overlay"><i data-lucide="zoom-in"></i></span>
-          </button>
-          <figcaption>${it.label}</figcaption>
-        </figure>
-      `,
-    )
-    .join("");
+  document.getElementById("idAllLightboxBody").innerHTML = items.length
+    ? items
+        .map(
+          (it) => `
+            <figure class="id-all-lightbox-figure">
+              <button class="id-thumb-btn id-all-thumb" data-lightbox-src="${it.src}" data-lightbox-caption="${it.label}" type="button">
+                <img src="${it.src}" alt="${it.label}" />
+                <span class="id-thumb-overlay"><i data-lucide="zoom-in"></i></span>
+              </button>
+              <figcaption>${it.label}</figcaption>
+            </figure>
+          `,
+        )
+        .join("")
+    : `<div class="id-all-lightbox-empty">
+        <i data-lucide="file-x"></i>
+        <p>身分証が未提出です</p>
+        <span>ユーザーが書類を提出するとここに表示されます。</span>
+      </div>`;
   overlay.querySelectorAll("[data-lightbox-src]").forEach((btn) => {
     btn.addEventListener("click", () => {
       openIdLightbox(btn.dataset.lightboxSrc, btn.dataset.lightboxCaption);
