@@ -229,6 +229,7 @@ let workerPassword = "";
 const withdrawalHistory = [];
 let withdrawalPending = false;
 let pendingLogoutButton = null;
+let feedNotice = "";
 
 const feed = document.querySelector("#jobFeed");
 const channelTitle = document.querySelector("#channelTitle");
@@ -2161,8 +2162,18 @@ function enterRoleApp() {
   pendingLoginMethod = null;
   setLoginStep("role");
   if (role === "worker") {
+    activeChannel = "all";
+    activePriceTier = "all";
+    activeCategory = "all";
+    activeFilter = "all";
+    document.querySelectorAll("#workerApp .channel").forEach((item) => item.classList.remove("active"));
+    document.querySelector("#workerApp .channel[data-channel='all']")?.classList.add("active");
+    document.querySelectorAll("#workerApp .filter").forEach((item) => {
+      item.classList.toggle("active", item.dataset.filter === activeFilter);
+    });
+    feedNotice = "完了しました。案件一覧へ移動しました。";
     showRole("worker");
-    renderMyPage("登録が完了しました。続けて身分証を提出してください。");
+    renderFeed();
   } else if (role === "company") {
     showRole("company");
   } else {
@@ -2342,9 +2353,12 @@ function renderFeed() {
   feedIntroText.textContent =
     "価格帯ごとに案件を並べ、各価格帯の中でカテゴリ別に確認できます。カテゴリから探す一覧で見たい仕事だけに切り替えられます。";
   const visibleJobs = getVisibleJobs();
+  const noticeHtml = feedNotice ? `<div class="mypage-alert">${feedNotice}</div>` : "";
+  feedNotice = "";
 
   if (!visibleJobs.length) {
     feed.innerHTML = `
+      ${noticeHtml}
       <article class="job-message">
         <div class="avatar" style="background:#454952;color:#f5f6f8">?</div>
         <div class="message-body">
@@ -2362,7 +2376,7 @@ function renderFeed() {
     renderDetail(visibleJobs[0]);
   }
 
-  feed.innerHTML = visibleJobs
+  feed.innerHTML = noticeHtml + visibleJobs
     .map(
       (job) => `
         <article class="job-message ${job.id === selectedJobId ? "selected" : ""}" data-id="${job.id}">
