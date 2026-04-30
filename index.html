@@ -124,6 +124,37 @@
           </button>
         </div>
 
+        <div class="login-step is-hidden" id="loginStepCompanyAuth">
+          <div class="login-copy">
+            <h2>企業ログイン</h2>
+            <p>運営から発行されたメールアドレスとパスワードでログインしてください。</p>
+          </div>
+          <form class="login-form" id="companyLoginForm" novalidate>
+            <div class="mypage-alert is-hidden span-2" id="companyLoginAlert"></div>
+            <label class="span-2">
+              メールアドレス
+              <input name="email" type="text" inputmode="email" autocomplete="email" required />
+            </label>
+            <label class="span-2">
+              パスワード
+              <span class="password-field">
+                <input name="password" type="password" inputmode="text" pattern="[A-Za-z0-9]+" title="半角英数字で入力してください。全角英数字は自動で半角に変換されます。" required />
+                <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
+                  <i data-lucide="eye"></i>
+                </button>
+              </span>
+            </label>
+            <button class="primary-button wide span-2" type="submit">
+              <i data-lucide="log-in"></i>
+              企業ページにログイン
+            </button>
+          </form>
+          <button class="secondary-button login-back" data-login-back="role" type="button">
+            <i data-lucide="arrow-left"></i>
+            ロール選択に戻る
+          </button>
+        </div>
+
         <div class="login-step is-hidden" id="loginStepWorkerProfile">
           <div class="login-copy">
             <h2>アカウント情報の入力</h2>

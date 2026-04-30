@@ -231,7 +231,9 @@ let isProfileCardEditing = false;
 let workerPassword = "";
 let isVuzzLoggedIn = false;
 const vuzzAdminCredentials = { email: "admin@vuzz.jp", password: "vuzz2026" };
-const companyAccounts = [];
+const COMPANY_ACCOUNTS_STORAGE_KEY = "homeworks_company_accounts";
+const companyAccounts = loadCompanyAccounts();
+let currentCompanyAccount = null;
 const registeredWorkers = [
   {
     email: "tanaka.yui@example.com",
@@ -535,6 +537,31 @@ function refreshIcons() {
   }
 }
 
+function loadCompanyAccounts() {
+  try {
+    const raw = window.localStorage?.getItem(COMPANY_ACCOUNTS_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((account) => account && typeof account === "object")
+      .map((account) => ({
+        companyName: account.companyName?.toString() || "",
+        email: account.email?.toString() || "",
+        password: account.password?.toString() || "",
+      }));
+  } catch (_err) {
+    return [];
+  }
+}
+
+function saveCompanyAccounts() {
+  try {
+    window.localStorage?.setItem(COMPANY_ACCOUNTS_STORAGE_KEY, JSON.stringify(companyAccounts));
+  } catch (_err) {
+    // Prototype storage can fail in restricted browsers; the in-memory account still works.
+  }
+}
+
 function renderVuzzChannel(channelKey) {
   const channel = vuzzChannels[channelKey];
   if (!channel) return;
@@ -705,6 +732,7 @@ function renderCompanyAccountsChannel(alertText = "") {
       email: formData.get("email")?.toString().trim() || "",
       password: formData.get("password")?.toString() || "",
     });
+    saveCompanyAccounts();
     renderCompanyAccountsChannel("企業アカウントを追加しました。");
   });
   setupPasswordInputs(vuzzContent);
@@ -779,6 +807,7 @@ function openCompanyAccountEditDialog(index) {
       email: formData.get("email")?.toString().trim() || "",
       password: formData.get("password")?.toString() || "",
     };
+    saveCompanyAccounts();
     dialog.close();
     renderCompanyAccountsChannel("企業アカウントを更新しました。");
   });
@@ -1727,7 +1756,7 @@ function renderRegistrationForm(alertText = "", mode = "login") {
     renderVuzzChannel("review");
   });
   document.getElementById("devBypassCompanyFromLogin")?.addEventListener("click", () => {
-    showRole("company");
+    enterDemoCompany();
   });
   setupPasswordInputs(feed);
   setupEmailValidation(feed);
@@ -2850,11 +2879,18 @@ function showRole(role) {
     renderVuzzLogin();
     return;
   }
+  if (role === "company" && !currentCompanyAccount) {
+    renderCompanyLogin();
+    return;
+  }
   loginView.classList.add("is-hidden");
   Object.entries(appViews).forEach(([viewRole, view]) => {
     view.classList.toggle("is-hidden", viewRole !== role);
   });
   window.location.hash = role;
+  if (role === "company") {
+    updateCompanyPortalIdentity();
+  }
   refreshIcons();
 }
 
@@ -2915,12 +2951,13 @@ function loginExistingWorker(displayEmail = "ログイン済み") {
   renderMyPage("ログインしました。マイページを表示しています。");
 }
 
-const loginSteps = ["role", "method", "email", "vuzzAuth", "workerProfile", "companyProfile"];
+const loginSteps = ["role", "method", "email", "vuzzAuth", "companyAuth", "workerProfile", "companyProfile"];
 const loginStepIds = {
   role: "loginStepRole",
   method: "loginStepMethod",
   email: "loginStepEmail",
   vuzzAuth: "loginStepVuzzAuth",
+  companyAuth: "loginStepCompanyAuth",
   workerProfile: "loginStepWorkerProfile",
   companyProfile: "loginStepCompanyProfile",
 };
@@ -2959,11 +2996,29 @@ function startRegistrationFlow(role) {
     workerAuthEmail = "";
     profileFormStep = 1;
   }
+  if (role === "company") {
+    renderCompanyLogin();
+    return;
+  }
   const heading = document.getElementById("methodHeading");
   if (heading) {
     heading.textContent = role === "company" ? "企業として登録方法を選択" : "ワーカーとして登録方法を選択";
   }
   setLoginStep("method");
+}
+
+function renderCompanyLogin(alertText = "") {
+  pendingLoginRole = "company";
+  pendingLoginMethod = "email";
+  setLoginStep("companyAuth");
+  const alert = document.getElementById("companyLoginAlert");
+  if (alert) {
+    alert.textContent = alertText;
+    alert.classList.toggle("is-hidden", !alertText);
+  }
+  setupPasswordInputs(loginView);
+  setupEmailValidation(loginView);
+  refreshIcons();
 }
 
 function chooseAuthMethod(method) {
@@ -3010,6 +3065,46 @@ function enterRoleApp() {
   } else {
     showRole(role);
   }
+}
+
+function getCompanyDisplayName(account = currentCompanyAccount) {
+  return account?.companyName || account?.email?.split("@")[0] || "企業ページ";
+}
+
+function updateCompanyPortalIdentity() {
+  const displayName = getCompanyDisplayName();
+  const avatar = document.querySelector("#companyApp .worker-card .worker-avatar");
+  const name = document.querySelector("#companyApp .worker-card strong");
+  const status = document.querySelector("#companyApp .worker-card span:not(.presence)");
+  if (avatar) avatar.textContent = displayName.charAt(0);
+  if (name) name.textContent = displayName;
+  if (status) status.textContent = currentCompanyAccount ? "企業ログイン済み・掲載可" : "企業確認済み・掲載可";
+}
+
+function loginCompanyAccount(email, password) {
+  const account = companyAccounts.find((item) => item.email === email && item.password === password);
+  if (!account) {
+    renderCompanyLogin("メールアドレスまたはパスワードが違います。");
+    return;
+  }
+  currentCompanyAccount = { ...account };
+  companyData.companyName = account.companyName || getCompanyDisplayName(account);
+  companyProfileSubmitted = true;
+  pendingLoginRole = null;
+  pendingLoginMethod = null;
+  setLoginStep("role");
+  showRole("company");
+}
+
+function enterDemoCompany() {
+  currentCompanyAccount = {
+    companyName: "白樺文具株式会社",
+    email: "demo-company@example.com",
+    password: "",
+  };
+  companyData.companyName = currentCompanyAccount.companyName;
+  companyProfileSubmitted = true;
+  showRole("company");
 }
 
 function getPayAmount(job) {
@@ -3514,6 +3609,16 @@ document.getElementById("vuzzLoginForm")?.addEventListener("submit", (event) => 
   renderVuzzChannel("review");
 });
 
+document.getElementById("companyLoginForm")?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  normalizePasswordInputs(event.currentTarget);
+  if (!event.currentTarget.reportValidity()) return;
+  const formData = new FormData(event.currentTarget);
+  const email = formData.get("email")?.toString().trim() || "";
+  const password = formData.get("password")?.toString() || "";
+  loginCompanyAccount(email, password);
+});
+
 document.getElementById("backToWorkerFromVuzzLogin")?.addEventListener("click", () => {
   showRole("worker");
   renderFeed();
@@ -3526,7 +3631,7 @@ document.getElementById("devBypassAdmin")?.addEventListener("click", () => {
 });
 
 document.getElementById("devBypassCompany")?.addEventListener("click", () => {
-  showRole("company");
+  enterDemoCompany();
 });
 
 document.getElementById("emailRegisterForm")?.addEventListener("submit", (event) => {
@@ -3813,6 +3918,7 @@ function completeLogout(button) {
   profileFormStep = 1;
   workerAuthEmail = "";
   companyProfileSubmitted = false;
+  currentCompanyAccount = null;
   pendingLoginRole = null;
   pendingLoginMethod = null;
   updateIdentityUI();
