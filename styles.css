@@ -665,8 +665,10 @@ button {
 }
 
 .voice-pill {
+  flex: 0 0 auto;
   background: #24272d;
   color: var(--muted);
+  white-space: nowrap;
 }
 
 .voice-pill.active {
