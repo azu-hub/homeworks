@@ -2341,10 +2341,14 @@ button {
   gap: 12px;
 }
 
-.worker-card {
+.worker-card-list .worker-card {
+  display: block;
   border-radius: var(--radius);
   background: #1e2026;
   overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: none;
 }
 
 /* Required info section – always shown */
