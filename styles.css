@@ -831,7 +831,8 @@ button {
   border: none;
 }
 
-.app-shell.panel-collapsed [data-panel-toggle] i[data-lucide] {
+.app-shell.panel-collapsed [data-panel-toggle] i[data-lucide],
+.app-shell.panel-collapsed [data-panel-toggle] svg[data-lucide] {
   display: none;
 }
 

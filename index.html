@@ -267,13 +267,6 @@
 
     <div class="app-shell app-view is-hidden" id="workerApp">
       <aside class="channel-panel" aria-label="案件チャンネル">
-        <div class="guild-header">
-          <div aria-hidden="true"></div>
-          <button class="icon-button logout-button" data-logout type="button" aria-label="ログアウト">
-            <i data-lucide="log-out"></i>
-          </button>
-        </div>
-
         <button class="worker-card profile-card" id="openMyPage" type="button">
           <div class="worker-avatar" id="workerAvatar"><i data-lucide="user"></i></div>
           <div>
@@ -429,6 +422,9 @@
         </nav>
 
         <div class="status-strip">
+          <button class="icon-button logout-button" data-logout type="button" aria-label="ログアウト">
+            <i data-lucide="log-out"></i>
+          </button>
           <button class="voice-pill" id="aiRoomButton" type="button">
             <i data-lucide="headphones"></i>
             相談ルーム
