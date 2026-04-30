@@ -2475,6 +2475,7 @@ document.querySelectorAll("[data-category-shortcut]").forEach((button) => {
     activePriceTier = "all";
     activeCategory = button.dataset.categoryShortcut;
     renderFeed();
+    closeAppPanel(button.closest(".app-shell"));
   });
 });
 
@@ -2751,6 +2752,17 @@ const MOBILE_MQ = window.matchMedia("(max-width: 820px)");
 
 function closeMobilePanel(shell) {
   shell.classList.remove("panel-open");
+  const btn = shell.querySelector("[data-panel-toggle]");
+  if (btn) btn.setAttribute("aria-label", "サイドバーを開く");
+}
+
+function closeAppPanel(shell) {
+  if (!shell) return;
+  if (MOBILE_MQ.matches) {
+    closeMobilePanel(shell);
+    return;
+  }
+  shell.classList.add("panel-collapsed");
   const btn = shell.querySelector("[data-panel-toggle]");
   if (btn) btn.setAttribute("aria-label", "サイドバーを開く");
 }
