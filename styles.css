@@ -2443,7 +2443,9 @@ button {
   color: var(--muted);
   margin: 0;
   line-height: 1.5;
-  word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Optional ID section – always shown but marked optional */
