@@ -549,7 +549,7 @@ const vuzzChannels = {
   },
   workers: {
     title: "ユーザー一覧",
-    subtitle: "登録済みワーカーの確認・承認",
+    subtitle: "登録済みワーカーの本人確認・承認",
     noticeTitle: "ユーザー管理",
     noticeText: "ワーカーが個人情報を登録すると一覧に表示されます",
     metrics: [],
