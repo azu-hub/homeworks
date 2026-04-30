@@ -665,14 +665,14 @@ function renderCompanyAccountsChannel(alertText = "") {
           companyAccounts.length
             ? companyAccounts
                 .map(
-                  (account) => `
+                  (account, index) => `
                     <article>
                       <span class="status-dot"></span>
                       <div>
                         <strong>${escapeHtml(account.companyName || "企業名未設定")}</strong>
                         <p>${escapeHtml(account.email)}・パスワード発行済み</p>
                       </div>
-                      <button class="mini-button" type="button">確認</button>
+                      <button class="mini-button" data-edit-company-account="${index}" type="button">編集</button>
                     </article>
                   `,
                 )
@@ -689,6 +689,12 @@ function renderCompanyAccountsChannel(alertText = "") {
     </aside>
   `;
 
+  vuzzContent.querySelectorAll("[data-edit-company-account]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openCompanyAccountEditDialog(Number(button.dataset.editCompanyAccount));
+    });
+  });
+
   document.getElementById("companyAccountForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
     normalizePasswordInputs(event.currentTarget);
@@ -703,6 +709,81 @@ function renderCompanyAccountsChannel(alertText = "") {
   });
   setupPasswordInputs(vuzzContent);
   refreshIcons();
+}
+
+function openCompanyAccountEditDialog(index) {
+  const account = companyAccounts[index];
+  if (!account) return;
+
+  let dialog = document.getElementById("companyAccountEditModal");
+  if (!dialog) {
+    dialog = document.createElement("dialog");
+    dialog.className = "post-modal";
+    dialog.id = "companyAccountEditModal";
+    document.body.appendChild(dialog);
+  }
+
+  dialog.innerHTML = `
+    <form class="modal-card" id="companyAccountEditForm" novalidate>
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">company account</p>
+          <h2>企業アカウント編集</h2>
+        </div>
+        <button class="icon-button" id="closeCompanyAccountEdit" type="button" aria-label="閉じる">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      <div class="form-grid">
+        <label class="span-2">
+          会社名
+          <input name="companyName" type="text" value="${escapeHtml(account.companyName || "")}" placeholder="例：白樺文具株式会社" />
+        </label>
+        <label>
+          メールアドレス
+          <input name="email" type="text" inputmode="email" value="${escapeHtml(account.email || "")}" required />
+        </label>
+        <label>
+          パスワード
+          <span class="password-field">
+            <input name="password" type="password" inputmode="text" pattern="[A-Za-z0-9]+" title="半角英数字で入力してください。全角英数字は自動で半角に変換されます。" value="${escapeHtml(account.password || "")}" required />
+            <button class="icon-button password-toggle" type="button" aria-label="パスワードを表示">
+              <i data-lucide="eye"></i>
+            </button>
+          </span>
+        </label>
+      </div>
+      <div class="form-actions">
+        <button class="secondary-button" id="cancelCompanyAccountEdit" type="button">キャンセル</button>
+        <button class="primary-button" type="submit">
+          <i data-lucide="save"></i>
+          保存
+        </button>
+      </div>
+    </form>
+  `;
+
+  setupPasswordInputs(dialog);
+  refreshIcons();
+
+  const closeDialog = () => dialog.close();
+  dialog.querySelector("#closeCompanyAccountEdit")?.addEventListener("click", closeDialog);
+  dialog.querySelector("#cancelCompanyAccountEdit")?.addEventListener("click", closeDialog);
+  dialog.querySelector("#companyAccountEditForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    normalizePasswordInputs(event.currentTarget);
+    if (!event.currentTarget.reportValidity()) return;
+    const formData = new FormData(event.currentTarget);
+    companyAccounts[index] = {
+      companyName: formData.get("companyName")?.toString().trim() || "",
+      email: formData.get("email")?.toString().trim() || "",
+      password: formData.get("password")?.toString() || "",
+    };
+    dialog.close();
+    renderCompanyAccountsChannel("企業アカウントを更新しました。");
+  });
+
+  dialog.showModal?.();
 }
 
 function upsertRegisteredWorker() {
