@@ -2752,6 +2752,7 @@ const MOBILE_MQ = window.matchMedia("(max-width: 820px)");
 
 function closeMobilePanel(shell) {
   shell.classList.remove("panel-open");
+  shell.classList.add("panel-collapsed");
   const btn = shell.querySelector("[data-panel-toggle]");
   if (btn) btn.setAttribute("aria-label", "サイドバーを開く");
 }
@@ -2786,12 +2787,12 @@ document.querySelectorAll(".app-shell").forEach((shell) => {
     const dx = e.changedTouches[0].clientX - touchStartX;
     const dy = e.changedTouches[0].clientY - touchStartY;
     if (Math.abs(dy) > Math.abs(dx)) return;
-    const panelOpen = shell.classList.contains("panel-open");
-    if (!panelOpen && dx > 50 && touchStartX < 48) {
-      shell.classList.add("panel-open");
+    const collapsed = shell.classList.contains("panel-collapsed");
+    if (collapsed && dx > 50 && touchStartX < 48) {
+      shell.classList.remove("panel-collapsed");
       const btn = shell.querySelector("[data-panel-toggle]");
       if (btn) btn.setAttribute("aria-label", "サイドバーを閉じる");
-    } else if (panelOpen && dx < -50) {
+    } else if (!collapsed && dx < -50) {
       closeMobilePanel(shell);
     }
   }, { passive: true });
@@ -2802,8 +2803,9 @@ document.querySelectorAll("[data-panel-toggle]").forEach((button) => {
     const shell = button.closest(".app-shell");
     if (!shell) return;
     if (MOBILE_MQ.matches) {
-      const open = shell.classList.toggle("panel-open");
-      button.setAttribute("aria-label", open ? "サイドバーを閉じる" : "サイドバーを開く");
+      const collapsed = shell.classList.toggle("panel-collapsed");
+      shell.classList.remove("panel-open");
+      button.setAttribute("aria-label", collapsed ? "サイドバーを開く" : "サイドバーを閉じる");
     } else {
       const collapsed = shell.classList.toggle("panel-collapsed");
       button.setAttribute("aria-label", collapsed ? "サイドバーを開く" : "サイドバーを閉じる");
