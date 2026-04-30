@@ -845,6 +845,69 @@ function renderWorkerListChannel() {
   const total = registeredWorkers.length;
   const approved = registeredWorkers.filter((w) => w.approved).length;
   const pending = total - approved;
+  const workerEntries = registeredWorkers.map((worker, index) => ({ worker, index }));
+  const pendingWorkers = workerEntries.filter(({ worker }) => !worker.approved);
+  const approvedWorkers = workerEntries.filter(({ worker }) => worker.approved);
+  const renderWorkerCard = ({ worker: w, index }) => {
+    const hasId = w.idImages && (w.idImages.front || w.idImages.back || w.idImages.face);
+    const addressParts = [
+      w.postalCode ? `〒${w.postalCode.replace(/(\d{3})(\d{4})/, "$1-$2")}` : "",
+      w.prefecture || "",
+      w.addressLine1 || "",
+      w.addressLine2 || "",
+    ].filter(Boolean);
+    const addressStr = addressParts.length ? addressParts.join(" ") : "住所未設定";
+    return `
+      <article class="worker-card">
+        <div class="worker-card-required">
+          <div class="worker-card-name-row">
+            <span class="status-dot${w.approved ? "" : " warn"}"></span>
+            <div class="worker-card-name">
+              <strong>${escapeHtml(w.lastName + " " + w.firstName)}</strong>
+              <span class="worker-card-kana">${escapeHtml(w.kanaLast + " " + w.kanaFirst)}</span>
+            </div>
+            ${
+              w.approved
+                ? `<span class="worker-status-badge approved">承認済み</span>`
+                : `<button class="worker-approve-btn" type="button" data-approve-worker="${index}">承認する</button>`
+            }
+          </div>
+          <dl class="worker-card-dl">
+            ${w.username ? `<div>
+              <dt><i data-lucide="at-sign"></i></dt>
+              <dd>${escapeHtml(w.username)}</dd>
+            </div>` : ""}
+            <div>
+              <dt><i data-lucide="mail"></i></dt>
+              <dd>${escapeHtml(w.email)}</dd>
+            </div>
+            <div>
+              <dt><i data-lucide="map-pin"></i></dt>
+              <dd>${escapeHtml(addressStr)}</dd>
+            </div>
+            <div>
+              <dt><i data-lucide="clock"></i></dt>
+              <dd>登録日時：${escapeHtml(w.registeredAt)}</dd>
+            </div>
+          </dl>
+        </div>
+        <div class="worker-card-id-section">
+          <div class="worker-card-id-header">
+            <span class="worker-card-id-label">本人確認書類</span>
+            <span class="worker-id-optional-badge">任意</span>
+            ${
+              hasId
+                ? `<span class="worker-id-status submitted">提出済み</span>`
+                : `<span class="worker-id-status not-submitted">未提出</span>`
+            }
+            <button class="id-view-btn" type="button" data-view-id="${index}">
+              <i data-lucide="id-card"></i>身分証を確認
+            </button>
+          </div>
+        </div>
+      </article>
+    `;
+  };
   vuzzTitle.textContent = ch.title;
   vuzzSubtitle.textContent = ch.subtitle;
   vuzzNoticeTitle.parentElement?.classList.remove("is-hidden");
@@ -864,71 +927,43 @@ function renderWorkerListChannel() {
           <h2>登録ユーザー一覧</h2>
         </div>
       </div>
-      <div class="worker-card-list">
+      <div class="worker-list-sections">
         ${
           registeredWorkers.length
-            ? registeredWorkers
-                .map((w, i) => {
-                  const hasId = w.idImages && (w.idImages.front || w.idImages.back || w.idImages.face);
-                  const addressParts = [
-                    w.postalCode ? `〒${w.postalCode.replace(/(\d{3})(\d{4})/, "$1-$2")}` : "",
-                    w.prefecture || "",
-                    w.addressLine1 || "",
-                    w.addressLine2 || "",
-                  ].filter(Boolean);
-                  const addressStr = addressParts.length ? addressParts.join(" ") : "住所未設定";
-                  return `
-                    <article class="worker-card">
-                      <div class="worker-card-required">
-                        <div class="worker-card-name-row">
-                          <span class="status-dot${w.approved ? "" : " warn"}"></span>
-                          <div class="worker-card-name">
-                            <strong>${escapeHtml(w.lastName + " " + w.firstName)}</strong>
-                            <span class="worker-card-kana">${escapeHtml(w.kanaLast + " " + w.kanaFirst)}</span>
-                          </div>
-                          ${
-                            w.approved
-                              ? `<span class="worker-status-badge approved">承認済み</span>`
-                              : `<button class="worker-approve-btn" type="button" data-approve-worker="${i}">承認する</button>`
-                          }
-                        </div>
-                        <dl class="worker-card-dl">
-                          ${w.username ? `<div>
-                            <dt><i data-lucide="at-sign"></i></dt>
-                            <dd>${escapeHtml(w.username)}</dd>
-                          </div>` : ""}
-                          <div>
-                            <dt><i data-lucide="mail"></i></dt>
-                            <dd>${escapeHtml(w.email)}</dd>
-                          </div>
-                          <div>
-                            <dt><i data-lucide="map-pin"></i></dt>
-                            <dd>${escapeHtml(addressStr)}</dd>
-                          </div>
-                          <div>
-                            <dt><i data-lucide="clock"></i></dt>
-                            <dd>登録日時：${escapeHtml(w.registeredAt)}</dd>
-                          </div>
-                        </dl>
-                      </div>
-                      <div class="worker-card-id-section">
-                        <div class="worker-card-id-header">
-                          <span class="worker-card-id-label">本人確認書類</span>
-                          <span class="worker-id-optional-badge">任意</span>
-                          ${
-                            hasId
-                              ? `<span class="worker-id-status submitted">提出済み</span>`
-                              : `<span class="worker-id-status not-submitted">未提出</span>`
-                          }
-                          <button class="id-view-btn" type="button" data-view-id="${i}">
-                            <i data-lucide="id-card"></i>身分証を確認
-                          </button>
-                        </div>
-                      </div>
-                    </article>
-                  `;
-                })
-                .join("")
+            ? `
+              <section class="worker-list-section">
+                <div class="worker-list-heading">
+                  <strong>未承認ユーザー</strong>
+                  <span>${pendingWorkers.length}</span>
+                </div>
+                <div class="worker-card-list">
+                  ${
+                    pendingWorkers.length
+                      ? pendingWorkers.map(renderWorkerCard).join("")
+                      : `<div class="worker-card-empty compact">
+                          <i data-lucide="badge-check"></i>
+                          <p>未承認ユーザーなし</p>
+                        </div>`
+                  }
+                </div>
+              </section>
+              <section class="worker-list-section">
+                <div class="worker-list-heading">
+                  <strong>承認済みユーザー</strong>
+                  <span>${approvedWorkers.length}</span>
+                </div>
+                <div class="worker-card-list">
+                  ${
+                    approvedWorkers.length
+                      ? approvedWorkers.map(renderWorkerCard).join("")
+                      : `<div class="worker-card-empty compact">
+                          <i data-lucide="users"></i>
+                          <p>承認済みユーザーなし</p>
+                        </div>`
+                  }
+                </div>
+              </section>
+            `
             : `<div class="worker-card-empty">
                 <i data-lucide="users"></i>
                 <p>登録ユーザーなし</p>

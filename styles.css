@@ -2379,6 +2379,37 @@ button {
 }
 
 /* ── Worker card list (admin user list) ── */
+.worker-list-sections,
+.worker-list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.worker-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.worker-list-heading strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.worker-list-heading span {
+  min-width: 28px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #17181c;
+  color: var(--muted);
+  text-align: center;
+}
+
 .worker-card-list {
   display: flex;
   flex-direction: column;
