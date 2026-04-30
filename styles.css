@@ -2612,7 +2612,8 @@ button {
 }
 
 /* Lightbox overlay */
-#idLightboxOverlay {
+#idLightboxOverlay,
+#idAllLightboxOverlay {
   display: none;
   position: fixed;
   inset: 0;
@@ -2621,7 +2622,8 @@ button {
   justify-content: center;
 }
 
-#idLightboxOverlay.open {
+#idLightboxOverlay.open,
+#idAllLightboxOverlay.open {
   display: flex;
 }
 
