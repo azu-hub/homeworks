@@ -705,6 +705,38 @@ function normalizePasswordInputs(scope = document) {
   scope.querySelectorAll("input[data-password-input], input[type='password']").forEach(normalizePasswordInput);
 }
 
+function setupEmailValidation(scope = document) {
+  scope.querySelectorAll("input[name='email']").forEach((input) => {
+    if (input.dataset.emailValidation) return;
+    input.dataset.emailValidation = "true";
+    input.addEventListener("input", () => {
+      const val = input.value;
+      if (!val) { input.setCustomValidity(""); removeEmailError(input); return; }
+      if (!val.includes("@")) {
+        input.setCustomValidity("@を含むメールアドレスを入力してください");
+        showEmailError(input, "@を含むメールアドレスを入力してください");
+      } else {
+        input.setCustomValidity("");
+        removeEmailError(input);
+      }
+    });
+  });
+}
+
+function showEmailError(input, msg) {
+  let el = input.parentElement.querySelector(".email-error");
+  if (!el) {
+    el = document.createElement("span");
+    el.className = "email-error field-error";
+    input.after(el);
+  }
+  el.textContent = msg;
+}
+
+function removeEmailError(input) {
+  input.parentElement.querySelector(".email-error")?.remove();
+}
+
 function updateIdentityUI() {
   const rewardSummary = getRewardSummary();
   const displayName = isLoggedIn ? profileData.username || (profileData.lastName && profileData.firstName ? `${profileData.lastName} ${profileData.firstName}` : profileData.lastName || profileData.firstName) || "未設定" : "ゲスト";
@@ -1184,6 +1216,7 @@ function renderRegistrationForm(alertText = "", mode = "login") {
     renderRegistrationForm();
   });
   setupPasswordInputs(feed);
+  setupEmailValidation(feed);
   refreshIcons();
 }
 
@@ -2232,6 +2265,7 @@ function renderVuzzLogin(alertText = "") {
     alert.classList.toggle("is-hidden", !alertText);
   }
   setupPasswordInputs(loginView);
+  setupEmailValidation(loginView);
   refreshIcons();
 }
 
@@ -3105,3 +3139,4 @@ if (appViews[initialRole]) {
 }
 
 updateIdentityUI();
+setupEmailValidation();
