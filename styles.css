@@ -670,6 +670,38 @@ button {
   background: #191b20;
 }
 
+.sidebar-logout {
+  margin-top: auto;
+  padding: 10px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.sidebar-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-logout-btn:hover {
+  background: rgba(255,255,255,0.07);
+  color: var(--text);
+}
+
+.sidebar-logout-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 .voice-pill,
 .primary-button,
 .secondary-button {
