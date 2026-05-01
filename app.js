@@ -4273,6 +4273,12 @@ document.querySelectorAll("[data-panel-toggle]").forEach((button) => {
   });
 });
 
+document.querySelectorAll("[data-panel-close]").forEach((button) => {
+  button.addEventListener("click", () => {
+    closeMobilePanel(button.closest(".app-shell"));
+  });
+});
+
 function completeLogout(button) {
   isLoggedIn = false;
   emailVerified = false;
