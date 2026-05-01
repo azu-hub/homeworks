@@ -2466,9 +2466,50 @@ button {
   border: none;
 }
 
-/* Required info section – always shown */
+.worker-card-summary {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.worker-card-summary::-webkit-details-marker {
+  display: none;
+}
+
+.worker-card-summary strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.worker-card-summary svg {
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+  transition: transform 0.18s ease;
+}
+
+.worker-card-collapsible[open] .worker-card-summary {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.worker-card-collapsible[open] .worker-card-summary svg {
+  transform: rotate(180deg);
+}
+
+/* Expanded info section */
 .worker-card-required {
   padding: 14px 16px 12px;
+}
+
+.worker-card-detail-status {
+  margin-bottom: 12px;
 }
 
 .worker-card-name-row {

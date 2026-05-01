@@ -1041,12 +1041,15 @@ function renderWorkerListChannel() {
     ].filter(Boolean);
     const addressStr = addressParts.length ? addressParts.join(" ") : "住所未設定";
     return `
-      <article class="worker-card">
+      <details class="worker-card worker-card-collapsible">
+        <summary class="worker-card-summary">
+          <span class="status-dot${w.approved ? "" : " warn"}"></span>
+          <strong>${escapeHtml(w.lastName + " " + w.firstName)}</strong>
+          <i data-lucide="chevron-down"></i>
+        </summary>
         <div class="worker-card-required">
-          <div class="worker-card-name-row">
-            <span class="status-dot${w.approved ? "" : " warn"}"></span>
+          <div class="worker-card-name-row worker-card-detail-status">
             <div class="worker-card-name">
-              <strong>${escapeHtml(w.lastName + " " + w.firstName)}</strong>
               <span class="worker-card-kana">${escapeHtml(w.kanaLast + " " + w.kanaFirst)}</span>
             </div>
             ${
@@ -1088,7 +1091,7 @@ function renderWorkerListChannel() {
             </button>
           </div>
         </div>
-      </article>
+      </details>
     `;
   };
   vuzzTitle.textContent = ch.title;
