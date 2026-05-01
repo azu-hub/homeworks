@@ -671,9 +671,12 @@ button {
 }
 
 .sidebar-logout {
+  position: sticky;
+  bottom: 0;
   margin-top: auto;
   padding: 10px;
   border-top: 1px solid rgba(255,255,255,0.06);
+  background: var(--panel);
 }
 
 .sidebar-logout-btn {
@@ -689,6 +692,10 @@ button {
   font-size: 13px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
+}
+
+#vuzzApp:not(.is-hidden) .sidebar-logout-btn.is-hidden {
+  display: flex !important;
 }
 
 .sidebar-logout-btn:hover {
