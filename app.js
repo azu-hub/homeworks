@@ -711,7 +711,7 @@ function renderCompanyAccountsChannel(alertText = "") {
                           Number.isInteger(row.accountIndex)
                             ? `data-edit-company-account="${row.accountIndex}"`
                             : `data-add-company-account="${rowIndex}"`
-                        } type="button">${Number.isInteger(row.accountIndex) ? "企業編集" : "アカウント追加"}</button>
+                        } type="button">${Number.isInteger(row.accountIndex) ? "企業編集" : "情報"}</button>
                       </div>
                     </article>
                   `,
@@ -873,9 +873,14 @@ function openCompanyJobsDialog(companyName) {
           <p class="eyebrow">company jobs</p>
           <h2>${escapeHtml(companyName)}の案件</h2>
         </div>
-        <button class="icon-button" id="closeCompanyJobs" type="button" aria-label="閉じる">
-          <i data-lucide="x"></i>
-        </button>
+        <div class="company-row-actions">
+          <button class="icon-button" id="addCompanyJob" type="button" aria-label="案件を追加">
+            <i data-lucide="plus"></i>
+          </button>
+          <button class="icon-button" id="closeCompanyJobs" type="button" aria-label="閉じる">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
       </div>
       <div class="company-job-list">
         ${
@@ -902,6 +907,10 @@ function openCompanyJobsDialog(companyName) {
     </div>
   `;
 
+  dialog.querySelector("#addCompanyJob")?.addEventListener("click", () => {
+    dialog.close();
+    openCompanyJobEditDialog(null, companyName);
+  });
   dialog.querySelector("#closeCompanyJobs")?.addEventListener("click", () => dialog.close());
   dialog.querySelectorAll("[data-edit-company-job]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -914,7 +923,28 @@ function openCompanyJobsDialog(companyName) {
 }
 
 function openCompanyJobEditDialog(jobId, companyName) {
-  const job = jobs.find((item) => item.id === jobId);
+  const isEdit = Number.isInteger(jobId);
+  const job = isEdit
+    ? jobs.find((item) => item.id === jobId)
+    : {
+        id: Math.max(0, ...jobs.map((item) => item.id)) + 1,
+        channel: "inspection",
+        company: companyName || "企業名未設定",
+        logo: (companyName || "企").trim().charAt(0) || "企",
+        color: "#58a9df",
+        title: "",
+        description: "",
+        pay: "",
+        due: "",
+        place: "完全在宅",
+        slots: "あと1名",
+        time: "未設定",
+        review: "提出後24時間以内",
+        trust: "運営確認中",
+        badge: "新着",
+        tags: ["remote"],
+        posted: "now",
+      };
   if (!job) return;
 
   let dialog = document.getElementById("companyJobEditModal");
@@ -930,7 +960,7 @@ function openCompanyJobEditDialog(jobId, companyName) {
       <div class="modal-header">
         <div>
           <p class="eyebrow">job edit</p>
-          <h2>案件編集</h2>
+          <h2>${isEdit ? "案件編集" : "案件追加"}</h2>
         </div>
         <button class="icon-button" id="closeCompanyJobEdit" type="button" aria-label="閉じる">
           <i data-lucide="x"></i>
@@ -963,8 +993,8 @@ function openCompanyJobEditDialog(jobId, companyName) {
       <div class="form-actions">
         <button class="secondary-button" id="cancelCompanyJobEdit" type="button">キャンセル</button>
         <button class="primary-button" type="submit">
-          <i data-lucide="save"></i>
-          保存
+          <i data-lucide="${isEdit ? "save" : "plus"}"></i>
+          ${isEdit ? "保存" : "追加"}
         </button>
       </div>
     </form>
@@ -982,8 +1012,12 @@ function openCompanyJobEditDialog(jobId, companyName) {
     job.due = formData.get("due")?.toString().trim() || job.due;
     job.channel = formData.get("channel")?.toString() || job.channel;
     job.description = formData.get("description")?.toString().trim() || job.description;
+    if (!isEdit) {
+      jobs.unshift(job);
+      selectedJobId = job.id;
+    }
     dialog.close();
-    renderCompanyAccountsChannel("案件情報を更新しました。");
+    renderCompanyAccountsChannel(isEdit ? "案件情報を更新しました。" : "案件を追加しました。");
     if (selectedJobId === job.id) renderDetail(job);
     renderFeed();
   });
