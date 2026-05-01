@@ -2530,7 +2530,7 @@ function renderMyPage(alertText = "") {
     : !idSubmitted
       ? `
         <div class="onboarding-action">
-          <p class="form-note">マイナンバーカードの表面・裏面の画像と、顔写真を提出してください。</p>
+          <p class="form-note">マイナンバーカードの表面・裏面の画像と、顔写真を提出してください。提出した身分証は運営のみ確認できます。</p>
           <form id="idUploadForm" class="id-upload-form">
             <label class="id-upload-label">
               <span>マイナンバーカード（表面）</span>
@@ -4101,6 +4101,7 @@ function renderApplicantModal(id, context = "company") {
   if (!data) return;
   const stats = getApplicantStats(id);
   const approved = applicantApprovalState.get(id) ?? false;
+  const canViewIdentity = context === "vuzz";
   const approveLabel = context === "vuzz"
     ? (approved ? "承認取り消し" : "本人確認を承認")
     : (approved ? "承認取り消し" : "採用する");
@@ -4110,15 +4111,23 @@ function renderApplicantModal(id, context = "company") {
 
   const body = document.getElementById("applicantModalBody");
   if (body) {
-    const idCardHtml = data.myNumber
-      ? `<div class="id-card-placeholder">
-           <div class="card-chip"></div>
-           <div class="card-row"></div>
-           <div class="card-row short"></div>
-         </div>`
-      : `<div class="id-card-empty">
-           <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-           <span>マイナンバーカード 未提出</span>
+    const idCardHtml = canViewIdentity
+      ? (data.myNumber
+          ? `<div class="id-card-placeholder">
+               <div class="card-chip"></div>
+               <div class="card-row"></div>
+               <div class="card-row short"></div>
+             </div>`
+          : `<div class="id-card-empty">
+               <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+               <span>マイナンバーカード 未提出</span>
+             </div>`)
+      : `<div class="id-card-private">
+           <i data-lucide="shield-check"></i>
+           <div>
+             <strong>身分証は運営のみ確認できます</strong>
+             <span>${approved ? "運営確認済み" : "運営確認中"}</span>
+           </div>
          </div>`;
 
     body.innerHTML = `
@@ -4135,7 +4144,7 @@ function renderApplicantModal(id, context = "company") {
         <span><b>${stats.onTimeRate === null ? "-" : `${stats.onTimeRate}%`}</b>期限内完了率</span>
       </div>
       <div class="id-card-section">
-        <p class="eyebrow">マイナンバーカード</p>
+        <p class="eyebrow">${canViewIdentity ? "本人確認書類" : "本人確認情報"}</p>
         ${idCardHtml}
       </div>`;
   }

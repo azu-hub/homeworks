@@ -3202,6 +3202,36 @@ button {
   stroke: var(--muted-2);
 }
 
+.id-card-private {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #1e2026;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+}
+
+.id-card-private i {
+  color: var(--accent-2);
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+}
+
+.id-card-private strong {
+  color: var(--text);
+  display: block;
+  font-size: 13px;
+}
+
+.id-card-private span {
+  display: block;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
 @media (max-width: 1120px) {
   .app-shell {
     grid-template-columns: 250px minmax(0, 1fr);
