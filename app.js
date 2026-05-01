@@ -979,6 +979,10 @@ function openCompanyJobEditDialog(jobId, companyName) {
         <input name="due" type="text" value="${escapeHtml(job.due)}" required />
       </label>
       <label>
+        募集人数
+        <input name="slots" type="number" min="1" step="1" value="${escapeHtml(job.slots.replace(/[^\d]/g, "") || "1")}" required />
+      </label>
+      <label>
         カテゴリ
         <select name="channel">
           <option value="inspection"${job.channel === "inspection" ? " selected" : ""}>検品・梱包</option>
@@ -1010,6 +1014,8 @@ function openCompanyJobEditDialog(jobId, companyName) {
     job.title = formData.get("title")?.toString().trim() || job.title;
     job.pay = formData.get("pay")?.toString().trim() || job.pay;
     job.due = formData.get("due")?.toString().trim() || job.due;
+    const slots = formData.get("slots")?.toString().replace(/[^\d]/g, "") || "";
+    job.slots = slots ? `あと${slots}名` : job.slots;
     job.channel = formData.get("channel")?.toString() || job.channel;
     job.description = formData.get("description")?.toString().trim() || job.description;
     if (!isEdit) {
