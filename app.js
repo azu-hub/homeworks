@@ -3992,18 +3992,104 @@ document.querySelector("#companyApp .channel-list")?.addEventListener("click", (
 });
 
 const APPLICANT_DATA = {
-  misaki: { name: "佐藤 美咲", sub: "検品経験 12件・評価 4.9", avatar: "美", myNumber: true, approved: false },
-  ryo:    { name: "田中 亮",   sub: "データ入力 8件・即日対応",  avatar: "田", myNumber: true, approved: true  },
-  kana:   { name: "Kana S.",  sub: "本人確認済み・納期遵守率 100%", avatar: "K", myNumber: false, approved: false },
+  misaki: { name: "佐藤 美咲", avatar: "美", myNumber: true, approved: false, primaryCategory: "inspection" },
+  ryo:    { name: "田中 亮",   avatar: "田", myNumber: true, approved: true, primaryCategory: "typing" },
+  kana:   { name: "Kana S.",  avatar: "K", myNumber: false, approved: false, primaryCategory: "creative" },
+};
+
+const APPLICANT_WORK_HISTORY = {
+  misaki: [
+    { category: "inspection", rating: 5.0 },
+    { category: "inspection", rating: 4.9 },
+    { category: "inspection", rating: 4.8 },
+    { category: "inspection", rating: 5.0 },
+    { category: "inspection", rating: 4.9 },
+    { category: "inspection", rating: 4.8 },
+    { category: "inspection", rating: 4.9 },
+    { category: "inspection", rating: 4.9 },
+    { category: "inspection", rating: 5.0 },
+    { category: "inspection", rating: 4.8 },
+    { category: "inspection", rating: 4.9 },
+    { category: "inspection", rating: 4.9 },
+  ],
+  ryo: [
+    { category: "typing", rating: 4.9 },
+    { category: "typing", rating: 4.8 },
+    { category: "typing", rating: 4.7 },
+    { category: "typing", rating: 4.8 },
+    { category: "typing", rating: 4.9 },
+    { category: "typing", rating: 4.8 },
+    { category: "typing", rating: 4.7 },
+    { category: "typing", rating: 4.8 },
+  ],
+  kana: [
+    { category: "creative", rating: 5.0 },
+    { category: "creative", rating: 5.0 },
+    { category: "creative", rating: 4.9 },
+    { category: "creative", rating: 5.0 },
+    { category: "creative", rating: 4.9 },
+    { category: "creative", rating: 5.0 },
+  ],
+};
+
+const APPLICANT_STAT_LABELS = {
+  inspection: "検品経験",
+  typing: "データ入力",
+  creative: "画像チェック",
 };
 
 const applicantApprovalState = new Map(
   Object.entries(APPLICANT_DATA).map(([id, d]) => [id, d.approved])
 );
 
+function getApplicantStats(id) {
+  const data = APPLICANT_DATA[id];
+  const history = APPLICANT_WORK_HISTORY[id] || [];
+  const categoryCounts = history.reduce((counts, item) => {
+    counts[item.category] = (counts[item.category] || 0) + 1;
+    return counts;
+  }, {});
+  const primaryCategory =
+    data?.primaryCategory ||
+    Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ||
+    "inspection";
+  const ratings = history.map((item) => Number(item.rating)).filter(Number.isFinite);
+  const averageRating = ratings.length
+    ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
+    : null;
+  return {
+    totalCount: history.length,
+    primaryCategory,
+    primaryCount: categoryCounts[primaryCategory] || 0,
+    primaryLabel: APPLICANT_STAT_LABELS[primaryCategory] || categories[primaryCategory] || "作業経験",
+    averageRating,
+  };
+}
+
+function getApplicantSummary(id) {
+  const stats = getApplicantStats(id);
+  const ratingText = stats.averageRating === null ? "未評価" : stats.averageRating.toFixed(1);
+  return `${stats.primaryLabel} ${stats.primaryCount}件・評価 ${ratingText}`;
+}
+
+function updateApplicantSummaries(root = document) {
+  root.querySelectorAll("article[data-applicant-id]").forEach((article) => {
+    const id = article.dataset.applicantId;
+    const data = APPLICANT_DATA[id];
+    if (!data) return;
+    const avatar = article.querySelector(".worker-avatar");
+    const name = article.querySelector("strong");
+    const summary = article.querySelector(".worker-avatar + div span");
+    if (avatar) avatar.textContent = data.avatar;
+    if (name) name.textContent = data.name;
+    if (summary) summary.textContent = getApplicantSummary(id);
+  });
+}
+
 function renderApplicantModal(id, context = "company") {
   const data = APPLICANT_DATA[id];
   if (!data) return;
+  const stats = getApplicantStats(id);
   const approved = applicantApprovalState.get(id) ?? false;
   const approveLabel = context === "vuzz"
     ? (approved ? "承認取り消し" : "本人確認を承認")
@@ -4030,8 +4116,13 @@ function renderApplicantModal(id, context = "company") {
         <div class="applicant-modal-avatar">${data.avatar}</div>
         <div>
           <strong>${data.name}</strong>
-          <div style="color:var(--muted);font-size:13px;margin-top:4px">${data.sub}</div>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px">${getApplicantSummary(id)}</div>
         </div>
+      </div>
+      <div class="applicant-stats-grid">
+        <span><b>${stats.primaryCount}</b>${stats.primaryLabel}</span>
+        <span><b>${stats.totalCount}</b>完了案件</span>
+        <span><b>${stats.averageRating === null ? "-" : stats.averageRating.toFixed(1)}</b>平均評価</span>
       </div>
       <div class="id-card-section">
         <p class="eyebrow">マイナンバーカード</p>
@@ -4234,6 +4325,7 @@ renderDetail(jobs[0]);
 renderFeed();
 renderVuzzChannel("review");
 bindGuestTopbarButtons();
+updateApplicantSummaries();
 
 const initialRole = window.location.hash.replace("#", "");
 if (appViews[initialRole]) {

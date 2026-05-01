@@ -3126,6 +3126,28 @@ button {
   justify-content: center;
 }
 
+.applicant-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.applicant-stats-grid span {
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+  border-radius: var(--radius);
+  background: #1e2026;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.applicant-stats-grid b {
+  color: var(--text);
+  font-size: 16px;
+}
+
 .id-card-section {
   display: grid;
   gap: 8px;
