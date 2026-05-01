@@ -562,6 +562,14 @@ function refreshIcons() {
   }
 }
 
+function enableBackdropClose(dialog) {
+  if (!dialog || dialog.dataset.backdropClose === "true") return;
+  dialog.dataset.backdropClose = "true";
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+}
+
 function loadCompanyAccounts() {
   try {
     const raw = window.localStorage?.getItem(COMPANY_ACCOUNTS_STORAGE_KEY);
@@ -853,6 +861,7 @@ function openCompanyAccountDialog(index = null, defaults = {}) {
     renderCompanyAccountsChannel(isEdit ? "企業アカウントを更新しました。" : "企業アカウントを追加しました。");
   });
 
+  enableBackdropClose(dialog);
   dialog.showModal?.();
 }
 
@@ -919,6 +928,7 @@ function openCompanyJobsDialog(companyName) {
     });
   });
   refreshIcons();
+  enableBackdropClose(dialog);
   dialog.showModal?.();
 }
 
@@ -1029,6 +1039,7 @@ function openCompanyJobEditDialog(jobId, companyName) {
   });
 
   refreshIcons();
+  enableBackdropClose(dialog);
   dialog.showModal?.();
 }
 
@@ -4191,6 +4202,8 @@ document.getElementById("companyProfileGate")?.addEventListener("submit", (event
   form.reset();
   enterRoleApp();
 });
+
+document.querySelectorAll("dialog.post-modal").forEach(enableBackdropClose);
 
 const MOBILE_MQ = window.matchMedia("(max-width: 820px)");
 
