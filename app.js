@@ -3999,36 +3999,36 @@ const APPLICANT_DATA = {
 
 const APPLICANT_WORK_HISTORY = {
   misaki: [
-    { category: "inspection", rating: 5.0 },
-    { category: "inspection", rating: 4.9 },
-    { category: "inspection", rating: 4.8 },
-    { category: "inspection", rating: 5.0 },
-    { category: "inspection", rating: 4.9 },
-    { category: "inspection", rating: 4.8 },
-    { category: "inspection", rating: 4.9 },
-    { category: "inspection", rating: 4.9 },
-    { category: "inspection", rating: 5.0 },
-    { category: "inspection", rating: 4.8 },
-    { category: "inspection", rating: 4.9 },
-    { category: "inspection", rating: 4.9 },
+    { category: "inspection", onTime: true },
+    { category: "inspection", onTime: true },
+    { category: "inspection", onTime: true },
+    { category: "inspection", onTime: true },
+    { category: "inspection", onTime: true },
+    { category: "inspection", onTime: true },
+    { category: "inspection", onTime: true },
+    { category: "inspection", onTime: true },
+    { category: "inspection", onTime: true },
+    { category: "inspection", onTime: true },
+    { category: "inspection", onTime: true },
+    { category: "inspection", onTime: false },
   ],
   ryo: [
-    { category: "typing", rating: 4.9 },
-    { category: "typing", rating: 4.8 },
-    { category: "typing", rating: 4.7 },
-    { category: "typing", rating: 4.8 },
-    { category: "typing", rating: 4.9 },
-    { category: "typing", rating: 4.8 },
-    { category: "typing", rating: 4.7 },
-    { category: "typing", rating: 4.8 },
+    { category: "typing", onTime: true },
+    { category: "typing", onTime: true },
+    { category: "typing", onTime: true },
+    { category: "typing", onTime: true },
+    { category: "typing", onTime: true },
+    { category: "typing", onTime: true },
+    { category: "typing", onTime: true },
+    { category: "typing", onTime: false },
   ],
   kana: [
-    { category: "creative", rating: 5.0 },
-    { category: "creative", rating: 5.0 },
-    { category: "creative", rating: 4.9 },
-    { category: "creative", rating: 5.0 },
-    { category: "creative", rating: 4.9 },
-    { category: "creative", rating: 5.0 },
+    { category: "creative", onTime: true },
+    { category: "creative", onTime: true },
+    { category: "creative", onTime: true },
+    { category: "creative", onTime: true },
+    { category: "creative", onTime: true },
+    { category: "creative", onTime: true },
   ],
 };
 
@@ -4053,23 +4053,22 @@ function getApplicantStats(id) {
     data?.primaryCategory ||
     Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ||
     "inspection";
-  const ratings = history.map((item) => Number(item.rating)).filter(Number.isFinite);
-  const averageRating = ratings.length
-    ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
-    : null;
+  const onTimeCount = history.filter((item) => item.onTime).length;
+  const onTimeRate = history.length ? Math.round((onTimeCount / history.length) * 100) : null;
   return {
     totalCount: history.length,
     primaryCategory,
     primaryCount: categoryCounts[primaryCategory] || 0,
     primaryLabel: APPLICANT_STAT_LABELS[primaryCategory] || categories[primaryCategory] || "作業経験",
-    averageRating,
+    onTimeCount,
+    onTimeRate,
   };
 }
 
 function getApplicantSummary(id) {
   const stats = getApplicantStats(id);
-  const ratingText = stats.averageRating === null ? "未評価" : stats.averageRating.toFixed(1);
-  return `${stats.primaryLabel} ${stats.primaryCount}件・評価 ${ratingText}`;
+  const onTimeText = stats.onTimeRate === null ? "未計測" : `${stats.onTimeRate}%`;
+  return `${stats.primaryLabel} ${stats.primaryCount}件・期限内完了 ${onTimeText}`;
 }
 
 function updateApplicantSummaries(root = document) {
@@ -4122,7 +4121,7 @@ function renderApplicantModal(id, context = "company") {
       <div class="applicant-stats-grid">
         <span><b>${stats.primaryCount}</b>${stats.primaryLabel}</span>
         <span><b>${stats.totalCount}</b>完了案件</span>
-        <span><b>${stats.averageRating === null ? "-" : stats.averageRating.toFixed(1)}</b>平均評価</span>
+        <span><b>${stats.onTimeRate === null ? "-" : `${stats.onTimeRate}%`}</b>期限内完了率</span>
       </div>
       <div class="id-card-section">
         <p class="eyebrow">マイナンバーカード</p>
