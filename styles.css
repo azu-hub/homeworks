@@ -1033,6 +1033,10 @@ button {
   color: var(--accent-2);
 }
 
+.vuzz-notice-band {
+  display: none;
+}
+
 .main-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 338px;
