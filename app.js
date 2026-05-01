@@ -4216,11 +4216,22 @@ document.querySelectorAll("dialog.post-modal").forEach(enableBackdropClose);
 
 const MOBILE_MQ = window.matchMedia("(max-width: 820px)");
 
-function closeMobilePanel(shell) {
-  shell.classList.remove("panel-open");
-  shell.classList.add("panel-collapsed");
+function syncPanelToggleLabel(shell, isOpen) {
   const btn = shell.querySelector("[data-panel-toggle]");
-  if (btn) btn.setAttribute("aria-label", "サイドバーを開く");
+  if (btn) btn.setAttribute("aria-label", isOpen ? "サイドバーを閉じる" : "サイドバーを開く");
+}
+
+function setMobilePanelOpen(shell, isOpen) {
+  if (!shell) return;
+  shell.classList.toggle("panel-open", isOpen);
+  shell.classList.toggle("panel-collapsed", !isOpen);
+  shell.classList.remove("panel-dragging");
+  shell.querySelector(".channel-panel")?.style.removeProperty("transform");
+  syncPanelToggleLabel(shell, isOpen);
+}
+
+function closeMobilePanel(shell) {
+  setMobilePanelOpen(shell, false);
 }
 
 function closeAppPanel(shell) {
@@ -4236,39 +4247,102 @@ document.querySelectorAll(".app-shell").forEach((shell) => {
 
   let touchStartX = 0;
   let touchStartY = 0;
+  let latestTouchX = 0;
+  let isPanelDrag = false;
+  let dragStartedCollapsed = false;
+  let panelDragFrame = 0;
+  const panel = shell.querySelector(".channel-panel");
+  const panelWidth = () => panel?.getBoundingClientRect().width || 220;
 
   shell.addEventListener("touchstart", (e) => {
+    if (!MOBILE_MQ.matches || !panel) return;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
+    latestTouchX = touchStartX;
+    dragStartedCollapsed = shell.classList.contains("panel-collapsed");
+    const canOpen = dragStartedCollapsed && touchStartX < 42;
+    const canClose = !dragStartedCollapsed && touchStartX <= panelWidth() + 24;
+    isPanelDrag = canOpen || canClose;
+    if (!isPanelDrag) return;
+    shell.classList.add("panel-dragging");
+    panel.style.transform = dragStartedCollapsed
+      ? `translate3d(${-panelWidth()}px, 0, 0)`
+      : "translate3d(0, 0, 0)";
   }, { passive: true });
+
+  shell.addEventListener("touchmove", (e) => {
+    if (!isPanelDrag || !panel) return;
+    latestTouchX = e.touches[0].clientX;
+    const dx = latestTouchX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    if (Math.abs(dy) > Math.abs(dx) + 8) {
+      isPanelDrag = false;
+      shell.classList.remove("panel-dragging");
+      panel.style.removeProperty("transform");
+      return;
+    }
+    e.preventDefault();
+    if (panelDragFrame) return;
+    panelDragFrame = window.requestAnimationFrame(() => {
+      panelDragFrame = 0;
+      const width = panelWidth();
+      const nextX = dragStartedCollapsed
+        ? Math.min(0, -width + Math.max(0, dx))
+        : Math.max(-width, Math.min(0, dx));
+      panel.style.transform = `translate3d(${nextX}px, 0, 0)`;
+    });
+  }, { passive: false });
+
+  const finishPanelDrag = (x) => {
+    if (!isPanelDrag || !panel) return;
+    if (panelDragFrame) {
+      window.cancelAnimationFrame(panelDragFrame);
+      panelDragFrame = 0;
+    }
+    const dx = x - touchStartX;
+    const width = panelWidth();
+    const shouldOpen = dragStartedCollapsed ? dx > Math.min(90, width * 0.35) : dx > -Math.min(90, width * 0.35);
+    isPanelDrag = false;
+    setMobilePanelOpen(shell, shouldOpen);
+  };
 
   shell.addEventListener("touchend", (e) => {
     if (!MOBILE_MQ.matches) return;
-    const dx = e.changedTouches[0].clientX - touchStartX;
-    const dy = e.changedTouches[0].clientY - touchStartY;
-    if (Math.abs(dy) > Math.abs(dx)) return;
-    const collapsed = shell.classList.contains("panel-collapsed");
-    if (collapsed && dx > 50 && touchStartX < 48) {
-      shell.classList.remove("panel-collapsed");
-      const btn = shell.querySelector("[data-panel-toggle]");
-      if (btn) btn.setAttribute("aria-label", "サイドバーを閉じる");
-    } else if (!collapsed && dx < -50) {
-      closeMobilePanel(shell);
-    }
+    finishPanelDrag(e.changedTouches[0].clientX || latestTouchX);
+  }, { passive: true });
+
+  shell.addEventListener("touchcancel", () => {
+    if (!isPanelDrag || !panel) return;
+    isPanelDrag = false;
+    setMobilePanelOpen(shell, !dragStartedCollapsed);
   }, { passive: true });
 });
+
+function syncPanelMode() {
+  document.querySelectorAll(".app-shell").forEach((shell) => {
+    shell.classList.remove("panel-dragging");
+    shell.querySelector(".channel-panel")?.style.removeProperty("transform");
+    if (MOBILE_MQ.matches) {
+      if (!shell.classList.contains("panel-open")) setMobilePanelOpen(shell, false);
+    } else {
+      shell.classList.remove("panel-open");
+      syncPanelToggleLabel(shell, !shell.classList.contains("panel-collapsed"));
+    }
+  });
+}
+
+syncPanelMode();
+MOBILE_MQ.addEventListener?.("change", syncPanelMode);
 
 document.querySelectorAll("[data-panel-toggle]").forEach((button) => {
   button.addEventListener("click", () => {
     const shell = button.closest(".app-shell");
     if (!shell) return;
     if (MOBILE_MQ.matches) {
-      const collapsed = shell.classList.toggle("panel-collapsed");
-      shell.classList.remove("panel-open");
-      button.setAttribute("aria-label", collapsed ? "サイドバーを開く" : "サイドバーを閉じる");
+      setMobilePanelOpen(shell, shell.classList.contains("panel-collapsed"));
     } else {
       const collapsed = shell.classList.toggle("panel-collapsed");
-      button.setAttribute("aria-label", collapsed ? "サイドバーを開く" : "サイドバーを閉じる");
+      syncPanelToggleLabel(shell, !collapsed);
     }
   });
 });
