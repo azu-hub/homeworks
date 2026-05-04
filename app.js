@@ -4285,7 +4285,7 @@ document.querySelectorAll(".app-shell").forEach((shell) => {
       panelDragFrame = 0;
       const width = panelWidth();
       const nextX = dragStartedCollapsed
-        ? Math.max(-width, Math.min(0, latestTouchX - width))
+        ? -width + Math.min(width, Math.max(0, dx * 1.15))
         : Math.max(-width, Math.min(0, dx));
       panel.style.transform = `translate3d(${nextX}px, 0, 0)`;
     });
@@ -4300,7 +4300,7 @@ document.querySelectorAll(".app-shell").forEach((shell) => {
     const dx = x - touchStartX;
     const width = panelWidth();
     const shouldOpen = dragStartedCollapsed
-      ? x > width * 0.45 || dx > Math.min(90, width * 0.35)
+      ? dx > Math.min(82, width * 0.32)
       : dx > -Math.min(90, width * 0.35);
     isPanelDrag = false;
     setMobilePanelOpen(shell, shouldOpen);

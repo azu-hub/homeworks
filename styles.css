@@ -3385,11 +3385,36 @@ button {
   }
 
   .category-browser {
-    margin: 8px 10px 0;
+    gap: 5px;
+    margin: 6px 10px 0;
   }
 
   .category-browser-title {
     display: flex;
+    padding: 4px 6px 0;
+  }
+
+  .category-choice-list {
+    gap: 4px;
+  }
+
+  .category-choice {
+    grid-template-columns: 18px minmax(0, 1fr) 30px;
+    gap: 7px;
+    min-height: 32px;
+    padding: 5px 8px;
+  }
+
+  .category-choice svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .category-choice span {
+    width: 30px;
+    min-width: 0;
+    padding: 1px 6px;
+    font-size: 11px;
   }
 
   .status-strip {
@@ -3421,8 +3446,9 @@ button {
     display: grid;
     width: 100%;
     min-width: 0;
-    height: 40px;
-    min-height: 40px;
+    height: 36px;
+    min-height: 36px;
+    padding: 7px 9px;
   }
 
   .channel span {
