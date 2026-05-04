@@ -4251,24 +4251,26 @@ document.querySelectorAll(".app-shell").forEach((shell) => {
   let isPanelDrag = false;
   let dragStartedCollapsed = false;
   let panelDragFrame = 0;
+  let openSwipeDistance = 1;
   const panel = shell.querySelector(".channel-panel");
   const panelWidth = () => panel?.getBoundingClientRect().width || 220;
 
-  shell.addEventListener("touchstart", (e) => {
-    if (!MOBILE_MQ.matches || !panel) return;
+  const startPanelDrag = (e) => {
+    if (!MOBILE_MQ.matches || !panel || shell.classList.contains("is-hidden")) return;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     latestTouchX = touchStartX;
     dragStartedCollapsed = shell.classList.contains("panel-collapsed");
+    openSwipeDistance = Math.max(80, window.innerWidth - touchStartX);
     const canOpen = dragStartedCollapsed;
     const canClose = !dragStartedCollapsed && touchStartX <= panelWidth() + 24;
     isPanelDrag = canOpen || canClose;
     if (!isPanelDrag) return;
     shell.classList.add("panel-dragging");
     if (!dragStartedCollapsed) panel.style.transform = "translate3d(0, 0, 0)";
-  }, { passive: true });
+  };
 
-  shell.addEventListener("touchmove", (e) => {
+  const movePanelDrag = (e) => {
     if (!isPanelDrag || !panel) return;
     latestTouchX = e.touches[0].clientX;
     const dx = latestTouchX - touchStartX;
@@ -4285,11 +4287,11 @@ document.querySelectorAll(".app-shell").forEach((shell) => {
       panelDragFrame = 0;
       const width = panelWidth();
       const nextX = dragStartedCollapsed
-        ? -width + Math.min(width, Math.max(0, dx * 1.15))
+        ? -width + width * Math.max(0, Math.min(1, dx / openSwipeDistance))
         : Math.max(-width, Math.min(0, dx));
       panel.style.transform = `translate3d(${nextX}px, 0, 0)`;
     });
-  }, { passive: false });
+  };
 
   const finishPanelDrag = (x) => {
     if (!isPanelDrag || !panel) return;
@@ -4299,23 +4301,29 @@ document.querySelectorAll(".app-shell").forEach((shell) => {
     }
     const dx = x - touchStartX;
     const width = panelWidth();
+    const openProgress = Math.max(0, Math.min(1, dx / openSwipeDistance));
     const shouldOpen = dragStartedCollapsed
-      ? dx > Math.min(82, width * 0.32)
+      ? openProgress > 0.38 || dx > Math.min(92, width * 0.42)
       : dx > -Math.min(90, width * 0.35);
     isPanelDrag = false;
     setMobilePanelOpen(shell, shouldOpen);
   };
 
-  shell.addEventListener("touchend", (e) => {
+  const endPanelDrag = (e) => {
     if (!MOBILE_MQ.matches) return;
     finishPanelDrag(e.changedTouches[0].clientX || latestTouchX);
-  }, { passive: true });
+  };
 
-  shell.addEventListener("touchcancel", () => {
+  const cancelPanelDrag = () => {
     if (!isPanelDrag || !panel) return;
     isPanelDrag = false;
     setMobilePanelOpen(shell, !dragStartedCollapsed);
-  }, { passive: true });
+  };
+
+  document.addEventListener("touchstart", startPanelDrag, { passive: true });
+  document.addEventListener("touchmove", movePanelDrag, { passive: false });
+  document.addEventListener("touchend", endPanelDrag, { passive: true });
+  document.addEventListener("touchcancel", cancelPanelDrag, { passive: true });
 });
 
 function syncPanelMode() {
