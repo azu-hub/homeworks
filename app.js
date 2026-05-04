@@ -4260,14 +4260,12 @@ document.querySelectorAll(".app-shell").forEach((shell) => {
     touchStartY = e.touches[0].clientY;
     latestTouchX = touchStartX;
     dragStartedCollapsed = shell.classList.contains("panel-collapsed");
-    const canOpen = dragStartedCollapsed && touchStartX < 42;
+    const canOpen = dragStartedCollapsed;
     const canClose = !dragStartedCollapsed && touchStartX <= panelWidth() + 24;
     isPanelDrag = canOpen || canClose;
     if (!isPanelDrag) return;
     shell.classList.add("panel-dragging");
-    panel.style.transform = dragStartedCollapsed
-      ? `translate3d(${-panelWidth()}px, 0, 0)`
-      : "translate3d(0, 0, 0)";
+    if (!dragStartedCollapsed) panel.style.transform = "translate3d(0, 0, 0)";
   }, { passive: true });
 
   shell.addEventListener("touchmove", (e) => {
@@ -4287,7 +4285,7 @@ document.querySelectorAll(".app-shell").forEach((shell) => {
       panelDragFrame = 0;
       const width = panelWidth();
       const nextX = dragStartedCollapsed
-        ? Math.min(0, -width + Math.max(0, dx))
+        ? Math.max(-width, Math.min(0, latestTouchX - width))
         : Math.max(-width, Math.min(0, dx));
       panel.style.transform = `translate3d(${nextX}px, 0, 0)`;
     });
@@ -4301,7 +4299,9 @@ document.querySelectorAll(".app-shell").forEach((shell) => {
     }
     const dx = x - touchStartX;
     const width = panelWidth();
-    const shouldOpen = dragStartedCollapsed ? dx > Math.min(90, width * 0.35) : dx > -Math.min(90, width * 0.35);
+    const shouldOpen = dragStartedCollapsed
+      ? x > width * 0.45 || dx > Math.min(90, width * 0.35)
+      : dx > -Math.min(90, width * 0.35);
     isPanelDrag = false;
     setMobilePanelOpen(shell, shouldOpen);
   };
