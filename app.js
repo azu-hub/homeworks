@@ -1992,6 +1992,9 @@ function renderRegistrationForm(alertText = "", mode = "login") {
       <div class="dev-bypass">
         <p class="dev-bypass-label"><i data-lucide="flask-conical"></i> テスト用ショートカット（本番では非表示）</p>
         <div class="dev-bypass-buttons">
+          <button class="dev-bypass-btn" id="devBypassWorkerFromLogin" type="button">
+            <i data-lucide="user-check"></i> ワーカーページへ（認証スキップ）
+          </button>
           <button class="dev-bypass-btn" id="devBypassAdminFromLogin" type="button">
             <i data-lucide="shield-check"></i> 運営ページへ（認証スキップ）
           </button>
@@ -2054,6 +2057,9 @@ function renderRegistrationForm(alertText = "", mode = "login") {
   });
   document.querySelector("#backWorkerLoginButton")?.addEventListener("click", () => {
     renderRegistrationForm();
+  });
+  document.getElementById("devBypassWorkerFromLogin")?.addEventListener("click", () => {
+    loginExistingWorker("demo-worker@example.com");
   });
   document.getElementById("devBypassAdminFromLogin")?.addEventListener("click", () => {
     isVuzzLoggedIn = true;
@@ -3997,6 +4003,10 @@ document.getElementById("companyLoginForm")?.addEventListener("submit", (event) 
 document.getElementById("backToWorkerFromVuzzLogin")?.addEventListener("click", () => {
   showRole("worker");
   renderFeed();
+});
+
+document.getElementById("devBypassWorker")?.addEventListener("click", () => {
+  loginExistingWorker("demo-worker@example.com");
 });
 
 document.getElementById("devBypassAdmin")?.addEventListener("click", () => {

@@ -43,6 +43,9 @@
           <div class="dev-bypass">
             <p class="dev-bypass-label"><i data-lucide="flask-conical"></i> テスト用ショートカット（本番では非表示）</p>
             <div class="dev-bypass-buttons">
+              <button class="dev-bypass-btn" id="devBypassWorker" type="button">
+                <i data-lucide="user-check"></i> ワーカーページへ（認証スキップ）
+              </button>
               <button class="dev-bypass-btn" id="devBypassAdmin" type="button">
                 <i data-lucide="shield-check"></i> 運営ページへ（認証スキップ）
               </button>
@@ -1159,6 +1162,6 @@
     </dialog>
 
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-    <script src="./app.js?v=20260512-bank-presets"></script>
+    <script src="./app.js?v=20260512-worker-bypass"></script>
   </body>
 </html>
