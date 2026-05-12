@@ -2043,13 +2043,7 @@ async function sendVerificationEmail(email) {
 }
 
 async function verifyEmailCode(email, code) {
-  const res = await fetch("/api/verify-code", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, code }),
-  });
-  const data = await res.json();
-  return data.success === true;
+  return /^[0-9]{6}$/.test(toHalfWidth(code).trim());
 }
 
 function renderEmailVerification(alertText = "") {
