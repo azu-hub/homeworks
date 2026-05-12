@@ -1873,6 +1873,8 @@ button {
 
 .registration-grid:has(#workerLoginForm) {
   grid-template-columns: minmax(320px, 560px);
+  justify-content: center;
+  padding-right: 0;
 }
 
 .registration-grid:has(#workerRegistrationForm) {
