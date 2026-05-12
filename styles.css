@@ -3326,17 +3326,21 @@ button {
     position: fixed;
     top: 0;
     left: 0;
+    display: block;
     width: var(--mobile-panel-width);
     max-width: calc(100vw - 56px);
     height: 100vh;
     flex: 0 0 var(--mobile-panel-width);
     z-index: 30;
+    overflow-x: hidden;
+    overflow-y: auto;
     transform: none;
     transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
     will-change: transform;
     contain: layout paint;
     border-right: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow: 18px 0 34px rgba(0, 0, 0, 0.22);
+    -webkit-overflow-scrolling: touch;
   }
 
   .app-shell.panel-open > .channel-panel {
@@ -3357,8 +3361,6 @@ button {
   }
 
   .mobile-panel-close {
-    position: sticky;
-    top: 8px;
     z-index: 3;
     display: inline-grid;
     margin: 8px 10px 0 auto;
@@ -3447,9 +3449,8 @@ button {
     display: block;
     max-height: none;
     overflow-x: hidden;
-    overflow-y: auto;
+    overflow-y: visible;
     padding: 0 10px 12px;
-    -webkit-overflow-scrolling: touch;
   }
 
   .channel-group {
