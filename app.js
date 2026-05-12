@@ -183,6 +183,7 @@ let isLoggedIn = false;
 let emailVerified = false;
 let profileSubmitted = false;
 let idSubmitted = false;
+let idDocumentType = "mynumber";
 let idImages = { front: null, back: null, face: null };
 let contractIssued = false;
 let lineRegistered = false;
@@ -209,6 +210,23 @@ const profileData = {
   address: "",
   workHistory: "",
   avatarUrl: "",
+};
+const idDocumentTypes = {
+  license: {
+    label: "運転免許証",
+    front: "運転免許証（表面）",
+    back: "運転免許証（裏面）",
+  },
+  mynumber: {
+    label: "マイナンバーカード",
+    front: "マイナンバーカード（表面）",
+    back: "マイナンバーカード（裏面）",
+  },
+  passport: {
+    label: "パスポート",
+    front: "パスポート（顔写真ページ）",
+    back: "パスポート（所持人記入欄など）",
+  },
 };
 const companyData = {
   companyName: "",
@@ -1062,7 +1080,8 @@ function upsertRegisteredWorker() {
     gender: profileData.gender,
     emailVerified,
     idSubmitted,
-    idImages: { ...idImages },
+    idDocumentType,
+    idImages: { ...idImages, documentType: idDocumentType },
     approved: identityVerified,
   };
   if (idx >= 0) {
@@ -1084,6 +1103,7 @@ function renderWorkerListChannel() {
   const approvedWorkers = workerEntries.filter(({ worker }) => worker.approved);
   const renderWorkerCard = ({ worker: w, index }) => {
     const hasId = w.idImages && (w.idImages.front || w.idImages.back || w.idImages.face);
+    const idLabels = getIdDocumentLabels(w.idDocumentType || w.idImages?.documentType);
     const addressParts = [
       w.postalCode ? `〒${w.postalCode.replace(/(\d{3})(\d{4})/, "$1-$2")}` : "",
       w.prefecture || "",
@@ -1130,7 +1150,7 @@ function renderWorkerListChannel() {
         </div>
         <div class="worker-card-id-section">
           <div class="worker-card-id-header">
-            <span class="worker-card-id-label">本人確認書類</span>
+            <span class="worker-card-id-label">本人確認書類：${escapeHtml(idLabels.label)}</span>
             <span class="worker-id-optional-badge">任意</span>
             ${
               hasId
@@ -1262,6 +1282,10 @@ function closeIdLightbox() {
   document.getElementById("idLightboxOverlay")?.classList.remove("open");
 }
 
+function getIdDocumentLabels(type = "mynumber") {
+  return idDocumentTypes[type] || idDocumentTypes.mynumber;
+}
+
 function openIdAllLightbox(w) {
   let overlay = document.getElementById("idAllLightboxOverlay");
   if (!overlay) {
@@ -1282,10 +1306,11 @@ function openIdAllLightbox(w) {
     document.body.appendChild(overlay);
   }
   const name = `${w.lastName} ${w.firstName}`;
-  document.getElementById("idAllLightboxName").textContent = `身分証確認 — ${name}`;
+  const labels = getIdDocumentLabels(w.idDocumentType || w.idImages?.documentType);
+  document.getElementById("idAllLightboxName").textContent = `身分証確認 — ${name}（${labels.label}）`;
   const items = [
-    { src: w.idImages?.front, label: "マイナンバーカード（表面）" },
-    { src: w.idImages?.back,  label: "マイナンバーカード（裏面）" },
+    { src: w.idImages?.front, label: labels.front },
+    { src: w.idImages?.back,  label: labels.back },
     { src: w.idImages?.face,  label: "顔写真" },
   ].filter((it) => it.src);
   document.getElementById("idAllLightboxBody").innerHTML = items.length
@@ -2008,6 +2033,8 @@ function renderRegistrationForm(alertText = "", mode = "login") {
     emailVerified = false;
     profileSubmitted = false;
     idSubmitted = false;
+    idDocumentType = "mynumber";
+    idImages = { front: null, back: null, face: null };
     contractIssued = false;
     lineRegistered = false;
     vuzzApplicationSubmitted = false;
@@ -2433,6 +2460,7 @@ function renderMyPage(alertText = "") {
       </button>
     `
     : "";
+  const currentIdLabels = getIdDocumentLabels(idDocumentType);
   const profileForm = `
     <form class="onboarding-action" id="profileForm">
       <div class="verified-email-box">
@@ -2527,15 +2555,23 @@ function renderMyPage(alertText = "") {
     : !idSubmitted
       ? `
         <div class="onboarding-action">
-          <p class="form-note">マイナンバーカードの表面・裏面の画像と、顔写真を提出してください。提出した身分証は運営のみ確認できます。</p>
+          <p class="form-note">提出する身分証の種類を選んで、画像と顔写真を提出してください。提出した身分証は運営のみ確認できます。</p>
           <form id="idUploadForm" class="id-upload-form">
             <label class="id-upload-label">
-              <span>マイナンバーカード（表面）</span>
+              <span>提出する身分証</span>
+              <select id="idDocumentTypeSelect" name="idDocumentType" required>
+                ${Object.entries(idDocumentTypes).map(([value, item]) => `
+                  <option value="${value}" ${idDocumentType === value ? "selected" : ""}>${item.label}</option>
+                `).join("")}
+              </select>
+            </label>
+            <label class="id-upload-label">
+              <span id="idFrontLabel">${currentIdLabels.front}</span>
               <input type="file" id="idFrontInput" accept="image/*" required />
               <span class="id-upload-preview-wrap"><img id="idFrontPreview" class="id-upload-preview" /></span>
             </label>
             <label class="id-upload-label">
-              <span>マイナンバーカード（裏面）</span>
+              <span id="idBackLabel">${currentIdLabels.back}</span>
               <input type="file" id="idBackInput" accept="image/*" required />
               <span class="id-upload-preview-wrap"><img id="idBackPreview" class="id-upload-preview" /></span>
             </label>
@@ -2980,6 +3016,19 @@ function renderMyPage(alertText = "") {
   });
   const idUploadForm = document.querySelector("#idUploadForm");
   if (idUploadForm) {
+    const idDocumentTypeSelect = document.getElementById("idDocumentTypeSelect");
+    const updateIdDocumentLabels = () => {
+      const labels = getIdDocumentLabels(idDocumentTypeSelect?.value);
+      const frontLabel = document.getElementById("idFrontLabel");
+      const backLabel = document.getElementById("idBackLabel");
+      if (frontLabel) frontLabel.textContent = labels.front;
+      if (backLabel) backLabel.textContent = labels.back;
+    };
+    idDocumentTypeSelect?.addEventListener("change", () => {
+      idDocumentType = idDocumentTypeSelect.value;
+      updateIdDocumentLabels();
+    });
+    updateIdDocumentLabels();
     ["Front", "Back", "Face"].forEach((key) => {
       const input = document.getElementById(`id${key}Input`);
       const preview = document.getElementById(`id${key}Preview`);
@@ -2996,6 +3045,7 @@ function renderMyPage(alertText = "") {
     });
     idUploadForm.addEventListener("submit", (e) => {
       e.preventDefault();
+      idDocumentType = idDocumentTypeSelect?.value || "mynumber";
       const frontFile = document.getElementById("idFrontInput")?.files?.[0];
       const backFile = document.getElementById("idBackInput")?.files?.[0];
       const faceFile = document.getElementById("idFaceInput")?.files?.[0];
@@ -3011,7 +3061,7 @@ function renderMyPage(alertText = "") {
         });
       Promise.all([readFile(frontFile), readFile(backFile), readFile(faceFile)]).then(
         ([front, back, face]) => {
-          idImages = { front, back, face };
+          idImages = { documentType: idDocumentType, front, back, face };
           idSubmitted = true;
           upsertRegisteredWorker();
           updateIdentityUI();
@@ -3181,6 +3231,8 @@ function resetWorkerVerification() {
   recordWorkerLogin();
   profileSubmitted = false;
   idSubmitted = false;
+  idDocumentType = "mynumber";
+  idImages = { front: null, back: null, face: null };
   contractIssued = false;
   lineRegistered = false;
   vuzzApplicationSubmitted = false;
@@ -4115,7 +4167,7 @@ function renderApplicantModal(id, context = "company") {
              </div>`
           : `<div class="id-card-empty">
                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-               <span>マイナンバーカード 未提出</span>
+               <span>身分証 未提出</span>
              </div>`)
       : `<div class="id-card-private">
            <i data-lucide="shield-check"></i>
@@ -4361,6 +4413,8 @@ function completeLogout(button) {
   emailVerified = false;
   profileSubmitted = false;
   idSubmitted = false;
+  idDocumentType = "mynumber";
+  idImages = { front: null, back: null, face: null };
   contractIssued = false;
   lineRegistered = false;
   vuzzApplicationSubmitted = false;
