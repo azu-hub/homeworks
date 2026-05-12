@@ -3405,20 +3405,30 @@ button {
   .category-choice {
     grid-template-columns: 18px minmax(0, 1fr) 30px;
     gap: 7px;
-    min-height: 32px;
+    box-sizing: border-box;
+    height: 30px;
+    min-height: 30px;
+    max-height: 30px;
     padding: 5px 8px;
+    font-size: 12px;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
   }
 
   .category-choice svg {
     width: 15px;
     height: 15px;
+    flex-shrink: 0;
   }
 
   .category-choice span {
     width: 30px;
     min-width: 0;
+    height: 18px;
     padding: 1px 6px;
     font-size: 11px;
+    line-height: 16px;
   }
 
   .status-strip {
