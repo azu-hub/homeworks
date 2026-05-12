@@ -251,10 +251,10 @@ const bankPresets = [
   { key: "other", label: "その他", bankName: "", icon: "plus" },
 ];
 const bankBranchPresets = {
-  paypay: ["本店営業部", "ビジネス営業部", "すずめ支店", "はやぶさ支店", "その他支店"],
-  rakuten: ["本店", "第一営業支店", "第二営業支店", "サルサ支店", "その他支店"],
-  smbc: ["本店営業部", "新宿支店", "渋谷駅前支店", "大阪中央支店", "その他支店"],
-  mufg: ["本店", "新宿中央支店", "渋谷支店", "大阪営業部", "その他支店"],
+  paypay: ["本店営業部", "すずめ", "はやぶさ", "ふくろう", "ビジネス営業部", "手入力"],
+  rakuten: ["ジャズ", "ロック", "サンバ", "ワルツ", "サルサ", "手入力"],
+  smbc: ["神保町支店", "東京中央支店", "銀座支店", "渋谷駅前支店", "大阪中央支店", "手入力"],
+  mufg: ["新宿中央支店", "渋谷中央支店", "大阪営業部", "名古屋営業部", "仙台中央支店", "手入力"],
 };
 let bankSubmitted = false;
 let isBankEditing = false;
@@ -3203,7 +3203,7 @@ function renderMyPage(alertText = "") {
     branchPresetList.querySelectorAll("[data-branch-name]").forEach((button) => {
       button.addEventListener("click", () => {
         if (!branchNameInput) return;
-        branchNameInput.value = button.dataset.branchName === "その他支店" ? "" : button.dataset.branchName;
+        branchNameInput.value = button.dataset.branchName === "手入力" ? "" : button.dataset.branchName;
         updateBranchPresetActive();
         branchNameInput.focus();
       });
