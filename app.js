@@ -244,18 +244,19 @@ const savedJobs = new Set();
 const applications = [];
 const bankData = { bankName: "", branchName: "", accountType: "普通", accountNumber: "", holderName: "" };
 const bankPresets = [
-  { key: "paypay", label: "PayPay", bankName: "PayPay銀行", icon: "smartphone" },
-  { key: "rakuten", label: "楽天", bankName: "楽天銀行", icon: "badge-yen" },
-  { key: "smbc", label: "三井住友", bankName: "三井住友銀行", icon: "building-2" },
-  { key: "mufg", label: "三菱UFJ", bankName: "三菱UFJ銀行", icon: "landmark" },
+  { key: "paypay", label: "PayPay", bankName: "PayPay銀行", bankCode: "0033", icon: "smartphone" },
+  { key: "rakuten", label: "楽天", bankName: "楽天銀行", bankCode: "0036", icon: "badge-yen" },
+  { key: "smbc", label: "三井住友", bankName: "三井住友銀行", bankCode: "0009", icon: "building-2" },
+  { key: "mufg", label: "三菱UFJ", bankName: "三菱UFJ銀行", bankCode: "0005", icon: "landmark" },
   { key: "other", label: "その他", bankName: "", icon: "plus" },
 ];
-const bankBranchPresets = {
+const bankBranchFallbacks = {
   paypay: ["本店営業部", "すずめ", "はやぶさ", "ふくろう", "ビジネス営業部"],
   rakuten: ["ジャズ", "ロック", "サンバ", "ワルツ", "サルサ"],
   smbc: ["神保町支店", "東京中央支店", "銀座支店", "渋谷駅前支店", "大阪中央支店"],
   mufg: ["新宿中央支店", "渋谷中央支店", "大阪営業部", "名古屋営業部", "仙台中央支店"],
 };
+const bankBranchCache = new Map();
 let bankSubmitted = false;
 let isBankEditing = false;
 let isProfileCardEditing = false;
@@ -1451,8 +1452,28 @@ function getBankPresetKey(bankName = "") {
   return bankName ? "other" : "";
 }
 
-function getBankBranchPresets(bankKey = "") {
-  return bankBranchPresets[bankKey] || [];
+function getBankPresetByKey(bankKey = "") {
+  return bankPresets.find((bank) => bank.key === bankKey);
+}
+
+async function getBankBranches(bankKey = "") {
+  const preset = getBankPresetByKey(bankKey);
+  if (!preset?.bankCode) return [];
+  if (bankBranchCache.has(bankKey)) return bankBranchCache.get(bankKey);
+  try {
+    const res = await fetch(`https://bank.teraren.com/banks/${preset.bankCode}/branches.json`);
+    if (!res.ok) throw new Error("branch fetch failed");
+    const data = await res.json();
+    const branches = data
+      .map((branch) => branch?.normalize?.name || branch?.name)
+      .filter(Boolean);
+    bankBranchCache.set(bankKey, branches);
+    return branches;
+  } catch (_err) {
+    const fallback = bankBranchFallbacks[bankKey] || [];
+    bankBranchCache.set(bankKey, fallback);
+    return fallback;
+  }
 }
 
 function normalizePasswordInput(input) {
@@ -2492,7 +2513,6 @@ function renderMyPage(alertText = "") {
     : "";
   const currentIdLabels = getIdDocumentLabels(idDocumentType);
   const selectedBankKey = getBankPresetKey(bankData.bankName);
-  const selectedBranchOptions = getBankBranchPresets(selectedBankKey);
   const profileForm = `
     <form class="onboarding-action" id="profileForm">
       <div class="verified-email-box">
@@ -2815,14 +2835,13 @@ function renderMyPage(alertText = "") {
                   }).join("")}
                 </div>
               </div>
-              <div class="bank-branch-section${selectedBranchOptions.length ? "" : " is-hidden"}" id="bankBranchSection">
-                <span class="bank-preset-label">支店一覧</span>
+              <div class="bank-branch-section${selectedBankKey && selectedBankKey !== "other" ? "" : " is-hidden"}" id="bankBranchSection">
+                <div class="bank-branch-head">
+                  <span class="bank-preset-label">支店一覧</span>
+                  <input class="branch-search-input" id="branchSearchInput" type="search" placeholder="支店名を検索" />
+                </div>
                 <div class="branch-preset-grid" id="branchPresetList">
-                  ${selectedBranchOptions.map((branchName) => `
-                    <button class="branch-preset-btn${bankData.branchName === branchName ? " active" : ""}" type="button" data-branch-name="${escapeHtml(branchName)}">
-                      ${escapeHtml(branchName)}
-                    </button>
-                  `).join("")}
+                  <span class="branch-loading">銀行を選択すると支店一覧を取得します</span>
                 </div>
               </div>
               <div class="form-grid">
@@ -3180,30 +3199,31 @@ function renderMyPage(alertText = "") {
   const branchNameInput = document.querySelector("#branchNameInput");
   const bankBranchSection = document.querySelector("#bankBranchSection");
   const branchPresetList = document.querySelector("#branchPresetList");
+  const branchSearchInput = document.querySelector("#branchSearchInput");
   const bankPresetButtons = [...document.querySelectorAll("[data-bank-preset]")];
+  let currentBranchOptions = [];
+  let branchRequestId = 0;
   const updateBranchPresetActive = () => {
     const value = branchNameInput?.value.trim() || "";
     branchPresetList?.querySelectorAll("[data-branch-name]").forEach((button) => {
       button.classList.toggle("active", button.dataset.branchName === value);
     });
   };
-  const renderBranchPresets = () => {
-    if (!bankBranchSection || !branchPresetList || !bankNameInput) return;
-    const branches = getBankBranchPresets(getBankPresetKey(bankNameInput.value.trim()));
-    bankBranchSection.classList.toggle("is-hidden", branches.length === 0);
-    if (branchNameInput) {
-      branchNameInput.readOnly = branches.length > 0;
-      branchNameInput.placeholder = branches.length ? "支店一覧から選択" : "例：渋谷支店";
-    }
-    branchPresetList.innerHTML = branches
-      .map(
-        (branchName) => `
-          <button class="branch-preset-btn" type="button" data-branch-name="${escapeHtml(branchName)}">
-            ${escapeHtml(branchName)}
-          </button>
-        `,
-      )
-      .join("");
+  const paintBranchPresets = () => {
+    if (!branchPresetList) return;
+    const query = (branchSearchInput?.value || "").trim().toLowerCase();
+    const visibleBranches = currentBranchOptions.filter((branchName) => branchName.toLowerCase().includes(query));
+    branchPresetList.innerHTML = visibleBranches.length
+      ? visibleBranches
+          .map(
+            (branchName) => `
+              <button class="branch-preset-btn" type="button" data-branch-name="${escapeHtml(branchName)}">
+                ${escapeHtml(branchName)}
+              </button>
+            `,
+          )
+          .join("")
+      : `<span class="branch-loading">該当する支店がありません</span>`;
     branchPresetList.querySelectorAll("[data-branch-name]").forEach((button) => {
       button.addEventListener("click", () => {
         if (!branchNameInput) return;
@@ -3213,6 +3233,28 @@ function renderMyPage(alertText = "") {
       });
     });
     updateBranchPresetActive();
+  };
+  const renderBranchPresets = async () => {
+    if (!bankBranchSection || !branchPresetList || !bankNameInput) return;
+    const bankKey = getBankPresetKey(bankNameInput.value.trim());
+    const shouldShow = bankKey && bankKey !== "other";
+    const requestId = ++branchRequestId;
+    bankBranchSection.classList.toggle("is-hidden", !shouldShow);
+    if (branchNameInput) {
+      branchNameInput.readOnly = shouldShow;
+      branchNameInput.placeholder = shouldShow ? "支店一覧から選択" : "例：渋谷支店";
+    }
+    if (!shouldShow) {
+      currentBranchOptions = [];
+      branchPresetList.innerHTML = "";
+      return;
+    }
+    if (branchSearchInput) branchSearchInput.value = "";
+    branchPresetList.innerHTML = `<span class="branch-loading">支店一覧を取得中...</span>`;
+    const branches = await getBankBranches(bankKey);
+    if (requestId !== branchRequestId) return;
+    currentBranchOptions = branches;
+    paintBranchPresets();
   };
   const updateBankPresetActive = () => {
     const value = bankNameInput?.value.trim() || "";
@@ -3240,6 +3282,7 @@ function renderMyPage(alertText = "") {
     renderBranchPresets();
   });
   branchNameInput?.addEventListener("input", updateBranchPresetActive);
+  branchSearchInput?.addEventListener("input", paintBranchPresets);
   updateBankPresetActive();
   renderBranchPresets();
   document.querySelector("#editBankButton")?.addEventListener("click", () => {

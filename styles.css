@@ -1533,6 +1533,13 @@ button {
   gap: 9px;
 }
 
+.bank-branch-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .bank-preset-label {
   color: var(--muted);
   font-size: 12px;
@@ -1575,6 +1582,9 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 3px;
 }
 
 .branch-preset-btn {
@@ -1593,6 +1603,23 @@ button {
   border-color: rgba(240, 184, 75, 0.5);
   background: rgba(240, 184, 75, 0.12);
   color: #ffd280;
+}
+
+.branch-search-input {
+  width: min(220px, 54%);
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  outline: 0;
+  background: #191b20;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.branch-loading {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 /* ── Profile Card ── */
@@ -3650,6 +3677,15 @@ button {
 }
 
 @media (max-width: 560px) {
+  .bank-branch-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .branch-search-input {
+    width: 100%;
+  }
+
   .bank-preset-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
