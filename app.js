@@ -250,6 +250,12 @@ const bankPresets = [
   { key: "mufg", label: "三菱UFJ", bankName: "三菱UFJ銀行", icon: "landmark" },
   { key: "other", label: "その他", bankName: "", icon: "plus" },
 ];
+const bankBranchPresets = {
+  paypay: ["本店営業部", "ビジネス営業部", "すずめ支店", "はやぶさ支店", "その他支店"],
+  rakuten: ["本店", "第一営業支店", "第二営業支店", "サルサ支店", "その他支店"],
+  smbc: ["本店営業部", "新宿支店", "渋谷駅前支店", "大阪中央支店", "その他支店"],
+  mufg: ["本店", "新宿中央支店", "渋谷支店", "大阪営業部", "その他支店"],
+};
 let bankSubmitted = false;
 let isBankEditing = false;
 let isProfileCardEditing = false;
@@ -1439,6 +1445,16 @@ function normalizeUsernameValue(value = "") {
   return value.normalize("NFKC").replace(/[^A-Za-z0-9]/g, "").trim();
 }
 
+function getBankPresetKey(bankName = "") {
+  const matched = bankPresets.find((bank) => bank.bankName && bank.bankName === bankName);
+  if (matched) return matched.key;
+  return bankName ? "other" : "";
+}
+
+function getBankBranchPresets(bankKey = "") {
+  return bankBranchPresets[bankKey] || [];
+}
+
 function normalizePasswordInput(input) {
   const normalized = normalizePasswordValue(input.value);
   if (input.value === normalized) return;
@@ -2475,6 +2491,8 @@ function renderMyPage(alertText = "") {
     `
     : "";
   const currentIdLabels = getIdDocumentLabels(idDocumentType);
+  const selectedBankKey = getBankPresetKey(bankData.bankName);
+  const selectedBranchOptions = getBankBranchPresets(selectedBankKey);
   const profileForm = `
     <form class="onboarding-action" id="profileForm">
       <div class="verified-email-box">
@@ -2797,6 +2815,16 @@ function renderMyPage(alertText = "") {
                   }).join("")}
                 </div>
               </div>
+              <div class="bank-branch-section${selectedBranchOptions.length ? "" : " is-hidden"}" id="bankBranchSection">
+                <span class="bank-preset-label">支店一覧</span>
+                <div class="branch-preset-grid" id="branchPresetList">
+                  ${selectedBranchOptions.map((branchName) => `
+                    <button class="branch-preset-btn${bankData.branchName === branchName ? " active" : ""}" type="button" data-branch-name="${escapeHtml(branchName)}">
+                      ${escapeHtml(branchName)}
+                    </button>
+                  `).join("")}
+                </div>
+              </div>
               <div class="form-grid">
                 <label>
                   金融機関名
@@ -2804,7 +2832,7 @@ function renderMyPage(alertText = "") {
                 </label>
                 <label>
                   支店名
-                  <input name="branchName" type="text" placeholder="例：渋谷支店" value="${escapeHtml(bankData.branchName)}" required />
+                  <input name="branchName" id="branchNameInput" type="text" placeholder="例：渋谷支店" value="${escapeHtml(bankData.branchName)}" required />
                 </label>
                 <label>
                   口座種別
@@ -3149,7 +3177,39 @@ function renderMyPage(alertText = "") {
     renderMyPage("振込口座を登録しました。");
   });
   const bankNameInput = document.querySelector("#bankNameInput");
+  const branchNameInput = document.querySelector("#branchNameInput");
+  const bankBranchSection = document.querySelector("#bankBranchSection");
+  const branchPresetList = document.querySelector("#branchPresetList");
   const bankPresetButtons = [...document.querySelectorAll("[data-bank-preset]")];
+  const updateBranchPresetActive = () => {
+    const value = branchNameInput?.value.trim() || "";
+    branchPresetList?.querySelectorAll("[data-branch-name]").forEach((button) => {
+      button.classList.toggle("active", button.dataset.branchName === value);
+    });
+  };
+  const renderBranchPresets = () => {
+    if (!bankBranchSection || !branchPresetList || !bankNameInput) return;
+    const branches = getBankBranchPresets(getBankPresetKey(bankNameInput.value.trim()));
+    bankBranchSection.classList.toggle("is-hidden", branches.length === 0);
+    branchPresetList.innerHTML = branches
+      .map(
+        (branchName) => `
+          <button class="branch-preset-btn" type="button" data-branch-name="${escapeHtml(branchName)}">
+            ${escapeHtml(branchName)}
+          </button>
+        `,
+      )
+      .join("");
+    branchPresetList.querySelectorAll("[data-branch-name]").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (!branchNameInput) return;
+        branchNameInput.value = button.dataset.branchName === "その他支店" ? "" : button.dataset.branchName;
+        updateBranchPresetActive();
+        branchNameInput.focus();
+      });
+    });
+    updateBranchPresetActive();
+  };
   const updateBankPresetActive = () => {
     const value = bankNameInput?.value.trim() || "";
     const matched = bankPresets.find((bank) => bank.bankName && bank.bankName === value);
@@ -3165,12 +3225,19 @@ function renderMyPage(alertText = "") {
       const preset = bankPresets.find((bank) => bank.key === button.dataset.bankPreset);
       if (!preset || !bankNameInput) return;
       bankNameInput.value = preset.bankName;
+      if (branchNameInput) branchNameInput.value = "";
       updateBankPresetActive();
+      renderBranchPresets();
       bankNameInput.focus();
     });
   });
-  bankNameInput?.addEventListener("input", updateBankPresetActive);
+  bankNameInput?.addEventListener("input", () => {
+    updateBankPresetActive();
+    renderBranchPresets();
+  });
+  branchNameInput?.addEventListener("input", updateBranchPresetActive);
   updateBankPresetActive();
+  renderBranchPresets();
   document.querySelector("#editBankButton")?.addEventListener("click", () => {
     isBankEditing = true;
     renderMyPage();
