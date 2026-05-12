@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HomeWorks Hub</title>
     <link rel="preconnect" href="https://unpkg.com" />
-    <link rel="stylesheet" href="./styles.css?v=20260512-id-type-select" />
+    <link rel="stylesheet" href="./styles.css?v=20260512-username-rule" />
   </head>
   <body>
     <section class="login-view" id="loginView" aria-label="ログイン">
@@ -286,7 +286,8 @@
               <div class="form-grid">
                 <label class="span-2">
                   ユーザー名
-                  <input name="username" type="text" required />
+                  <input name="username" type="text" title="半角英数字のみで入力してください。" required />
+                  <span class="field-hint username-rule">半角英数字のみ（例: taro123）</span>
                 </label>
               </div>
               <div class="profile-step-actions">
@@ -1158,6 +1159,6 @@
     </dialog>
 
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-    <script src="./app.js?v=20260512-id-type-select"></script>
+    <script src="./app.js?v=20260512-username-rule"></script>
   </body>
 </html>

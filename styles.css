@@ -1958,6 +1958,12 @@ button {
   font-weight: 400;
 }
 
+.username-rule,
+.username-rule-text {
+  color: #ffd280;
+  font-weight: 900;
+}
+
 .field-error {
   display: block;
   margin-top: 4px;

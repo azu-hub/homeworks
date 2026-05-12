@@ -1429,7 +1429,7 @@ function normalizePasswordValue(value = "") {
 }
 
 function normalizeUsernameValue(value = "") {
-  return value.normalize("NFKC").trim();
+  return value.normalize("NFKC").replace(/[^A-Za-z0-9]/g, "").trim();
 }
 
 function normalizePasswordInput(input) {
@@ -2336,11 +2336,12 @@ function renderUsernameSetup(alertText = "") {
     ${alertText ? `<div class="mypage-alert">${alertText}</div>` : ""}
     <section class="registration-grid">
       <form class="portal-panel registration-form" id="usernameSetupForm">
-        <p class="form-note">他のユーザーに表示される名前を入力してください。</p>
+        <p class="form-note">他のユーザーに表示される名前を入力してください。<strong class="username-rule-text">半角英数字のみ</strong>使えます。</p>
         <div class="form-grid single-column-fields">
           <label>
             ユーザー名
-            <input name="username" type="text" value="${escapeHtml(profileData.username)}" required autocomplete="username" />
+            <input name="username" type="text" value="${escapeHtml(profileData.username)}" title="半角英数字のみで入力してください。" required autocomplete="username" />
+            <span class="field-hint username-rule">半角英数字のみ（例: taro123）</span>
           </label>
         </div>
         <div class="form-actions">
@@ -2371,7 +2372,7 @@ function renderUsernameSetup(alertText = "") {
     event.preventDefault();
     const rawUsername = normalizeUsernameValue(event.currentTarget.querySelector('input[name="username"]').value);
     if (!rawUsername) {
-      renderUsernameSetup("ユーザー名を入力してください。");
+      renderUsernameSetup("ユーザー名は半角英数字で入力してください。");
       return;
     }
     profileData.username = rawUsername;
@@ -2525,7 +2526,8 @@ function renderMyPage(alertText = "") {
               : `
                 <label class="span-2">
                   ユーザー名
-                  <input name="username" type="text" value="${escapeHtml(profileData.username)}" required />
+                  <input name="username" type="text" value="${escapeHtml(profileData.username)}" title="半角英数字のみで入力してください。" required />
+                  <span class="field-hint username-rule">半角英数字のみ（例: taro123）</span>
                 </label>
               `
         }
@@ -2686,7 +2688,8 @@ function renderMyPage(alertText = "") {
           <div class="form-grid single-column-fields" style="margin-top:12px">
             <label>
               ユーザー名
-              <input name="username" type="text" value="${escapeHtml(profileData.username)}" required />
+              <input name="username" type="text" value="${escapeHtml(profileData.username)}" title="半角英数字のみで入力してください。" required />
+              <span class="field-hint username-rule">半角英数字のみ</span>
             </label>
           </div>
           <div class="form-actions" style="margin-top:12px">
@@ -3130,10 +3133,19 @@ function renderMyPage(alertText = "") {
     isProfileCardEditing = false;
     renderMyPage();
   });
+  const profileCardUsernameInput = document.querySelector('#profileCardForm input[name="username"]');
+  profileCardUsernameInput?.addEventListener("blur", () => {
+    profileCardUsernameInput.value = normalizeUsernameValue(profileCardUsernameInput.value);
+  });
   document.querySelector("#profileCardForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    profileData.username = formData.get("username")?.toString().trim() || "";
+    const nextUsername = normalizeUsernameValue(formData.get("username")?.toString() || "");
+    if (!nextUsername) {
+      renderMyPage("ユーザー名は半角英数字で入力してください。");
+      return;
+    }
+    profileData.username = nextUsername;
     isProfileCardEditing = false;
     updateIdentityUI();
     renderMyPage("プロフィールを更新しました。");
@@ -4009,7 +4021,12 @@ document.getElementById("workerProfileGate")?.addEventListener("submit", (event)
   profileData.prefecture = formData.get("prefecture")?.toString().trim() || "";
   profileData.addressLine1 = formData.get("addressLine1")?.toString().trim() || "";
   profileData.addressLine2 = formData.get("addressLine2")?.toString().trim() || "";
-  profileData.username = normalizeUsernameValue(formData.get("username")?.toString() || "");
+  const gateUsername = normalizeUsernameValue(formData.get("username")?.toString() || "");
+  if (!gateUsername) {
+    alert("ユーザー名は半角英数字で入力してください。");
+    return;
+  }
+  profileData.username = gateUsername;
   profileData.address = [profileData.prefecture, profileData.addressLine1, profileData.addressLine2].filter(Boolean).join("");
   profileSubmitted = true;
   isEditingProfile = false;
