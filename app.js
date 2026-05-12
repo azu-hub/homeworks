@@ -319,7 +319,7 @@ const registeredWorkers = [
     addressLine1: "横浜市西区みなとみらい3-6-1",
     addressLine2: "",
     registeredAt: "2026/04/29 09:15:30",
-    emailVerified: false,
+    emailVerified: true,
     idSubmitted: false,
     idImages: { front: null, back: null, face: null },
     approved: false,
@@ -357,7 +357,7 @@ const registeredWorkers = [
     addressLine1: "福岡市中央区天神1-10-5",
     addressLine2: "",
     registeredAt: "2026/04/30 08:02:59",
-    emailVerified: false,
+    emailVerified: true,
     idSubmitted: false,
     idImages: { front: null, back: null, face: null },
     approved: false,
@@ -1373,7 +1373,7 @@ function getWorkerApprovalStatus() {
 function getWorkerApprovalLabel() {
   if (!isLoggedIn) return "登録して認証へ";
   if (!emailVerified) return "メール認証後に応募";
-  if (!identityVerified) return "運営承認後に応募";
+  if (!identityVerified) return "応募する";
   return "この案件に応募";
 }
 
@@ -1557,7 +1557,7 @@ function updateIdentityUI() {
       ? '<i data-lucide="mail-check"></i> メール認証後に応募'
       : identityVerified
         ? '<i data-lucide="check-circle-2"></i> この案件に応募'
-        : '<i data-lucide="badge-alert"></i> 運営承認後に応募';
+        : '<i data-lucide="check-circle-2"></i> 応募する';
   document.querySelector("#guestTopbarActions")?.classList.toggle("is-hidden", isLoggedIn);
   document.querySelectorAll("[data-logout]").forEach((btn) => {
     const inVuzz = !!btn.closest("#vuzzApp");
@@ -1870,7 +1870,21 @@ function applyToJob(jobId) {
   }
 
   if (!identityVerified) {
-    renderMyPage("応募するには、個人情報・身分証・契約書交付を完了し、運営の承認を受ける必要があります。");
+    if (!window.confirm("応募しますか？")) return;
+    if (!applications.some((application) => application.jobId === job.id)) {
+      applications.unshift({
+        jobId: job.id,
+        title: job.title,
+        company: job.company,
+        pay: job.pay,
+        status: "承認待ち",
+        updated: "now",
+      });
+    }
+    window.alert("承認されたら通知します");
+    document.querySelector("#applyButton").innerHTML =
+      '<i data-lucide="hourglass"></i> 承認待ち';
+    refreshIcons();
     return;
   }
 
@@ -3383,6 +3397,10 @@ function showRole(role) {
     view.classList.toggle("is-hidden", viewRole !== role);
   });
   window.location.hash = role;
+  if (role === "vuzz") {
+    const badge = document.getElementById("workerCount");
+    if (badge) badge.textContent = registeredWorkers.length;
+  }
   if (role === "company") {
     updateCompanyPortalIdentity();
   }
@@ -4482,9 +4500,12 @@ document.querySelectorAll(".app-shell").forEach((shell) => {
   shell.appendChild(backdrop);
   backdrop.addEventListener("click", () => closeMobilePanel(shell));
 
+  const EDGE_OPEN_ZONE = 24;
+  const DIRECTION_SLOP = 8;
   let touchStartX = 0;
   let touchStartY = 0;
   let latestTouchX = 0;
+  let pendingPanelTouch = false;
   let isPanelDrag = false;
   let dragStartedCollapsed = false;
   let panelDragFrame = 0;
@@ -4492,31 +4513,48 @@ document.querySelectorAll(".app-shell").forEach((shell) => {
   const panel = shell.querySelector(".channel-panel");
   const panelWidth = () => panel?.getBoundingClientRect().width || 220;
 
+  const resetTouchState = () => {
+    pendingPanelTouch = false;
+    isPanelDrag = false;
+    if (panelDragFrame) {
+      window.cancelAnimationFrame(panelDragFrame);
+      panelDragFrame = 0;
+    }
+  };
+
   const startPanelDrag = (e) => {
+    resetTouchState();
     if (!MOBILE_MQ.matches || !panel || shell.classList.contains("is-hidden")) return;
+    if (e.touches.length !== 1) return;
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     latestTouchX = touchStartX;
     dragStartedCollapsed = shell.classList.contains("panel-collapsed");
     openSwipeDistance = Math.max(80, window.innerWidth - touchStartX);
-    const canOpen = dragStartedCollapsed;
-    const canClose = !dragStartedCollapsed && touchStartX <= panelWidth() + 24;
-    isPanelDrag = canOpen || canClose;
-    if (!isPanelDrag) return;
+    const canOpen = dragStartedCollapsed && touchStartX <= EDGE_OPEN_ZONE;
+    const canClose = !dragStartedCollapsed && touchStartX <= panelWidth() + EDGE_OPEN_ZONE;
+    pendingPanelTouch = canOpen || canClose;
+  };
+
+  const beginActivePanelDrag = () => {
+    if (isPanelDrag) return;
+    isPanelDrag = true;
     shell.classList.add("panel-dragging");
     if (!dragStartedCollapsed) panel.style.transform = "translate3d(0, 0, 0)";
   };
 
   const movePanelDrag = (e) => {
-    if (!isPanelDrag || !panel) return;
+    if (!pendingPanelTouch || !panel) return;
     latestTouchX = e.touches[0].clientX;
     const dx = latestTouchX - touchStartX;
     const dy = e.touches[0].clientY - touchStartY;
-    if (Math.abs(dy) > Math.abs(dx) + 8) {
-      isPanelDrag = false;
-      shell.classList.remove("panel-dragging");
-      panel.style.removeProperty("transform");
-      return;
+    if (!isPanelDrag) {
+      if (Math.abs(dy) > DIRECTION_SLOP && Math.abs(dy) > Math.abs(dx)) {
+        pendingPanelTouch = false;
+        return;
+      }
+      if (Math.abs(dx) <= DIRECTION_SLOP) return;
+      beginActivePanelDrag();
     }
     e.preventDefault();
     if (panelDragFrame) return;
@@ -4531,7 +4569,10 @@ document.querySelectorAll(".app-shell").forEach((shell) => {
   };
 
   const finishPanelDrag = (x) => {
-    if (!isPanelDrag || !panel) return;
+    if (!isPanelDrag || !panel) {
+      resetTouchState();
+      return;
+    }
     if (panelDragFrame) {
       window.cancelAnimationFrame(panelDragFrame);
       panelDragFrame = 0;
@@ -4542,19 +4583,30 @@ document.querySelectorAll(".app-shell").forEach((shell) => {
     const shouldOpen = dragStartedCollapsed
       ? openProgress > 0.38 || dx > Math.min(92, width * 0.42)
       : dx > -Math.min(90, width * 0.35);
-    isPanelDrag = false;
+    resetTouchState();
     setMobilePanelOpen(shell, shouldOpen);
   };
 
   const endPanelDrag = (e) => {
-    if (!MOBILE_MQ.matches) return;
+    if (!MOBILE_MQ.matches) {
+      resetTouchState();
+      return;
+    }
+    if (!isPanelDrag) {
+      resetTouchState();
+      return;
+    }
     finishPanelDrag(e.changedTouches[0].clientX || latestTouchX);
   };
 
   const cancelPanelDrag = () => {
-    if (!isPanelDrag || !panel) return;
-    isPanelDrag = false;
-    setMobilePanelOpen(shell, !dragStartedCollapsed);
+    if (!isPanelDrag || !panel) {
+      resetTouchState();
+      return;
+    }
+    const wasCollapsed = dragStartedCollapsed;
+    resetTouchState();
+    setMobilePanelOpen(shell, !wasCollapsed);
   };
 
   document.addEventListener("touchstart", startPanelDrag, { passive: true });
