@@ -3585,7 +3585,6 @@ function renderFeed() {
             <div class="job-meta">
               <span>${job.pay}</span>
               <span>納期 ${job.due}</span>
-              <span>${job.place}</span>
               <span>${job.slots}</span>
             </div>
             <div class="job-actions">
@@ -3619,7 +3618,6 @@ function renderDetail(job) {
   document.querySelector("#detailTrust").textContent = job.trust;
   document.querySelector("#detailPay").textContent = job.pay;
   document.querySelector("#detailDue").textContent = `納期: ${job.due}`;
-  document.querySelector("#detailPlace").textContent = job.place;
   document.querySelector("#detailSlots").textContent = job.slots;
   document.querySelector("#detailTime").textContent = job.time;
   document.querySelector("#detailReview").textContent = job.review;
