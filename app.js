@@ -1403,6 +1403,10 @@ function normalizePasswordValue(value = "") {
   return value.normalize("NFKC").replace(/[^A-Za-z0-9]/g, "");
 }
 
+function normalizeUsernameValue(value = "") {
+  return value.normalize("NFKC").trim();
+}
+
 function normalizePasswordInput(input) {
   const normalized = normalizePasswordValue(input.value);
   if (input.value === normalized) return;
@@ -2305,7 +2309,7 @@ function renderUsernameSetup(alertText = "") {
     ${alertText ? `<div class="mypage-alert">${alertText}</div>` : ""}
     <section class="registration-grid">
       <form class="portal-panel registration-form" id="usernameSetupForm">
-        <p class="form-note">他のユーザーに表示される名前を入力してください。半角英数字で入力できます。</p>
+        <p class="form-note">他のユーザーに表示される名前を入力してください。</p>
         <div class="form-grid single-column-fields">
           <label>
             ユーザー名
@@ -2327,9 +2331,8 @@ function renderUsernameSetup(alertText = "") {
   `;
 
   const usernameInput = feed.querySelector('input[name="username"]');
-  usernameInput?.addEventListener("input", () => {
-    const converted = toHalfWidth(usernameInput.value);
-    if (usernameInput.value !== converted) usernameInput.value = converted;
+  usernameInput?.addEventListener("blur", () => {
+    usernameInput.value = normalizeUsernameValue(usernameInput.value);
   });
 
   feed.querySelector("#usernameSetupBackButton")?.addEventListener("click", () => {
@@ -2339,7 +2342,7 @@ function renderUsernameSetup(alertText = "") {
 
   feed.querySelector("#usernameSetupForm")?.addEventListener("submit", (event) => {
     event.preventDefault();
-    const rawUsername = toHalfWidth(event.currentTarget.querySelector('input[name="username"]').value.trim());
+    const rawUsername = normalizeUsernameValue(event.currentTarget.querySelector('input[name="username"]').value);
     if (!rawUsername) {
       renderUsernameSetup("ユーザー名を入力してください。");
       return;
@@ -3954,7 +3957,7 @@ document.getElementById("workerProfileGate")?.addEventListener("submit", (event)
   profileData.prefecture = formData.get("prefecture")?.toString().trim() || "";
   profileData.addressLine1 = formData.get("addressLine1")?.toString().trim() || "";
   profileData.addressLine2 = formData.get("addressLine2")?.toString().trim() || "";
-  profileData.username = toHalfWidth(formData.get("username")?.toString().trim() || "");
+  profileData.username = normalizeUsernameValue(formData.get("username")?.toString() || "");
   profileData.address = [profileData.prefecture, profileData.addressLine1, profileData.addressLine2].filter(Boolean).join("");
   profileSubmitted = true;
   isEditingProfile = false;
