@@ -243,6 +243,13 @@ let pendingLoginMethod = null;
 const savedJobs = new Set();
 const applications = [];
 const bankData = { bankName: "", branchName: "", accountType: "普通", accountNumber: "", holderName: "" };
+const bankPresets = [
+  { key: "paypay", label: "PayPay", bankName: "PayPay銀行", icon: "smartphone" },
+  { key: "rakuten", label: "楽天", bankName: "楽天銀行", icon: "badge-yen" },
+  { key: "smbc", label: "三井住友", bankName: "三井住友銀行", icon: "building-2" },
+  { key: "mufg", label: "三菱UFJ", bankName: "三菱UFJ銀行", icon: "landmark" },
+  { key: "other", label: "その他", bankName: "", icon: "plus" },
+];
 let bankSubmitted = false;
 let isBankEditing = false;
 let isProfileCardEditing = false;
@@ -2765,10 +2772,29 @@ function renderMyPage(alertText = "") {
           : `
             <p class="form-note">報酬の振込先となる口座を登録してください。</p>
             <form class="onboarding-action" id="bankForm">
+              <div class="bank-preset-section">
+                <span class="bank-preset-label">よく使う銀行</span>
+                <div class="bank-preset-grid">
+                  ${bankPresets.map((bank) => {
+                    const activeClass =
+                      bank.bankName && bankData.bankName === bank.bankName
+                        ? " active"
+                        : !bank.bankName && bankData.bankName && !bankPresets.some((preset) => preset.bankName === bankData.bankName)
+                          ? " active"
+                          : "";
+                    return `
+                      <button class="bank-preset-btn${activeClass}" type="button" data-bank-preset="${bank.key}">
+                        <i data-lucide="${bank.icon}"></i>
+                        <span>${bank.label}</span>
+                      </button>
+                    `;
+                  }).join("")}
+                </div>
+              </div>
               <div class="form-grid">
                 <label>
                   金融機関名
-                  <input name="bankName" type="text" placeholder="例：〇〇銀行" value="${escapeHtml(bankData.bankName)}" required />
+                  <input name="bankName" id="bankNameInput" type="text" placeholder="例：〇〇銀行" value="${escapeHtml(bankData.bankName)}" required />
                 </label>
                 <label>
                   支店名
@@ -3116,6 +3142,29 @@ function renderMyPage(alertText = "") {
     isBankEditing = false;
     renderMyPage("振込口座を登録しました。");
   });
+  const bankNameInput = document.querySelector("#bankNameInput");
+  const bankPresetButtons = [...document.querySelectorAll("[data-bank-preset]")];
+  const updateBankPresetActive = () => {
+    const value = bankNameInput?.value.trim() || "";
+    const matched = bankPresets.find((bank) => bank.bankName && bank.bankName === value);
+    bankPresetButtons.forEach((button) => {
+      button.classList.toggle(
+        "active",
+        matched ? button.dataset.bankPreset === matched.key : Boolean(value) && button.dataset.bankPreset === "other",
+      );
+    });
+  };
+  bankPresetButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const preset = bankPresets.find((bank) => bank.key === button.dataset.bankPreset);
+      if (!preset || !bankNameInput) return;
+      bankNameInput.value = preset.bankName;
+      updateBankPresetActive();
+      bankNameInput.focus();
+    });
+  });
+  bankNameInput?.addEventListener("input", updateBankPresetActive);
+  updateBankPresetActive();
   document.querySelector("#editBankButton")?.addEventListener("click", () => {
     isBankEditing = true;
     renderMyPage();
